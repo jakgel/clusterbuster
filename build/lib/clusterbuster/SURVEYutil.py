@@ -7,7 +7,7 @@ Created on Wed May 10 10:52:22 2017
 """
 from __future__ import division,print_function
 
-import clusterbuster.IOutil                    as iout
+import pyutil_my.IOutil                    as iout
 import glob
 import os                                   
 import numpy    as np
@@ -15,7 +15,7 @@ import numpy    as np
 ''' former MUSIC-2 '''
 def MergeFilesToSurvey(survey, savefolder, verbose = True, clusterwise=False):
     
-    import clusterbuster.ObjectClasses as CBclass
+    import pyutil_my.ClusterBuster_pythonClass as CBclass
 
     minsize        = 1
     location       = savefolder+'/pickled/'

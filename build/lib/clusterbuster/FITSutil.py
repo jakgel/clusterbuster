@@ -1,25 +1,18 @@
-''' A two way road for a conversion from numpy arrays to -fits files with the correct format
-    Currentlythe header is initialized by a template.fitswhich should be changesin the future!
-'''
-
+# not working, I really have to learn how to install python modules
+# this set path question makes me ccraysi!
+#import os
 #import sys
 #sys.path.insert(0, os.getcwd())
-import os
 from astropy.io import fits  #import pyfits as fits
 import warnings
 import numpy as np
-import clusterbuster
-import scipy.ndimage.morphology    as morp #morp.binary_dilation(input, structure=None, iterations=1, mask=None, output=None, border_value=0, origin=0, brute_force=False)
+import matplotlib.pyplot as plt
 
 
 
 #====== Hickjacking the header from another NVSS image  
 #hduTemplate = fits.open('./../pyutil_my/Template-FITS/Casa4.3_Image.fits')
-
-
-path = os.path.dirname(clusterbuster.__file__)
-print(path)
-hduTemplate = fits.open(path+'/Template-FITS/NVSS_Image.fits') 
+hduTemplate = fits.open('./../pyutil_my/Template-FITS/NVSS_Image.fits') 
 #hdulist.info()
 hduTemplateHead = hduTemplate[0]    
      
@@ -51,9 +44,7 @@ def numpy2FITS ( array,  outfile, spixel, center=[-1,-1], pcenter = [-1,-1], ona
        input: 
       
        spixel (float) in arcsecs
-       The created images are up to my knowledge not readable by CASA
-       
-       Possible improvement: directly supply it as afunctionof a map class
+       The created images ar eup to my knowledge not readable by CASA
     '''
   
 
@@ -187,6 +178,10 @@ def numpy2FITS ( array,  outfile, spixel, center=[-1,-1], pcenter = [-1,-1], ona
     return outfile
 
 #====
+import scipy.ndimage.morphology    as morp #morp.binary_dilation(input, structure=None, iterations=1, mask=None, output=None, border_value=0, origin=0, brute_force=False)
+import pylab 
+
+
 def numpy2mask ( array, cutoff, Ndil, outfile=False) : #, header=hdutemplateHead.header
   
  array2 = np.greater(array, (array*0.)+cutoff)
@@ -196,13 +191,14 @@ def numpy2mask ( array, cutoff, Ndil, outfile=False) : #, header=hdutemplateHead
  newarray   = array3[np.newaxis , np.newaxis, :, :].astype(np.float32) #np.bool_) #array[np.newaxis , np.newaxis, :, :]
 
  hdu        = fits.PrimaryHDU(newarray)
- hduHead    = hdu.header  # now add some modifications ...    
+ hduHead    = hdu.header  # now add some modifications ...
+     
  hduHead    = hduTemplateHead.header   
                                                   
  hduHead['NAXIS1']  =   array.shape[0]                                                  
  hduHead['NAXIS2']  =   array.shape[1]                                                  
- hduHead['EXTEND']  =     True         
-        
+ 
+ hduHead['EXTEND']  =     True           #    T               
  if outfile:
   fits.writeto( filename=outfile, data=newarray, header = hduHead, clobber = True)
     

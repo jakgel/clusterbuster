@@ -9,10 +9,12 @@ import cv2
 #import pyfits as fits
 #import scipy.ndimage.morphology    as morp #morp.binary_dilation(input, structure=None, iterations=1, mask=None, output=None, border_value=0, origin=0, brute_force=False)
 from   scipy import ndimage                # used to compute the centroid
+from   scipy import sparse
+
 
 #print '###==== Step 1: Loading .py subroutines====###'
-import clusterbuster.ObjectClasses as CBclass
-import clusterbuster.NPimageutil   as pyNPi
+import pyutil_my.ClusterBuster_pythonClass as CBclass
+import pyutil_my.NPimageutil as pyNPi
 
 def RelicExtraction(image, sradio, z, contourMask = [], Imcenter=False, GCl=False, dinfo=False, rinfo= False, faintexcl=False, subtracted=False, term=False, eff=1, cnt_minlength=5, HistoH=0):
   

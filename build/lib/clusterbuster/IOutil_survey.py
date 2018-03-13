@@ -20,9 +20,9 @@ import matplotlib.pyplot                   as plt
 import matplotlib.colors                   as colors
 from   matplotlib      import cm
 from matplotlib.ticker import NullFormatter
-import clusterbuster.Custom_DatabaseClasses    as cdb 
-import clusterbuster.ObjectClasses             as CBclass
-import clusterbuster.IOutil                    as iout
+import pyutil_my.Custom_DatabaseClasses    as cdb 
+import pyutil_my.ClusterBuster_pythonClass as CBclass
+import pyutil_my.IOutil                    as iout
 import math  as math
 import warnings
 
@@ -445,7 +445,7 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, reliccnts=False, 
                 f.add_label(P1[0],P1[1],  'ratio= %.1e' % (GCl.ratio_relics()), size='x-large', **ciargs)
         
         # Workaround ... in future it would be better to take the image information from the image and read the contours directly
-        import clusterbuster.FITSutil                  as FITSut
+        import pyutil_my.FITSutil                  as FITSut
         
         try:
             _, center, spixel = FITSut.FITS2numpy( GCl.mapdic['Raw'] )
@@ -611,7 +611,7 @@ def PlotDistribution_FluxRatioLAS(location, ClList, RList):
 
     spixel   = 7.5
     size     = np.linspace((60+350)/spixel, (1400++350)/spixel, 30, endpoint=True)   # size array in arcsec FWHM
-    H        = np.loadtxt('../clusterbuster/AdvancedImaging/ImageInnerPos-exp.out') 
+    H        = np.loadtxt('../pyutil_my/AdvancedImaging/ImageInnerPos-exp.out') 
     
   
     powers   = [3,30,300]  #[10**a for a in [0.5,1.0,1.5,2.0] ]

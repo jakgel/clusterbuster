@@ -3,10 +3,10 @@
 A python 2.7 environment to jointly analyse the data products from cosmological simulations and radio sky surveys. It provides the functionalities to
 go from data-cubes (simulations) or .fits maps (surveys) to object catalogues.
 
-This python implementation provides a joint analysis framwork for radio relic surveys and simulations. You have to supply the map files our simulations cubes by yourself.
-Because of the widely varying output of different simulations you also have write your own wrapper to parse simulaion output into this tool. Once you have done this you get an survey catalogue (.pickle)
-that you can use for further analysis. Approximate Bayesian computation for your own specified model is implemented in an submodel.
-``astroABC`` requires ``NumPy``, and ``astropy``. ``astroABC``,``abcpmc``, and ``multiprocessing`` are optional.
+This python implementation provides a joint analysis framwork for radio relic surveys and simulations. You have to supply the map files or simulations cubes by yourself.
+Because of the widely varying output of different simulations you also have write your own wrapper to parse simulaion output into this tool. ClusterBuster provides some functionalities for this purpose.
+Once you have done this you are able to create a survey catalogue (.pickle) that you can use for further analysis. Approximate Bayesian computation for your own specified model is implemented in an submodel.
+``astroABC`` requires ``NumPy``, and ``astropy``. ``astroABC``,``abcpmc``, and ``multiprocessing`` are optional and usefull if you want to analyse simulations.
 
 In the subdirectories several functionalities are added.
 
@@ -41,25 +41,25 @@ fully supported openly accesible software. This means, that the software publish
 
 
 ## Installation
-*The easy way* install via pip:
+Install via pip:
 
     pip install clusterbuster
 
-Alternatively clone/fork this directory from  github, (alternatively also provide setup.sh?)
-## Dependencies
+Alternatively clone/fork this directory from  github, 
+Alternatively also provide setup.sh?
 
--NumPy >=1.8,
--scipy >=0.16,
--aplpy >=1.1,
--NFW   >=0.2,
+## Dependencies
+-NumPy >=1.8
+-scipy >=0.16
+-aplpy >=1.1
+-NFW   >=0.2
 -astropy >=1.3
 
-*Additional?*
+*Additional packaes needed?*
 Install addition packages via
 conda install ephem
 conda install -c astropy pyregion=1.2 
 cosmocalc? --> change to astropy cosmology!
-
 
 
 

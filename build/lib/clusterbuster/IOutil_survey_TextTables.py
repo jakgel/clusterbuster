@@ -14,8 +14,10 @@ from __future__ import division,print_function
 
 import csv
 import numpy as np
-import clusterbuster.ObjectClasses as CBclass
-import clusterbuster.IOutil        as IOutil
+#import warnings
+import matplotlib.pyplot as plt
+import pyutil_my.ClusterBuster_pythonClass as CBclass
+import pyutil_my.IOutil                    as IOutil
 import os
 
 

@@ -13,3 +13,4 @@
 *clusterbuster.egg*
 *.gitignore.kate*
 *__init__.py*
+*dist

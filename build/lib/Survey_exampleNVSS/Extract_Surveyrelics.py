@@ -25,7 +25,7 @@ import os
     
 print( '###==== Step 0a: Executing self written .py subroutines ====###' )
 import clusterbuster.RelicExtraction           as relex
-import clusterbuster.ObjectClasses             as CBclass
+import clusterbuster.ObjectClass               as CBclass
 import clusterbuster.Custom_DatabaseClasses    as cdb 
 import clusterbuster.IOutil                    as iout
 import clusterbuster.IOutil_survey             as ioclass

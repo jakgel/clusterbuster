@@ -1,7 +1,7 @@
-import numpy                  as np
-import scipy.interpolate      as interpolate
-import matplotlib.pyplot      as plt
-import clusterbuster.MATHutil as math
+import numpy                as np
+import scipy.interpolate    as interpolate
+import matplotlib.pyplot    as plt
+import pyutil_my.MATHutil   as math
 '''
     Start with e.g. InterpolateRadio2D(psiFile = '../Analysis_MUSIC2/Hoeft_radio/mach_psi_tablefine(10,3).txt',  inter=(10,6)) 
 '''
