@@ -1,5 +1,6 @@
 *.pyc
 *~
+*Analysis_CW*
 *MultiUtil*
 *Analysis_CW*
 *Analysis_MUSIC2*
@@ -9,3 +10,6 @@
 *.ipynb*
 *spyderworkspace
 *clusterbuster_outsourced
+*clusterbuster.egg*
+*.gitignore.kate*
+*__init__.py*
