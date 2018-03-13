@@ -1,0 +1,11 @@
+*.pyc
+*~
+*MultiUtil*
+*Analysis_CW*
+*Analysis_MUSIC2*
+*Relics_Surveys
+*PostProcessing*
+*install.sh*
+*.ipynb*
+*spyderworkspace
+*clusterbuster_outsourced

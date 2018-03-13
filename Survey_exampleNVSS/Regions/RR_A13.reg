@@ -1,0 +1,6 @@
+# Region file format: DS9 version 4.1
+global color=green dashlist=8 3 width=1 font="helvetica 10 normal roman" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1
+fk5
+circle(0:15:09.420,-19:52:55.10,25")
+# text(0:15:09.456,-19:56:40.10) font="times 10 bold" text={NVSS}
+polygon(0:13:22.656,-19:28:30.54,0:13:21.776,-19:29:33.49,0:13:23.120,-19:30:48.13,0:13:24.785,-19:31:39.04,0:13:26.985,-19:31:44.71,0:13:33.452,-19:31:35.29,0:13:36.854,-19:31:12.25,0:13:40.918,-19:31:28.70,0:13:46.116,-19:31:05.13,0:13:45.984,-19:30:55.71,0:13:35.585,-19:29:25.24) # text={, 0, alpha -2.3}

@@ -1,0 +1,4 @@
+    s            dir               |   f flux   | s fluxunit  |  s   freq   |  s  shape    |  f  majoraxis  | f minoraxis  |  s axisunit  | f theta  |   s comment
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+   J2000 11h23m24.8s +43d10m09.0s  |   1.02     |      mJy    |    1400MHz  |   Point      |      0.9       |      0.9     |    arccmin   |          |   GMRT image 610 MHz (Redu_20140529, Image 15) with alpha -0.65 assumed
+   J2000 11h23m33.8s +43d10m34.9s  |   0.76     |      mJy    |    1400MHz  |   Point      |      0.9       |      0.9     |    arccmin   |          |   GMRT image 610 MHz (Redu_20140529, Image 15) with alpha -0.65 assumed

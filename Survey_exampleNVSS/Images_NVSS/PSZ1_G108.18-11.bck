@@ -1,0 +1,319 @@
+global ds9
+set vv 7.3.2
+# this is a check for to ensure a match between the
+# current ds9 version matches the prefs version
+switch -- [string compare $vv [lindex $ds9(version) 0]] {
+  -1 {
+    if {[tk_messageBox -type yesno -icon question -message [msgcat::mc {DS9 has detected an older backup file, do you wish to continue?}]] == {no}} {
+      return
+    }
+  }
+  0 {}
+  1 {
+    tk_messageBox -type ok -icon warning -message [msgcat::mc {DS9 has detected a newer version of a backup file and therefore will not process this file.}]
+    return
+  }
+}
+proc BackupFindFile {varname} {
+  upvar $varname var
+
+  set id [string first "\[" $var(file,name)]
+  if {$id > 0} {
+    set fn [string range $var(file,name) 0 [expr $id-1]]
+    set ext [string range $var(file,name) $id end]
+  } else {
+    set fn $var(file,name)
+    set ext {}
+  }
+
+  if {![file exists $fn]} {
+    Error "[msgcat::mc {Unable to load}] $fn"
+    global fitsfbox
+    set fn [OpenFileDialog fitsfbox]
+    if {$fn == {}} {
+      Error [msgcat::mc {An error has occurred during restore}]
+      return 0
+    }
+    if {![file exists $fn]} {
+      Error [msgcat::mc {An error has occurred during restore}]
+      return 0
+    }
+    set var(file,name) "$fn$ext"
+  }
+
+  return 1
+}
+panner compass 1
+colorbar configure -size 20
+colorbar configure -ticks 11
+colorbar configure -numerics 1
+colorbar configure -space 0
+colorbar configure -orientation 0
+colorbar configure -font helvetica
+colorbar configure -fontsize 9
+colorbar configure -fontweight normal
+colorbar configure -fontslant roman
+colorbar colorbar 13 0.5 1 0
+colorbar tag "{}"
+colorbarrgb configure -size 20
+colorbarrgb configure -ticks 11
+colorbarrgb configure -numerics 1
+colorbarrgb configure -space 0
+colorbarrgb configure -orientation 0
+colorbarrgb configure -font helvetica
+colorbarrgb configure -fontsize 9
+colorbarrgb configure -fontweight normal
+colorbarrgb configure -fontslant roman
+colorbarrgb colorbar rgb 0.5 0.5 0.5 1 1 1 0
+colorbarrgb tag "{}"
+CreateNameNumberFrame Frame1 base
+global loadParam
+array set loadParam [list load,layer {} file,name ./PSZ1_G108.18-11.bck.dir/Frame1/NVSS-PSZ1_G108.18-11.53.fits file,mode {} load,type mmapincr file,type fits]
+if [BackupFindFile loadParam] {
+  ProcessLoad
+}
+Frame1 magnifier graphics 1
+Frame1 magnifier cursor 1
+Frame1 magnifier zoom 4
+Frame1 magnifier color white
+Frame1 colorbar tag "{}"
+colorbar tag "{}"
+set sav [colorbar get colorbar]
+colorbar colorbar 13 0.5 1 0
+Frame1 colormap [colorbar get colormap]
+colorbar colorbar $sav
+Frame1 bg color white
+Frame1 nan color white
+Frame1 rgb channel red
+Frame1 rgb view 1 1 1
+Frame1 rgb system image
+Frame1 3d view 0 0
+Frame1 3d scale 1
+Frame1 3d method mip
+Frame1 3d highlite 1
+Frame1 3d border 1
+Frame1 3d background none
+Frame1 bin factor to  1 1 
+Frame1 bin depth 1
+Frame1 bin filter {""}
+Frame1 bin buffer size 1024
+Frame1 bin about  0 0 
+Frame1 bin function sum
+Frame1 colorscale linear
+Frame1 colorscale log 1000
+Frame1 datasec 1
+Frame1 clip user  -0.001 0.05 
+Frame1 clip mode user
+Frame1 clip scope local
+Frame1 clip minmax mode auto
+Frame1 clip minmax sample 25
+Frame1 clip zscale contrast 0.25
+Frame1 clip zscale sample 600
+Frame1 clip zscale line 120
+Frame1 pan preserve 0
+Frame1 pan to physical  252.31572 230.77267 
+Frame1 3d view point 0 0 0 0 0
+Frame1 zoom to  7.4300838 7.4300838 
+Frame1 rotate to 0
+Frame1 orient none
+Frame1 wcs align 0
+Frame1 crop  143.5 165.5  348.5 295.5  physical fk5
+Frame1 marker load ds9 {"./PSZ1_G108.18-11.bck.dir/Frame1/ds9.reg"}
+Frame1 marker centroid radius 10
+Frame1 marker centroid iteration 30
+Frame1 wcs wcs fk5 sexagesimal
+Frame1 mask color red
+Frame1 mask mark 1
+Frame1 mask transparency 0
+Frame1 contour create green 1 0 block 5 1 linear 1000 user  -0.001 0.05  {"0.0009 0.0018 0.0036 0.0072"}
+Frame1 grid create wcs fk5 sexagesimal publication {" Grid=0, Colour(grid)=0, Width(grid)=1, Style(grid)=0, DrawAxes=1, Colour(axes)=0, Width(axes)=1, Style(axes)=0, Format(1)=hms.1, Format(2)=dms.0, Colour(ticks)=16777215, Width(ticks)=1, Style(ticks)=0, Border=1, Colour(border)=255, Width(border)=1, Style(border)=0, Labelling=exterior, LabelUp=1, NumLab=1, Font(numlab)=2, Size(numlab)=20, Colour(numlab)=16777215, TextLab=1, Font(textlab)=2, Size(textlab)=27, Colour(textlab)=0, DrawTitle=1, Font(title)=2, Size(title)=12, Colour(title)=0, Gap(1)=0.0017453277777777776, Gap(2)=0.0008726638888888888, NumLabGap(1)=-.02, NumLabGap(2)=-.01, TextLabGap(1)=0, TextLabGap(2)=.1, TitleGap=-1.3, Edge(1)=top, Edge(2)=left, "} {"grid,color black grid,style 0 view 1 axes,origin lll numlab,type interior border 1 tick,width 1 numlab,color white numlab,weight normal title,text {} axes,color black numlab,slant roman axes,style 0 textlab,color black numlab 1 skyformat sexagesimal textlab,gap1 {} border,color blue textlab,slant roman textlab,gap2 {} textlab,size 27 grid,gapunit1 degrees border,style 0 grid,gapunit2 degrees grid,gapunit3 STOKES title,gap {} textlab,font helvetica grid,width 1 format1 {} title 1 format2 dms.0 sky fk5 textlab 1 title,color black axes,width 1 title,slant roman border,width 1 system wcs numlab,vertical 1 tick,color white textlab,def1 1 tick,style 0 textlab,def2 1 axes 1 type publication frame Frame1 grid,gap1 0.1 tick 1 grid,gap2 0.05 numlab,gap1 {} grid,gap3 {} numlab,gap2 {} grid 0 numlab,size 20 numlab,gap3 {} axes,type exterior textlab,weight normal title,size 12 numlab,font helvetica title,def 0 title,font helvetica textlab,text1 {} title,weight normal textlab,text2 {}"}
+CreateNameNumberFrame Frame2 base
+global loadParam
+array set loadParam [list load,layer {} file,name ./PSZ1_G108.18-11.bck.dir/Frame2/NVSS-PSZ1_G108.18-11.53.fits file,mode {} load,type mmapincr file,type fits]
+if [BackupFindFile loadParam] {
+  ProcessLoad
+}
+Frame2 magnifier graphics 1
+Frame2 magnifier cursor 1
+Frame2 magnifier zoom 4
+Frame2 magnifier color white
+Frame2 colorbar tag "{}"
+colorbar tag "{}"
+set sav [colorbar get colorbar]
+colorbar colorbar 13 0.5 1 0
+Frame2 colormap [colorbar get colormap]
+colorbar colorbar $sav
+Frame2 bg color white
+Frame2 nan color white
+Frame2 rgb channel red
+Frame2 rgb view 1 1 1
+Frame2 rgb system image
+Frame2 3d view 0 0
+Frame2 3d scale 1
+Frame2 3d method mip
+Frame2 3d highlite 1
+Frame2 3d border 1
+Frame2 3d background none
+Frame2 bin factor to  1 1 
+Frame2 bin depth 1
+Frame2 bin filter {""}
+Frame2 bin buffer size 1024
+Frame2 bin about  0 0 
+Frame2 bin function sum
+Frame2 colorscale linear
+Frame2 colorscale log 1000
+Frame2 datasec 1
+Frame2 clip user  -0.001 0.05 
+Frame2 clip mode user
+Frame2 clip scope local
+Frame2 clip minmax mode auto
+Frame2 clip minmax sample 25
+Frame2 clip zscale contrast 0.25
+Frame2 clip zscale sample 600
+Frame2 clip zscale line 120
+Frame2 pan preserve 0
+Frame2 pan to physical  242 242 
+Frame2 3d view point 0 0 0 0 0
+Frame2 zoom to  5.1597804 5.1597804 
+Frame2 rotate to 0
+Frame2 orient none
+Frame2 wcs align 0
+Frame2 marker load ds9 {"./PSZ1_G108.18-11.bck.dir/Frame2/ds9.reg"}
+Frame2 marker centroid radius 10
+Frame2 marker centroid iteration 30
+Frame2 wcs wcs fk5 sexagesimal
+Frame2 mask color red
+Frame2 mask mark 1
+Frame2 mask transparency 0
+Frame2 contour create green 1 0 block 5 1 linear 1000 user  -0.001 0.05  {""}
+Frame2 grid create wcs fk5 sexagesimal publication {" Grid=0, Colour(grid)=16777215, Width(grid)=1, Style(grid)=0, DrawAxes=1, Colour(axes)=0, Width(axes)=1, Style(axes)=0, Format(1)=hms.1, Format(2)=dms.1, Colour(ticks)=16777215, Width(ticks)=1, Style(ticks)=0, Border=1, Colour(border)=255, Width(border)=1, Style(border)=0, Labelling=exterior, LabelUp=0, NumLab=1, Font(numlab)=2, Size(numlab)=10, Colour(numlab)=16777215, TextLab=1, Font(textlab)=2, Size(textlab)=14, Colour(textlab)=0, DrawTitle=1, Title=NVSS-TYC3644-1850-1 , Font(title)=2, Size(title)=12, Colour(title)=0, Gap(1)=0.0017453277777777776, Gap(2)=0.0017453277777777776, NumLabGap(1)=-.02, NumLabGap(2)=-.01, TextLabGap(1)=0, TextLabGap(2)=.1, TitleGap=-1.3, Edge(1)=top, Edge(2)=left, "} {"grid,color black grid,style 0 view 1 axes,origin lll numlab,type interior border 1 tick,width 1 numlab,color white numlab,weight normal title,text {} axes,color black numlab,slant roman axes,style 0 textlab,color black numlab 1 skyformat sexagesimal textlab,gap1 {} border,color blue textlab,slant roman textlab,gap2 {} textlab,size 27 grid,gapunit1 degrees border,style 0 grid,gapunit2 degrees grid,gapunit3 STOKES title,gap {} textlab,font helvetica grid,width 1 format1 {} title 1 format2 dms.0 sky fk5 textlab 1 title,color black axes,width 1 title,slant roman border,width 1 system wcs numlab,vertical 1 tick,color white textlab,def1 1 tick,style 0 textlab,def2 1 axes 1 type publication frame Frame1 grid,gap1 0.1 tick 1 grid,gap2 0.05 numlab,gap1 {} grid,gap3 {} numlab,gap2 {} grid 0 numlab,size 20 numlab,gap3 {} axes,type exterior textlab,weight normal title,size 12 numlab,font helvetica title,def 0 title,font helvetica textlab,text1 {} title,weight normal textlab,text2 {}"}
+global pds9
+array set pds9 { nan,msg Weiß dialog motif text,font courier samp 1 font,msg Helvetica threads 8 font,weight normal automarker 1 bg,msg Weiß language locale text,font,weight normal dialog,all 0 nan white font,slant roman confirm 1 backup 1 language,dir {} font helvetica language,name Deutsch bg white xpa 1 text,font,msg Courier tcl 0 dialog,center 0 font,size 9 text,font,slant roman text,font,size 9 }
+global current
+array set current { colorbar colorbar orient none zoom { 7.4300838 7.4300838 } mode region ext {} display single cursor {} align 0 rotate 0 rgb red frame Frame1 }
+global pcurrent
+array set pcurrent { orient none zoom { 1 1 } mode none display single align 0 rotate 0 }
+global view
+array set view { info,wcss 0 info,wcsc 0 info,wcst 0 info,wcsd 0 graph,horz 0 info,wcsu 0 info,wcse 0 magnifier 1 info,lowhigh 0 info,frame 1 info,image 1 info,wcsv 0 info,wcsf 0 info,wcsw 0 info,wcsg 0 info 1 colorbar 1 info,physical 1 info,wcsx 0 info,wcsh 0 info,wcs 1 info,wcsy 0 info,wcsi 0 info,wcsz 0 info,wcsj 0 buttons 1 info,object 1 info,wcsk 0 info,amplifier 0 info,wcsl 0 info,filename 1 info,detector 0 info,wcsm 0 info,minmax 0 info,wcsn 0 info,wcso 0 panner 1 info,wcsp 0 info,wcsq 0 info,wcsa 0 layout horizontal info,wcsr 0 info,wcsb 0 graph,vert 0 }
+global pview
+array set pview { info,wcss 0 info,wcsc 0 info,wcst 0 info,wcsd 0 graph,horz 0 info,wcsu 0 info,wcse 0 magnifier 1 info,lowhigh 0 info,wcsf 0 info,frame 1 info,image 1 info,wcsv 0 colorbar 1 info 1 info,wcsg 0 info,wcsw 0 info,wcs 1 info,wcsh 0 info,wcsx 0 info,physical 1 info,wcsi 0 info,wcsy 0 info,object 1 buttons 1 info,wcsj 0 info,wcsz 0 info,wcsk 0 info,filename 1 info,wcsl 0 info,amplifier 0 info,minmax 0 info,wcsm 0 info,detector 0 info,wcsn 0 panner 1 info,wcso 0 info,wcsp 0 layout horizontal info,wcsa 0 info,wcsq 0 graph,vert 0 info,wcsb 0 info,wcsr 0 }
+global canvas
+array set canvas { gap 4 width 2495 gap,bottom 0 height 1129 }
+global phttp
+array set phttp { auth,passwd {} proxy,host {} auth,user {} auth 0 proxy 0 proxy,port {} }
+global pbuttons
+array set pbuttons { color,he 1 frame,lock,frame,physical 0 view,lowhigh 0 frame,single 1 major,color 1 view,wcs 0 bin,in 1 view,buttons 1 help,release 1 file,open 1 edit,crosshair 1 view,panner 1 frame,lock,scale 0 help,story 0 help,new 0 frame,match,color 0 view,amplifier 0 scale,params 0 region,dissolve 0 major,zoom 1 frame,newrgb 1 major,file 1 bin,512x 0 file,console 0 frame,lock,cube,none 0 bin,8192x 0 edit,prefs 0 frame,match,smooth 0 bin,2048x 0 zoom,i2 1 edit,colorbar 1 zoom,i4 1 scale,minmax 1 scale,asinh 1 color,numerics 0 view,horizontal 0 major,wcs 1 zoom,i8 1 view,colorbar 1 color,sls 0 frame,match,crop,wcs 0 frame,clear 1 bin,1 1 bin,2 1 frame,new3d 1 zoom,16 0 edit,rotate 1 file,page 1 bin,4 1 zoom,none 0 region,list 1 file,pspage 0 frame,lock,crop,none 0 frame,lock,frame,detector 0 bin,8 1 scale,zscale 1 region,centroid 0 region,autocentroid 0 frame,size 0 zoom,270 0 scale,pow 1 frame,match,crop,image 0 scale,90 0 wcs,fk4 1 zoom,32 0 wcs,fk5 1 frame,blink 1 color,cool 1 frame,match,frame,amplifier 0 bin,average 0 bin,128x 0 frame,lock,crosshair,image 0 color,staircase 0 view,image 0 frame,reset 0 scale,95 0 file,save 1 scale,96 0 scale,97 0 major,scale 1 scale,98 0 region,showtext 0 edit,region 1 file,exit 1 scale,99 0 frame,first 1 frame,lock,crop,physical 0 help,ref 1 color,grey 1 frame,lock,crop,amplifier 0 frame,lock,crosshair,none 0 view,filename 0 view,magnifier 1 file,backup 0 region,vector 0 frame,lock,crosshair,wcs 0 color,vert 0 color,green 0 file,header 1 edit,crop 1 edit,cut 0 frame,lock,crop,image 0 frame,match,scale 0 region,all 1 scale,user 0 file,samp,image 0 color,params 0 zoom,in 1 frame,movelast 0 region,deleteall 0 color,standard 0 frame,match,frame,physical 0 help,faq 0 frame,lock,frame,image 0 region,load 1 frame,match,frame,image 0 region,savetemplate 0 region,loadtemplate 0 scale,925 0 color,rainbow 1 zoom,params 0 frame,refresh 0 zoom,i16 0 zoom,90 0 region,delete 1 edit,copy 0 region,annulus 0 frame,lock,crosshair,amplifier 0 bin,fit 1 region,ruler 0 region,circle 0 frame,match,crosshair,amplifier 0 color,a 1 view,physical 0 color,b 1 frame,match,cube,image 0 frame,lock,crop,detector 0 scale,sqrt 1 zoom,i32 0 major,view 1 frame,match,cube,wcs 0 view,vertical 0 region,point 0 region,group 0 frame,movenext 0 frame,match,crosshair,physical 0 bin,128 0 file,print 1 frame,lock,crop,wcs 0 frame,delete 1 frame,lock,frame,none 0 frame,match,crop,physical 0 frame,movefirst 0 color,red 0 region,none 1 region,polygon 0 bin,params 0 frame,last 1 scale,zmax 0 edit,catalog 1 frame,tile 1 major,help 1 region,compass 0 edit,paste 0 frame,match,crosshair,wcs 0 help,about 1 region,back 1 file,samp,table 0 frame,match,frame,detector 0 scale,squared 1 scale,datasec 0 frame,lock,cube,image 0 help,desk 1 region,ellipse 0 frame,cube 0 view,graphvert 1 edit,none 1 major,edit 1 color,blue 0 frame,lock,crosshair,physical 0 file,psprint 0 wcs,ecliptic 1 color,horz 0 region,save 1 region,newgroup 0 color,aips0 1 wcs,galactic 1 region,front 1 zoom,0 0 zoom,1 1 frame,moveprev 0 zoom,2 1 scale,995 0 frame,match,frame,wcs 0 scale,hist 1 zoom,4 1 color,reset 0 color,numspace 0 region,show 0 view,minmax 0 view,detector 0 frame,new 1 frame,match,crop,amplifier 0 zoom,8 1 zoom,center 0 region,ellipseannulus 0 zoom,fit 1 major,bin 1 frame,next 1 edit,pan 1 view,info 1 frame,match,crosshair,detector 0 frame,lock,frame,amplifier 0 bin,1024x 0 file,xpa,info 0 bin,out 1 view,object 0 frame,lock,smooth 0 frame,match,crop,detector 0 color,invert 0 region,create 0 region,info 1 frame,match,crosshair,image 0 scale,sinh 1 color,bb 1 file,tcl 0 wcs,sexagesimal 1 region,panda 0 region,boxannulus 0 wcs,degrees 1 region,box 0 wcs,icrs 1 view,frame 0 region,segment 0 frame,lock,color 0 bin,16 1 frame,lock,bin 0 frame,3d 0 major,frame 1 file,restore 0 frame,lock,crosshair,detector 0 frame,match,bin 0 color,color 0 help,ack 1 color,i8 1 frame,lock,cube,wcs 0 frame,prev 1 color,heat 1 edit,zoom 1 region,invert 0 edit,examine 1 bin,32 1 frame,deleteall 0 region,text 0 region,projection 0 zoom,crop 0 help,keyboard 1 scale,log 1 frame,lock,frame,wcs 0 bin,4096x 0 zoom,align 0 scale,linear 1 edit,undo 0 major,region 1 zoom,x 0 frame,rgb 0 bin,256 0 zoom,y 0 zoom,xy 0 zoom,180 0 color,hsv 0 view,graphhorz 1 region,line 0 color,numvalue 0 region,epanda 0 zoom,out 1 bin,sum 0 bin,256x 0 help,user 1 file,movie 0 region,bpanda 0 bin,64 1 }
+global ppanner
+array set ppanner { compass 1 }
+global pmagnifier
+array set pmagnifier { region 1 zoom 4 color,msg Weiß cursor 1 color white }
+global colorbar
+array set colorbar { invert 0 lock 0 size 20 font,weight normal space 0 tag red font,slant roman map heat numerics 1 font helvetica orientation horizontal ticks 11 font,size 9 tag,msg Rot }
+global saveimage
+array set saveimage { tiff,compress none error {An error has occurred while creating the image. Please be sure that the entire image window is visible on the screen.} jpeg,quality 75 }
+global debug
+array set debug { tcl,xpa 0 tcl,samp 0 tcl,ftp 0 tcl,marker 0 saotk,perf 0 tcl,idletasks 0 tcl,info 0 tcl,restore 0 tcl,events 0 tcl,grid 0 saotk,ast 0 saotk,bin 0 tcl,cat 0 saotk,rgb 0 saotk,crop 0 saotk,compress 0 saotk,mosaic 0 tcl,image 0 tcl,update 0 saotk,wcs 0 saotk,parser 0 iis 0 tcl,layout 0 tcl,hv 0 tcl,watch 0 saotk,gz 0 tcl,http 0 }
+global ps
+array set ps { scale 100 orient portrait height 11 size letter resolution 150 filename,txt ds9.txt dest printer level 2 width 8.5 filename ds9.ps cmd lp color rgb }
+global pps
+array set pps { scale 100 orient portrait height 11 size letter resolution 150 filename,txt ds9.txt dest printer level 2 width 8.5 filename ds9.ps cmd lp color rgb }
+global rgb
+array set rgb { blue 1 lock,colorbar 0 lock,scale 0 lock,slice 0 lock,crop 0 system wcs green 1 lock,bin 0 lock,wcs 0 lock,smooth 0 red 1 }
+global threed
+array set threed { scale 1 method mip highlite,color cyan border,color blue compass,color green az 0 highlite 1 border 1 compass 0 background none el 0 border,color,msg Blau highlite,color,msg Zyan }
+global blink
+array set blink { interval 500 }
+global pblink
+array set pblink { interval 500 }
+global tile
+array set tile { grid,col 10 mode grid grid,gap 4 grid,row 10 grid,mode automatic }
+global ptile
+array set ptile { grid,col 10 mode grid grid,row 10 grid,gap 4 grid,mode automatic }
+global crosshair
+array set crosshair { lock none }
+global cube
+array set cube { system wcs axis 2 lock none }
+global bin
+array set bin { wheel,factor 1.2 wheel 0 buffersize 1024 depth 1 lock 0 function sum factor { 1 1 } }
+global pbin
+array set pbin { wheel,factor 1.2 wheel 0 lock 0 depth 1 buffersize 1024 function sum factor { 1 1 } }
+global panzoom
+array set panzoom { wheel,factor 1.2 skyformat sexagesimal preserve 0 mode click wheel 1 system wcs lock none sky fk5 }
+global ppanzoom
+array set ppanzoom { wheel,factor 1.2 preserve 0 wheel 1 mode click }
+global crop
+array set crop { skyformat degrees rcoord wcs dformat degrees system wcs lock none dcoord wcs sky fk5 }
+global scale
+array set scale { min -0.001 datasec 1 mode user lock 0 xaxis full scope local log 1000 type linear yaxis log max 0.05 }
+global pscale
+array set pscale { datasec 1 mode minmax scope local log 1000 type linear }
+global minmax
+array set minmax { mode auto sample 25 }
+global pminmax
+array set pminmax { mode auto sample 25 }
+global zscale
+array set zscale { line 120 sample 600 contrast .25 }
+global pzscale
+array set pzscale { line 120 contrast .25 sample 600 }
+global marker
+array set marker { panda,ang2 360 shape line show 1 bpanda,ang1 0 bpanda,ang2 360 boxannulus,annuli 1 delete 1 centroid,radius 10 dformat degrees annulus,inner 15 panda,angnum 4 show,text 1 centroid,iteration 30 epanda,angnum 4 plot2d 0 font,size 10 move 1 rotate 1 fixed 0 skyformat sexagesimal ellipseannulus,radius1 40 ellipseannulus,radius2 20 ellipseannulus,radius3 60 plot3d 1 epanda,radius1 40 panda,annuli 1 epanda,radius2 20 panda,outer 30 epanda,radius3 60 segment,length 20 source 1 epsilon 3 strip 0 bpanda,radius1 80 epanda,annuli 1 bpanda,radius2 40 bpanda,radius3 120 color green stats 0 sky fk5 annulus,outer 30 format ds9 font,weight normal polygon,width 20 font,slant roman edit 1 font helvetica bpanda,angnum 4 dash 0 boxannulus,radius1 80 projection,thick 0 dashlist {8 3} boxannulus,radius2 40 polygon,height 20 system wcs box,radius1 80 boxannulus,radius3 120 box,radius2 40 annulus,annuli 1 point,size 11 compass,radius 40 copy Frame1 epanda,ang1 0 include 1 copy,system wcs epanda,ang2 360 centroid,auto 0 circle,radius 20 width 1 load current bpanda,annuli 1 ellipse,radius1 40 ellipse,radius2 20 panda,inner 15 preserve 0 maxdialog 48 panda,ang1 0 ellipseannulus,annuli 1 }
+global pmarker
+array set pmarker { panda,ang2 360 bpanda,ang1 0 shape circle show 1 bpanda,ang2 360 boxannulus,annuli 1 delete 1 centroid,radius 10 dformat degrees annulus,inner 15 panda,angnum 4 show,text 1 epanda,angnum 4 centroid,iteration 30 plot2d 0 font,size 10 rotate 1 move 1 fixed 0 ellipseannulus,radius1 40 ellipseannulus,radius2 20 ellipseannulus,radius3 60 epanda,radius1 40 plot3d 1 epanda,radius2 20 panda,outer 30 panda,annuli 1 epanda,radius3 60 segment,length 20 source 1 epsilon 3 bpanda,radius1 80 bpanda,radius2 40 epanda,annuli 1 bpanda,radius3 120 stats 0 color green format ds9 annulus,outer 30 font,weight normal polygon,width 20 font,slant roman edit 1 font helvetica bpanda,angnum 4 dash 0 projection,thick 0 boxannulus,radius1 80 dashlist {8 3} polygon,height 20 boxannulus,radius2 40 boxannulus,radius3 120 box,radius1 80 box,radius2 40 point,size 11 annulus,annuli 1 compass,radius 40 epanda,ang1 0 include 1 epanda,ang2 360 centroid,auto 0 circle,radius 20 width 1 bpanda,annuli 1 ellipse,radius1 40 preserve 0 panda,inner 15 ellipse,radius2 20 ellipseannulus,annuli 1 panda,ang1 0 }
+global centroid
+array set centroid {  }
+global wcs
+array set wcs { skyformat sexagesimal system wcs frame Frame1 sky fk5 }
+global pwcs
+array set pwcs { skyformat sexagesimal system wcs sky fk5 }
+global pgraph
+array set pgraph { horz,log false horz,grid 1 vert,log false vert,grid 1 }
+global pcoord
+array set pcoord { wcss 0 wcsc 0 wcst 0 wcsd 0 wcsu 0 wcse 0 wcsv 0 wcsf 0 image 1 wcsw 0 wcsg 0 wcsx 0 wcsh 0 physical 0 wcs 1 wcsy 0 wcsi 0 wcsz 0 wcsj 0 wcsk 0 wcsl 0 filename 0 amplifier 0 wcsm 0 detector 0 wcsn 0 wcso 0 wcsp 0 value 1 wcsq 0 wcsa 0 wcsr 0 wcsb 0 }
+global pexamine
+array set pexamine { zoom 4 mode new }
+global pixel
+array set pixel { size 5 }
+global mask
+array set mask { transparency 0 mark 1 color red }
+global pmask
+array set pmask { transparency 0 color red mark 1 }
+global contour
+array set contour { numlevel 5 scale linear init,scale 0 method block view 1 copy {} dash 0 width 1 color,msg Grün smooth 1 log 1000 init,limits 0 min -0.001 mode user init,mode 0 max 0.05 color green }
+global pcontour
+array set pcontour { numlevel 5 dash 0 width 1 method block color,msg Grün smooth 4 color green }
+global grid
+array set grid { grid,color black grid,style 0 view 1 axes,origin lll numlab,type interior border 1 tick,width 1 numlab,color white numlab,weight normal title,text {} axes,color black numlab,slant roman axes,style 0 textlab,color black numlab 1 skyformat sexagesimal textlab,gap1 {} border,color blue textlab,slant roman textlab,gap2 {} textlab,size 27 grid,gapunit1 degrees border,style 0 grid,gapunit2 degrees grid,gapunit3 STOKES title,gap {} textlab,font helvetica grid,width 1 format1 {} title 1 format2 dms.0 sky fk5 textlab 1 title,color black axes,width 1 title,slant roman border,width 1 system wcs numlab,vertical 1 tick,color white textlab,def1 1 tick,style 0 textlab,def2 1 axes 1 type publication frame Frame1 grid,gap1 0.1 tick 1 grid,gap2 0.05 numlab,gap1 {} grid,gap3 {} numlab,gap2 {} grid 0 numlab,size 20 numlab,gap3 {} axes,type exterior textlab,weight normal title,size 12 numlab,font helvetica title,def 0 title,font helvetica textlab,text1 {} title,weight normal textlab,text2 {} }
+global smooth
+array set smooth { radius 3 lock 0 function gaussian view 0 }
+global psmooth
+array set psmooth { radius 3 lock 0 function gaussian view 0 }
+global nres
+array set nres { skyformat degrees system wcs server simbad-cds sky fk5 }
+global pnres
+array set pnres { server simbad-cds }
+global sao
+array set sao { valid 0 width 15 mode new height 15 survey dss save 0 rformat arcmin sky fk5 }
+global eso
+array set eso { valid 0 width 15 mode new height 15 survey DSS1 save 0 rformat arcmin sky fk5 }
+global stsci
+array set stsci { valid 0 width 15 mode new height 15 survey all save 0 rformat arcmin sky fk5 }
+global twomass
+array set twomass { valid 0 width 15 mode new height 15 survey j save 0 rformat arcmin sky fk5 }
+global nvss
+array set nvss { valid 1 width 15 mode new height 15 survey nvss save 0 rformat arcmin sky fk5 }
+global skyview
+array set skyview { valid 0 width 300 mode new height 300 survey sdssi save 0 rformat arcsec sky fk5 }
+global cat
+array set cat { id 0 sym,font,msg {} }
+global pcat
+array set pcat { sym,units physical sym,font,weight normal vot 1 loc 500 server cds sym,color,msg Grün sym,font,msg Helvetica sym,font,slant roman sym,font,size 10 sym,font,weight, {} sym,color green sym,font helvetica sym,shape {circle point} }
+global vla
+array set vla { valid 1 width 15 mode new height 15 survey first save 0 rformat arcmin sky fk5 }
+global pvo
+array set pvo { method mime hv 1 delay 15 server http://cxc.harvard.edu/chandraed/list.txt }
+global pap
+array set pap { legend,position right axis,x,flip 0 show 1 graph,title,size 12 axis,title,weight normal error,cap 0 legend,title,family helvetica legend,title Legend axis,x,log 0 legend,font,slant roman axis,font,family,msg Helvetica error 1 axis,y,min {} axis,title,family,msg Helvetica axis,y,max {} axis,font,family helvetica shape,color,msg Rot legend 0 legend,font,family helvetica graph,title,family,msg Helvetica legend,title,weight normal axis,y,grid 1 shape,color red error,color red graph,title,family helvetica axis,font,slant roman color black bar,relief raised legend,font,size 9 shape,symbol none legend,title,size 10 axis,font,weight normal graph,title,slant roman legend,font,weight normal axis,y,auto 1 axis,y,format {} dash 0 axis,y,flip 0 axis,title,slant roman smooth linear legend,title,slant roman graph,title,weight normal axis,x,format {} axis,y,title {} axis,y,log 0 axis,x,min {} axis,title,size 9 axis,x,grid 1 axis,x,max {} error,width 1 error,color,msg Rot graph,title {} width 1 axis,title,family helvetica color,msg Schwarz shape,fill 1 bar,mode normal axis,x,auto 1 axis,x,title {} axis,font,size 9 }
+global panalysis
+array set panalysis { user2 {} autoload 1 user3 {} log 0 user4 {} user {} }
+global active
+array set active { Frame1 1 Frame2 1 }

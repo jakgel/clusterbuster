@@ -1,0 +1,6 @@
+    s            dir               |   f flux   | s fluxunit  |  s   freq   |  s  shape    |  f  majoraxis  | f minoraxis  |  s axisunit  | f theta  |   s comment
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+   J2000 12h47m52.6s -02d49m52.4s  |    125.7   |      mJy    |    1400MHz  |   Gaussian   |      0.9       |      0.9     |    arccmin   |       |   NVSS source 124252-024952 is slightly resolved but with other flux instead of 155.7
+
+   
+   

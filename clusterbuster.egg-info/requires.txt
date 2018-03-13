@@ -1,0 +1,5 @@
+NumPy (>=1.8)
+scipy (>=0.16)
+aplpy (>=1.1)
+NFW   (>=0.2)
+astropy (>=1.3)
