@@ -16,14 +16,14 @@ In the subdirectories several functionalities are added.
 - Change files paths in some .py with personal name folders, make them more generall (example RelicSurveys/RelicExtraction.py)
 - Remove some DEBUGGING parts within the code
 - Add the cosmic web datacubes examples and documentation including a link to the download directory
-- Remove the NVSS images (currently 50MB) and add a hint where to find them
+- Remove the NVSS images (currently 50MB) and add a description where to find them
 
 Input for simulations:
 - Cosmic web (cite, also cite the data science centre because it has the radio emission)
-- MUSIC-2 300 massive cluster (needs processed shocks files which are not publicy available. Ask authors of [Nuza et al. 2017](http://adsabs.harvard.edu/abs/2017MNRAS.470..240N))
+- MUSIC-2: threehundred massive cluster (needs processed shocks files which are not publicy available. Ask authors of [Nuza et al. 2017](http://adsabs.harvard.edu/abs/2017MNRAS.470..240N))
 
 Radio Surveys:
-- NVSS (cite paper adsabs + add link to the personal catoluge of point sources+relic region+cluster information)
+- NVSS (cite paper adsabs + add link to the personal catalogue of point sources+relic region+cluster information)
 
 
 *To add:*

@@ -14,3 +14,4 @@
 *.gitignore.kate*
 *__init__.py*
 *dist
+*build/lib*
