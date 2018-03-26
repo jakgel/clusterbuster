@@ -268,7 +268,7 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
             
     return 0
         
-def plot_Clusters(survey, dynamicscale=False, subtracted=True, reliccnts=False, relicregions=False, DS9regions=False, diamF=2.6, colorbar=False, beam=True, shapes=True, recenter=True, infolabel = False, sectors=False, xray=False, highres=False, show_rot=False, vectors = False, label_sheme='balanced', maxdist=1700, filterargs = {'zborder':0, 'ztype':'>', 'minimumLAS':4, 'GClflux':20, 'index':None}):
+def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=False, DS9regions=False, diamF=2.6, colorbar=False, beam=True, shapes=True, recenter=True, infolabel = False, sectors=False, xray=False, highres=False, show_rot=False, vectors = False, label_sheme='balanced', maxdist=1700, filterargs = {'zborder':0, 'ztype':'>', 'minimumLAS':4, 'GClflux':20, 'index':None}):
     import aplpy # check https://aplpy.readthedocs.io/en/v0.9.9/_generated/aplpy.aplpy.FITSFigure.html  for comands
 #    import matplotlib.colors as MPLcolors  # for more information, delve into http://matplotlib.org/users/colormapnorms.html
     import Analysis_MUSIC2.CreateMockObsXray as Xray
@@ -293,7 +293,7 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, reliccnts=False, 
         baargs.update({'color':'w'})
 
 
-
+    filterargs = {}
     for GCl in survey.FilterCluster(**filterargs):
         GCl = copy.deepcopy(GCl) # Because else changes will influence all galaxy clusters, you knwo class referencing in python, i.e.
 #        print(GCl.filterRelics(eff))
@@ -311,6 +311,8 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, reliccnts=False, 
                 savefolder = survey.outfolder
                 Xray.Run_MockObs_XRay(GCl, savefolder, verbose=False)  
                 ''' Is the mapdic updated ? '''
+        else:
+            GCl.mapdic['Brems'] = GCl.mapdic['Diffuse']
         
         #=== Sets some plotting parameters
         kpc = GCl.cosmoPS*3600  # kiloparsec per degree
@@ -323,7 +325,7 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, reliccnts=False, 
         diam    = diamF*R200/kpc 
  
     
-        f = aplpy.FITSFigure(GCl.mapdic['Brems'])
+        f = aplpy.FITSFigure(GCl.mapdic['Brems']) #dimensions=[0, 1],, slices=[10, 10], , slices=[10, 10]
          
         if recenter:
             print('Recentering', GCl.name, GCl.RA(),GCl.Dec(),diam)
@@ -346,62 +348,64 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, reliccnts=False, 
         levels = [1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7]
         levels = [l-3.5 for l in levels]  
         
-        if 1==2: #MUSIC-2
-            vmin    = 2.5
-            vmax    = 9.7 #6.2
-            vmid    = -1.5
-        else:
-            vmin    = -2
-            vmax    =  5.
-            vmid    = -4.5
-        
-        
-        
-        exponent= np.log(vmax/vmin)
-        print(survey.cnt_levels, survey.emi_max)
-        return 0
-        
 
-        if reliccnts:
+
+        # The basic image
+        if dynamicscale:
+            vmax    = np.max(f._data)
+            levels  = [GCl.dinfo.limit*l for l in [ survey.m_cnt**n for n in np.arange(0,16)  ]]  #0,16
+        else:
+#            vmid    = 3e-7
+#            exponent= 1.7 
+            vmax    = survey.emi_max
+            levels  = survey.cnt_levels
+           
+
+        vmin    = 0.6 * GCl.dinfo.rms #0.25
+        vmid    = -2  #0.00006  * GCl.dinfo.rms
+        exponent= np.log(vmax/vmin)
+         
+        levels   = survey.cnt_levels    
+
+
+        if not xray:
             
             for relic in GCl.filterRelics(eff=eff):
                 pixelcnt = np.transpose(np.squeeze(relic.cnt))
-                print( pixelcnt.shape )
+#                print( pixelcnt.shape )
                 wcscnts  =  f.pixel2world(pixelcnt[0,:],pixelcnt[1,:])
-                print( type(wcscnts), len(wcscnts) )
+#                print( type(wcscnts), len(wcscnts) )
                 wcscnts =  np.asarray([ (x,y)  for x,y in zip(wcscnts[0],wcscnts[0]) ]).T
-                print( wcscnts.shape )
+#                print( wcscnts.shape )
                 f.show_polygons([wcscnts], lw=2, color = 'white') # , lw=1, color = 'white' , alpha=1.0
-                print( len(relic.cnt) )
+#                print( len(relic.cnt) )
             addargs = {'vmid':vmid,'vmin':vmin,'vmax':vmax,'stretch':'log','exponent':exponent}
             
             ''' It seems like you can only have one interactive contours '''
-            f.show_contour(GCl.mapdic['Diffuse'], linewidth=0.15, overlap = True, levels=[l for l in levels if l<vmax*survey.m_cnt], cmap='afmhot',filled=True, alpha=0.49, extend='max', **addargs) #
+            print(levels)
+#            f.show_colorscale(vmin=1e9, vmax=1e11,  stretch='linear', cmap='afmhot') #gist_heat    
+            f.show_colorscale(vmid=vmid, vmin=vmin, vmax=vmax,  stretch='log', exponent=exponent, cmap='afmhot') #gist_heat      
+#            f.show_contour(GCl.mapdic['Diffuse'], linewidth=0.15, overlap = True, levels=[l for l in levels if l<vmax*survey.m_cnt], cmap='afmhot',filled=True, alpha=0.49, extend='max', **addargs) #
             f.show_contour(GCl.mapdic['Diffuse'], linewidth=0.15, overlap = True, levels=levels, colors='green',filled=False)
         else:
-             f.show_colorscale(vmid = vmid, vmin=vmin, vmax=vmax,  stretch='log', exponent=exponent, cmap='afmhot') #gist_heat      
+             if 1==2: #MUSIC-2
+                vmin_xr    = 2.5
+                vmax_xr    = 9.7 #6.2
+                vmid_xr    = -1.5
+             else:
+                vmin_xr    = -2
+                vmax_xr    =  5.
+                vmid_xr    = -4.5
+            
+             exponent= np.log(max(vmax/vmin,1.0001))
+            
+             f.show_colorscale(vmid = vmid_xr, vmin=vmin_xr, vmax=vmax_xr,  stretch='log', exponent=exponent, cmap='afmhot') #gist_heat      
 #             f.show_colorscale(cmap='afmhot') #gist_heat  
 #             return 0
 #             f.show_contour(GCl.xname[-1], colors='grey', linewidth=0.5,  levels=levels, overlap = True)
              #development
              
-             
-             # The basic image
-             if dynamicscale:
-                vmax    = np.max(f._data)
-                levels  = [GCl.dinfo.limit*l for l in [ survey.m_cnt**n for n in np.arange(0,16)  ]]  #0,16
-             else:
-    #            vmid    = 3e-7
-    #            exponent= 1.7 
-                vmax    = survey.emi_max
-                levels  = survey.cnt_levels
-               
-
-             vmin    = 0.6 * GCl.dinfo.rms #0.25
-             vmid    = -2  #0.00006  * GCl.dinfo.rms
-             exponent= np.log(vmax/vmin)
-             
-             levels   = survey.cnt_levels                
+                         
              if highres:
                  key      = "Raw"
                  key_comp = "CompModell" 
@@ -469,11 +473,11 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, reliccnts=False, 
         if beam:
             f.add_beam()
             f.beam.show()
-            f.beam.set_major(GCl.dinfo.beam[0] * u.arcsecond)
-            f.beam.set_minor(GCl.dinfo.beam[1] * u.arcsecond)
-            f.beam.set_angle(GCl.dinfo.beam[2])  # degrees
+#            f.beam.set_major(GCl.dinfo.beam[0] * u.arcsecond)
+#            f.beam.set_minor(GCl.dinfo.beam[1] * u.arcsecond)
+#            f.beam.set_angle(GCl.dinfo.beam[2])  # degrees
             f.beam.set(facecolor='#BBBBBB',alpha=0.8,edgecolor='black')
-           
+
         if show_rot:     
             f.add_label(0.97, 0.12, '$\\theta=%.3f$' % (GCl.mockobs.theta),  relative=True, style='oblique', size='large', horizontalalignment='right', **laargs) #-0.01*len(Cl_name)
             f.add_label(0.97, 0.08, '$\\phi  =%.3f$' % (GCl.mockobs.phi)  ,  relative=True, style='oblique', size='large', horizontalalignment='right', **laargs) #-0.01*len(Cl_name)
@@ -489,15 +493,15 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, reliccnts=False, 
 
         '''DEVELOPMENT'''
         if vectors:
-            
-           pdata = GCl.xname[1] #fits with magnitude of signal (use where not enough signal)
-           adata = GCl.xname[2] #fits with angle of signal     (use nan, where no vector should be)
+
+           pdata = GCl.mapdic['MassSpeed'] #fits with magnitude of signal (use where not enough signal)
+           adata = GCl.mapdic['MassAngle'] #fits with angle of signal     (use nan, where no vector should be)
            f.show_vectors(pdata, adata, step=15,scale=1e-2,alpha=0.2, color='blue',lw=2) # , mutation_scale=4 ,ls='-.-', 0.3, head_width=5
-            
-#           x  = GCl.xname[4] + 3.0 dsdsd+ GCl.RA  #fits with magnitude of signal (use where not enough signal)
-#           y  = GCl.xname[5] + GCl.Dec #fits with angle of signal     (use nan, where no vector should be)
-#           dx = GCl.xname[6] #fits with magnitude of signal (use where not enough signal)
-#           dy = GCl.xname[7] #fits with angle of signal     (use nan, where no vector should be)
+
+#           x  = GCl.mapdic['x'] + 3.0 dsdsd+ GCl.RA  #fits with magnitude of signal (use where not enough signal)
+#           y  = GCl.mapdic['y'] + GCl.Dec #fits with angle of signal     (use nan, where no vector should be)
+#           dx = GCl.mapdic['dx']  #fits with magnitude of signal (use where not enough signal)
+#           dy = GCl.mapdic['dy']  #fits with angle of signal     (use nan, where no vector should be)
 #           f.show_arrows(x, y, dx, dy, step=15,scale=1e-2,alpha=0.2, color='blue',lw=2) # , mutation_scale=4 ,ls='-.-', 0.3, head_width=5
         '''DEVELOPMENT END'''
 
@@ -693,7 +697,7 @@ def stats_lineregress(name, data_x, data_y, verbose = False):
     return None, None
 
 
-def create_Mass_redshift2( SurveySamples, (zrange,colors), markers = np.asarray(['.','s']), effi=[], log=[False,False], logplot=[True,True], lockedaxis=False):
+def create_Mass_redshift2( SurveySamples, zrange,colors, markers = np.asarray(['.','s']), effi=[], log=[False,False], logplot=[True,True], lockedaxis=False):
 
     """
     Takes as inputs;
@@ -1165,7 +1169,7 @@ def fetchpandas(survey, plotmeasures, kwargs_FilterCluster={}, kwargs_FilterObje
         
     plotmeasures = [             
                     lambda x: x.alpha,
-                    lambda x: cdb.measurand( x.Dproj_pix()/x.GCl.R200(), 'Dproj',label='$Dproj_rel$',  un = '' )
+                    lambda x: cdb.measurand( x.Dproj_pix()/x.GCl.R200(), 'Dproj',label='$Dproj_rel$',  un = None )
                     ]
     
     idmeasures: lambda x: x.alpha
@@ -1174,7 +1178,7 @@ def fetchpandas(survey, plotmeasures, kwargs_FilterCluster={}, kwargs_FilterObje
                     lambda x: x.Rho, 
                     lambda x: x.Mach,              
                     lambda x: x.T, 
-                    lambda x: cdb.measurand( -x.alpha(), 'alpha',label='$\\alpha$',  un = '' ),
+                    lambda x: cdb.measurand( -x.alpha(), 'alpha',label='$\\alpha$',  un = None ),
                     lambda x: x.LLS, 
                     lambda x: x.P_rest
                     ]
@@ -1215,6 +1219,7 @@ def fetchpandas(survey, plotmeasures, kwargs_FilterCluster={}, kwargs_FilterObje
             
     List_full  = [item for sublist in List_full for item in sublist]
         
+    print(survey.Rmodel.simu, survey.Rmodel.effList[0], len(List_full),feff)
     for GCl,relic in List_full:
 
         relic.asign_cluster(GCl)

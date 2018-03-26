@@ -133,11 +133,8 @@ def pickleObject_old(obj, location, append = False):
   
 def unpickleObject(location):
   
-  print('____1 in IOutil.py::unpickleObject')
   with open(location+'.pickle', 'rb') as handle:
-      print('____2')
       obj = pickle.load(handle)
-      print('____3')
   return obj
     
     

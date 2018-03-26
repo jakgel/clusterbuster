@@ -4,6 +4,7 @@
 
 #import sys
 #sys.path.insert(0, os.getcwd())
+from __future__ import division,print_function
 import os
 from astropy.io import fits  #import pyfits as fits
 import warnings
@@ -44,7 +45,19 @@ def FITS2numpy (fitsfile) :
   return (image, center, pixelsize)  
      
 # Writing FITS
-def numpy2FITS ( array,  outfile, spixel, center=[-1,-1], pcenter = [-1,-1], oname='', nuobs=0, telescop='UnknownRadioTelescope') : #, header=hdutemplateHead.header
+
+
+
+
+def Map2FITS (array,dinfo,outfile):
+    '''
+    Maps numpy info and detinfo directly to outfile
+    This function uses some of the ObjectClass.py data, so it should in principle become part it.
+    Detection info should be changed to mapinfo + detinfo (detection threshold etc.) '''
+    numpy2FITS(array,outfile,dinfo.spixel,center=dinfo.center,pcenter=dinfo.pcenter, nuobs=dinfo.nucen,beam=dinfo.beam,telescope=dinfo.telescope)
+    
+
+def numpy2FITS ( array,  outfile, spixel, center=[-1,-1], pcenter = [-1,-1], oname='', nuobs=1.4, beam=[45/3600,45/3600,0],telescope='UnknownRadioTelescope') : #, header=hdutemplateHead.header
 
     ''' Creates an FITS file out of an 2D numpy map 
    
@@ -52,8 +65,10 @@ def numpy2FITS ( array,  outfile, spixel, center=[-1,-1], pcenter = [-1,-1], ona
       
        spixel (float) in arcsecs
        The created images are up to my knowledge not readable by CASA
+       centre  = (Ra,Dec)
        
-       Possible improvement: directly supply it as afunctionof a map class
+       Possible improvement: directly supply it as a function of a map class
+       
     '''
   
 
@@ -70,22 +85,29 @@ def numpy2FITS ( array,  outfile, spixel, center=[-1,-1], pcenter = [-1,-1], ona
     #plt.show()
      
     newarray   = array[np.newaxis , np.newaxis, :, :].astype(np.float32) #array[np.newaxis , np.newaxis, :, :]
+#    newarray   = array[: , :].astype(np.float32) #array[np.newaxis , np.newaxis, :, :]
 
+    
+    '''=== This is a big designe desicion: Do I want to stick with two our four dimension. 
+    Four dimension seem to be needed for the astrply imager and cas. Two dimensions are needed for the rotation packgae '''
     hdu        = fits.PrimaryHDU(newarray)
-#    hduHead    = hdu.header  # now add some modifications ...    
-    hduHead    = hduTemplateHead.header   
+    hduHead    = hdu.header  # now add some modifications ...      
+#    hduHead    = hduTemplateHead.header   
      
     # Debugging delete certai entries
-    keylist = ['PC01_01', 'PC02_01', 'PC03_01', 'PC04_01',
-               'PC01_02', 'PC02_02', 'PC03_02', 'PC04_02',
-               'PC01_03', 'PC02_03', 'PC03_03', 'PC04_03',
-               'PC01_04', 'PC02_04', 'PC03_04', 'PC04_04']
+#    keylist = ['PC01_01', 'PC02_01', 'PC03_01', 'PC04_01',
+#               'PC01_02', 'PC02_02', 'PC03_02', 'PC04_02',
+#               'PC01_03', 'PC02_03', 'PC03_03', 'PC04_03',
+#               'PC01_04', 'PC02_04', 'PC03_04', 'PC04_04']
 #    for key in keylist:
 #        try: 
 #            del hduHead[key]
 #        except:
-#            print '[%s] not found, so we cannot delete it from the .fits header' % (key)
+#            print('[%s] not found, so we cannot delete it from the .fits header' % (key))
 
+    hduHead['CTYPE1']  = 'RA---SIN'    
+    hduHead['CTYPE2']  = 'DEC--SIN'   
+    
     #NAXIS   =                    2   #4                                                  
     hduHead['NAXIS1']  =   array.shape[0]                                                  
     hduHead['NAXIS2']  =   array.shape[1]                                                  
@@ -106,7 +128,12 @@ def numpy2FITS ( array,  outfile, spixel, center=[-1,-1], pcenter = [-1,-1], ona
     if pcenter[0] != -1:
       hduHead['CRPIX1']  =   float(pcenter[0]) 
       hduHead['CRPIX2']  =   float(pcenter[1])  
-     
+      
+    hduHead['BUNIT']   = 'JY/BEAM ' 
+    hduHead['BMAJ']    = beam[0]/3600 # .beam.set_major(GCl.dinfo.beam[0] * u.arcsecond)
+    hduHead['BMIN']    = beam[1]/3600 #     f.beam.set_minor(GCl.dinfo.beam[1] * u.arcsecond)
+    hduHead['BPA']     = beam[2]      #    f.beam.set_angle(GCl.dinfo.beam[2])  # degrees
+
     #hduHead['BSCALE']  =   1.000000000000E+00 /PHYSICAL = PIXEL*BSCALE + BZERO                 
     #hduHead['BZERO']   =   0.000000000000E+00                                                  
     #hduHead['BMAJ']    =   2.772961722480E-03                                                  
@@ -114,7 +141,8 @@ def numpy2FITS ( array,  outfile, spixel, center=[-1,-1], pcenter = [-1,-1], ona
     #hduHead['BPA']     =  -4.343997192383E+01                                                  
     #hduHead['BTYPE']   = 'Intensity'                                                           
     hduHead['OBJECT']  = oname                                                     
-                                                      
+    hduHead['EPOCH']     = (2000,'Celestial coordinate equinox')
+                                                  
     #hduHead['BUNIT']   = 'Jy/beam '           /Brightness (pixel) unit                         
     #hduHead['EQUINOX'] =   2.000000000000E+03                                                  
     #hduHead['RADESYS'] = 'FK5     '                                                            
@@ -158,8 +186,8 @@ def numpy2FITS ( array,  outfile, spixel, center=[-1,-1], pcenter = [-1,-1], ona
     #hduHead['PV2_2']   =   0.000000000000E+00   
     
     if nuobs > 0:
-        hduHead['CUNIT3']  = 'GHz      '  
-        hduHead['RESTFRQ'] = 1.4E+09  #1.7E+09  /Rest Frequency (Hz)               #3.250000000000E+08                    
+#        hduHead['CUNIT4']  = 'GHz      ' # 'GHz      '  
+        hduHead['RESTFRQ'] = (nuobs*1e9, 'in Hz')    #1.4E+09  #1.7E+09  /Rest Frequency (Hz)               #3.250000000000E+08                    
     #hduHead['SPECSYS'] = 'TOPOCENT'           /Spectral reference frame                        
     #hduHead['ALTRVAL'] =  -7.034932238758E+01 /Alternate frequency reference value             
     #hduHead['ALTRPIX'] =   1.000000000000E+00 /Alternate frequency reference pixel             
@@ -176,7 +204,7 @@ def numpy2FITS ( array,  outfile, spixel, center=[-1,-1], pcenter = [-1,-1], ona
     #hduHead['ORIGIN']  = 'CASA 4.4.85 (DEV r85)'                                          
     
     hduHead['OBSERVER'] = 'MockObs'
-    hduHead['TELESCOP'] = telescop
+    hduHead['TELESCOP'] = telescope
     del hduHead['HISTORY'] # Just to much of false history ... lets delete it
     
     

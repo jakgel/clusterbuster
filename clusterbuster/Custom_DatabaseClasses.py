@@ -83,9 +83,13 @@ class measurand(entry):
         ''' Returns the labels of measurand objects  
             Use 'log=True' if you want to indicate that you use the logarithmic values
         '''
+        if self.unit is None:
+            unit = ''
+        else:
+            unit = ' [%s]' % (self.unit)
         
-        if log: return 'log$_{10}($%s [%s]$)$' % (self.label, self.unit)  
-        else:   return '           %s [%s]   ' % (self.label, self.unit)     
+        if log: return 'log$_{10}($%s%s$)$' % (self.label, unit)  
+        else:   return '%s%s'               % (self.label, unit)     
         
           
     def inrange(self, limits):

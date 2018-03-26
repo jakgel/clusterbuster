@@ -13,10 +13,8 @@ import os
 import numpy    as np
 
 ''' former MUSIC-2 '''
-def MergeFilesToSurvey(survey, savefolder, verbose = True, clusterwise=False):
-    
-    import clusterbuster.ObjectClasses as CBclass
-
+def AddFilesToSurvey(survey, savefolder, verbose = True, clusterwise=False):
+    ''' This replaces tha galaxy clusters of a survey object with all pickled galaxy clusters in an particular 'savefolder' '''
     minsize        = 1
     location       = savefolder+'/pickled/'
     GCls           = []
@@ -41,8 +39,42 @@ def MergeFilesToSurvey(survey, savefolder, verbose = True, clusterwise=False):
     survey.GCls =  GCls
      
     iout.pickleObject(survey, location, 'Survey')
+    return survey
+
+
+def MergeFilesToSurvey_files(savefolder, surveyname, verbose = True, clusterwise=False):
+    
+    import clusterbuster.ObjectClasses as CBclass
+
+    minsize        = 1
+    location       = savefolder+'/pickled/'
+    print('MergeFilesToSurvey_files::', location)
+    GCls           = []
+    survey = CBclass.Survey([], surveyname, outfolder=savefolder)
+#    print '%sMonsterPickle*.pickle' % (location)             
+    print(location)
+    if verbose: print('%sMonsterPickle*.pickle' % (location))
+    if clusterwise: 
+        fn = 'GCl'
+    else:
+        fn = 'MonsterPickle'
+    for filename in glob.glob('%s%s*.pickle' % (location,fn)):  #glob.glob('%srelics/*.pickle' % (location)):  ;  (relics, histo, Bmodel, eff, mockobs)
+#        print'!!!'
+        if os.path.getsize(filename) > minsize:
+             if verbose: print(filename)
+             items = iout.unpickleObjectS(filename)
+             for (Cluster, Rmodel) in items: #(relics, eff, mockobs) in items:
+                 GCls.append(Cluster)
+             os.remove(filename) 
+
+    GCls = sorted(GCls, key= iout.Object_natural_keys)
+    survey.GCls =  GCls
+     
+    iout.pickleObject(survey, location, 'Survey')
     return 0
 
+
+MergeFilesToSurvey_files
 
 def TestPar(var):
   
@@ -50,7 +82,7 @@ def TestPar(var):
 
 
 
-def interpret_parset(parfile, repository='/parsets/', default='default2.parset', relative=None):
+def interpret_parset(parfile, repository='/parsets/', default='default.parset', relative=None):
 #This set loads a parset and replaxes one with the default one, alternatively you can give the default one and then modify the entries by another parset2dict
     from pathlib2 import Path
     import os
@@ -77,11 +109,6 @@ def interpret_parset(parfile, repository='/parsets/', default='default2.parset',
    
     return (comb_dict, B0_arr, nu_arr, eff_arr, z_arr) 
      
-  #except:
-     #print "Parset %s or %s could not be interpreted. IN ADDITION, Please check if a default parfile is given or exists as  'parsets/default.parset' " % ('parsets/'+ default, 'parsets/'+ parfile)
-     #return 0
-
-
 ''' former CW '''
 
 
@@ -98,14 +125,7 @@ def cmask(image,radius,center=None):
     inspired by http://stackoverflow.com/questions/8647024/how-to-apply-a-disc-shaped-mask-to-a-numpy-array 
     Returns: ... '''
     
-    
-    # degging
-#    testA = np.ones( (10,10))
-#    rel   = np.where(testA>0)
-#    x     = 5 - rel[0] 
-#    y     = 5 - rel[1] 
-#    radius = 4
-#    mask = np.power(x,2) + np.power(y,2) < radius**2
+
     
     if center is None:
         center = int(image.shape[0]/2.), int(image.shape[1]/2.)
@@ -119,12 +139,8 @@ def cmask(image,radius,center=None):
     y,x = np.ogrid[-a:n1-a, -b:n2-b]
     mask = x*x + y*y >= radius*radius
 
-
     return mask  
 
-
-
-# Franco says that the cutouts are 1.5 R100    ---> but I get very different values, rather 1 R200 
 
 def gaussian_pseudo(x,x0,sigma):
 # the integral is not zero, however we only compare absolute values which is fine
@@ -132,7 +148,7 @@ def gaussian_pseudo(x,x0,sigma):
 
 def Recenter(GCl, image, subp, image2mask=None, setto=0.): # a function of galaxy cluster?
     ''' recenters the cluster centric coordinates basede on the mass proxy 
-        WORK IN PROGRESS: Because It changes the GCl object, so it should be one of it's functionalities!
+        WORK IN PROGRESS: Because It changes the GCl object it should be one of it's functionalities!
         '''
     # draw region of Mwir around current center '''
     # find maximum within Rvir ...
@@ -180,8 +196,6 @@ def weight_snap(snaplist_z, z, sigma_z=0.2, use_list=None, fake=False):
                  z : The redshift of the assigned cluster
                  
         Returns: An numpy array of the weight for each snapshot
-        
-    In future sigma should be given for the age as it is a more linear representation for cluster evolution     
     '''
     
     # Draws the gaussian distribution function
@@ -209,7 +223,7 @@ def assign_snaps(snaplist_z, boundaries_z, VCM, snaps_Nclusters, sigma_z=0.2, us
         rand           : a random intitalizer for reproductive results
         
         Returns        : trials a list of lists that tells you about the exact number of representations for each cluster in each snap
-    In future sigma should be given for the age as it is a more linear representation for cluster evolution
+    In the future 'sigma' should be given for the age as it is a more linear representation for the evolution of galaxy clusters in the universe
     
     Currently this is only done for one z value. The goal would be to create a list for an array of z values
     + initial randomization that then could be saved

@@ -48,7 +48,7 @@ def get_truth(inp, relate, cut):
 class DetInfo:
   ''' This class is used to define the observational parameters of an created map, albeit one survey/ each galaxy cluster could have regions with differing detaction informations
   '''
-  def __init__(self, name='', beam=[1,1,0], spixel=1, rms=0, limit=0, nu=1.4, survey = 'NVSS'):
+  def __init__(self, name='', beam=[1,1,0], spixel=1, rms=0, limit=0, nucen=1.4, center=None, pcenter=None, survey = 'NVSS', telescope='VLA-D'):
 
     self.FWHM2sigma =1/2.354 
     self.name    = name     # name/id of the survey , e.g. NVSS, MSSS, TGSS
@@ -58,8 +58,12 @@ class DetInfo:
     self.spixel  = spixel   # pixel size in arcsec
     self.rms     = rms      # rms noise in Jy/beam
     self.limit   = limit    # detlimit  in Jy/beam 
-    self.nu      = nu       # observed frequency in GHz
-
+    self.nucen   = nucen    # observed frequency in GHz
+ 
+    self.center    = center
+    self.pcenter   = pcenter
+    self.telescope = telescope
+    
     self.update_Abeam()
 
   def update_Abeam(self):
@@ -85,17 +89,19 @@ class DetInfo:
 class BFieldModel:
   
   """
-  Simple class for representing some parameters of the used radio model
+  Simple class for representing the parametrisation of the magnetic field
+  
   """             
 
-  def __init__(self, idgrid, B0=0, kappa=0):
+  def __init__(self, B0=0, kappa=0, compress=0.85, B_para='dens'):
     
     # Bott variables used in the formula
     # B = (B0/muG) * (rho/1e-4) ** kappa
-    self.idgrid    = idgrid # two dimensional (B0_id, kappa_id)
-    self.B0        = B0     # B0
-    self.kappa     = kappa  # kappa
-
+    self.B0          = B0        # B0
+    self.kappa       = kappa     # kappa
+    self.compress    = compress  # factor of magnetic field enhancement in case of compression. 0..1
+    self.B_para      = B_para       # 'dens' or 'press'. Governes to what the B-field parameter is referring to
+    
     
   def __str__(self):
     return 'B-field model: B0=%6.3e muG, kappa=%6.3f' % (self.B0, self.kappa)
@@ -104,28 +110,49 @@ class BFieldModel:
 
 class RModel(BFieldModel):
   """
-  Class that inherits from 'BFieldModel'  and adds parameters to descripe a population of preexisting electrons and further, misc parameters
+  Class that inherits from 'BFieldModel'  and adds parameters to descripe the model parameters for DSA
+  Also has the parameters for a population of preexisting electrons and further, misc parameters.
   """ 
-  def __init__(self, id, effList = [1], simu=True, idgrid=None, pre=False, p0=1e-4, p_sigma=1, sigmoid_0=1e-4, sigmoid_width=1, **kwargs ):
+  def __init__(self, id, effList = [1], simu=True, pre=False, **kwargs):
         
-      BFieldModel.__init__(self, idgrid, **kwargs)
+      BFieldModel.__init__(self, **kwargs)
       
-      ''' Model of preexisting electrons '''
-      self.pre           = False
+      ''' Metaparameter '''
+      self.pre       = pre
+      self.effList   = effList
+      self.simu      = simu
+      self.id        = id
+
+      
+
+class PreModel_Hoeft(RModel):
+  """
+  Class that inherits from 'RModel'  and adds parameters to descripe a population of preexisting electrons and further, misc parameters
+  """ 
+  def __init__(self, id, **kwargs ):
+        
+      ''' Model of preexisting electrons, see internal .pdf description'''
+      RModel.__init__(self, id, pre=True, **kwargs)
+      self.t0      = 0.5   # Minimal time since reacceleration
+      self.t1      = 10    # Maximal time since reacceleration
+      self.n0      = 1e-6  # Number density of accretion shocks
+      self.n1      = 1e-2  # Number density of 'core'
+      self.kappa    = 0.05 # Initial normalisation PRE and thermal at shockfront
+
+class PreModel_Gelszinnis(RModel):
+  """
+  Class that inherits from 'RModel'  and adds parameters to descripe a population of preexisting electrons and further, misc parameters
+  """ 
+  def __init__(self, id, p0=1e-4, p_sigma=1, sigmoid_0=1e-4, sigmoid_width=1, **kwargs ):
+        
+      ''' Model of preexisting electrons, see internal .pdf description'''
+      RModel.__init__(self, id, pre=True, **kwargs)
       self.p0            = p0            # p_rat
       self.p_sigma       = p_sigma       # scatter sigmoid in lognormal coordinates
       self.sigmoid_0     = sigmoid_0     # density  (particles/cm-3)value for which the sigmoid value becomes 0
       self.sigmoid_width = sigmoid_width # order of magnitude over which this plasma content changes
-      
-      ''' Metaparameter '''
-      self.effList   = effList
-      self.simu      = simu
-      self.id        = id
-      
-  def __str__(self):
-    return 'B-field model: B0=%6.3e muG, kappa=%6.3f' % (self.B0, self.kappa)
-      
-     
+      self.PREexpo       = 0.09          # The exponent for the eff(Mach) modification, latter this should be replaced by the average gamma of the PREs
+        
 class MockObs:   #could also be an decendant if DetInfo
 
   """
@@ -183,7 +210,7 @@ class Galaxycluster(object):
         self.RA     = cdb.measurand(  RA, 'RA' , un = 'deg')  
         self.Dec    = cdb.measurand( Dec, 'Dec', un = 'deg')
         self.sky    = SkyCoord(self.RA(), self.Dec(), frame='icrs' , unit='deg')
-        self.z      = cdb.measurand(  z,  'z',  label = 'Redshift $z$' , un = '')            
+        self.z      = cdb.measurand(  z,  'z',  label = '$z$' , un = None)  #Redshift          
 
 
         '''  We differentiate several (currently two) measures of the clsuter central position 
@@ -261,23 +288,30 @@ class Galaxycluster(object):
         At this step is currently done on the fly, using this function is a thing of future versions '''
         
     
-    def maps_update(self, nparray, mapname, fitsname, s_pixel, center1, center2):
+    def maps_update(self, nparray, mapname, fitsname, dinfo=None):
         ''' This functions is used to write a .fits file to disk. and to update the map dictionary
         
         Input arguments:
             The numpy array map
             The mapname
-            The folder
-            The size of the pixels
-            The image centre in degree?
-            The image centre in pixel coordinates?
+            The fitsname
+            The detection information
+
+            
+        Currently, there is a detour by copyiing the dictonary. I did this to counter the effect, that the dictionaries of all galaxy clusters ended up do be the same.
+        Once I understood this effect a little better, I can up with a slimmer solution.
         '''
+        if dinfo is None:
+            dinfo = self.dinfo
+        
+        import copy
+        mapdic  = copy.deepcopy(self.mapdic)
         folder = os.path.dirname(fitsname)
         if not os.path.exists(folder):
             os.makedirs(folder)
-        FITSut.numpy2FITS ( nparray,  fitsname,  s_pixel, center1, center2) 
-        self.mapdic[mapname]   =  fitsname
-
+        FITSut.Map2FITS( nparray, dinfo, fitsname) # s_pixel, center1, center2  
+        mapdic[mapname]   =  fitsname
+        self.mapdic       =  mapdic
                         
        
     
@@ -931,8 +965,8 @@ class Relic:
         eigvals, eigvecs = np.linalg.eigh(cov)
         self.eigvecs     = np.sort(eigvecs, axis=1)[::-1]   #not yet workung perfectly! I think there is a bug inside, you could test by multiplying eigvecs with egvalues to see if the covariance matrix is reproduced!
         self.eigvals     = np.sort(eigvals)[::-1]
-        self.iner_rat    = cdb.measurand(self.eigvals[1]/self.eigvals[0], 'iner_rat'  , label='$v_\\mathrm{PC2}/v_\\mathrm{PC1}$',un='', vmax=1)
-        self.iner_rat_n  = cdb.measurand(self.eigvals[1]/self.eigvals[0], 'iner_rat_n', label='$v_\\mathrm{PC1}/v_\\mathrm{PC2}$',un='', vmin=1)
+        self.iner_rat    = cdb.measurand(self.eigvals[1]/self.eigvals[0], 'iner_rat'  , label='$v_\\mathrm{PC2}/v_\\mathrm{PC1}$',un=None, vmax=1)
+        self.iner_rat_n  = cdb.measurand(self.eigvals[1]/self.eigvals[0], 'iner_rat_n', label='$v_\\mathrm{PC1}/v_\\mathrm{PC2}$',un=None, vmin=1)
         self.ecc         = np.sqrt(1-self.iner_rat())  # BUG shoud work with out ()
 
            
@@ -982,15 +1016,15 @@ class Relic:
           
 #          print (self.alpha())
           if Mach is not None:
-              self.Mach      = cdb.measurand( Mach              , '$\overline{M}$', un = '' )
+              self.Mach      = cdb.measurand( Mach              , '$\overline{M}$', un=None )
           else:
             alpha            = min(self.alpha.value,-1.03) 
-#            self.Mach        = cdb.measurand( np.sqrt( (-alpha+2) / (-alpha+1 ) )              , '$\overline{M}$', un = '' ) 
+#            self.Mach        = cdb.measurand( np.sqrt( (-alpha+2) / (-alpha+1 ) )              , '$\overline{M}$', un=None ) 
             if alpha==-1.03 or alpha is None: # or not self.region.alphaFLAG:
                 Mach = np.nan #np.sqrt( (-alpha+1) / (-alpha-1 ) )  #= 
             else:
                 Mach         = np.sqrt( (-alpha+1) / (-alpha-1 ) )
-            self.Mach        = cdb.measurand( Mach , '$\overline{M}$', un = '' ) 
+            self.Mach        = cdb.measurand( Mach , '$\overline{M}$', un=None ) 
 
       
       def create_Histo(self,GCl,normtype='R200'):
@@ -1011,7 +1045,7 @@ class Relic:
       
       def shape_advanced(self):   
             #m.iner_rat/(m.LAS/(m.dinfo.beam[0]/60.
-            return cdb.measurand( self.iner_rat/ ( self.LAS / (self.dinfo.beam[0]/60.) ), 'shape_advanced'  , label='shape$_\mathrm{PC_1}$', un = '')   
+            return cdb.measurand( self.iner_rat/ ( self.LAS / (self.dinfo.beam[0]/60.) ), 'shape_advanced'  , label='shape$_\mathrm{PC_1}$', un=None)   
                   
         
       #def comp_uncorr_proc(self, *arg, *args):
@@ -1022,7 +1056,7 @@ class Relic:
             ''' flux weighted properties '''
             if self.wMach is not None: #4.358 needed?
                 self.T       = cdb.measurand( np.sum(self.wT)/np.sum(self.sparseW)                 , 'T_av'   , label='$\overline{T}$', un = 'keV' ) 
-                self.Mach    = cdb.measurand( np.sum(self.wMach)/np.sum(self.sparseW)              , 'M_av'   , label='$\overline{M}$', un = '' )
+                self.Mach    = cdb.measurand( np.sum(self.wMach)/np.sum(self.sparseW)              , 'M_av'   , label='$\overline{M}$', un = None )
                 self.Rho     = cdb.measurand( np.sum(self.wRho)/np.sum(self.sparseW)               , 'rho_av' , label='$\overline{\\rho}_\mathrm{down}$', un = 'cm$^{-3}$' ) #label='$\overline{\rho}_\mathrm{down}$',
                 self.Area_av = cdb.measurand( np.sum(self.wArea)/np.sum(self.sparseW)*1e6          , 'area_av', label='$\overline{\mathrm{area}}$', un = 'kpc$^2$' ) 
                 self.Area    = cdb.measurand( np.sum(self.wArea)/np.sum(self.sparseW)*len(self.sparseW) , 'area'                     , un = 'Mpc$^2$' )
@@ -1034,19 +1068,10 @@ class Relic:
 #                self.T_down   = cdb.measurand( np.sum(self.wT_down)/np.sum(self.sparseW)            , 'T_dow'  , label='$\overline{T_\\mathrm{down}}}$', un = 'keV' ) 
             
             if self.wAlpha is not None:   
-                self.alpha   = cdb.measurand( -np.sum(self.wAlpha)/np.sum(self.sparseW) , 'alpha', label='$\\alpha$', un = '' ) 
+                self.alpha   = cdb.measurand( -np.sum(self.wAlpha)/np.sum(self.sparseW) , 'alpha', label='$\\alpha$', un = None ) 
 #                self.alpha.value  =  -np.sum(self.wAlpha)/np.sum(self.sparseW)
 #                self.infer_Mach()
-                
-            '''Development ---> it turned out that these quantities are not needed
-            if self.sparseW2 is not None:
-                self.T2       = cdb.measurand( np.sum(self.wT2)/np.sum(self.sparseW2)                 , 'T_av2'   , label='$\overline{T2}$', un = 'keV' ) 
-                self.Mach2    = cdb.measurand( np.sum(self.wMach2)/np.sum(self.sparseW2)              , 'M_av2'   , label='$\overline{M2}$', un = '' )
-                self.Rho2     = cdb.measurand( np.sum(self.wRho2)/np.sum(self.sparseW2)               , 'rho_av2' , label='$\overline{\\rho2}_\mathrm{down}$', un = 'cm$^{-3}$' ) #label='$\overline{\rho}_\mathrm{down}$',
-                self.Area_av2 = cdb.measurand( np.sum(self.wArea2)/np.sum(self.sparseW2)*1e6          , 'area_av2', label='$\overline{\mathrm{area2}}$', un = 'kpc$^2$' ) 
-                self.Area2    = cdb.measurand( np.sum(self.wArea2)/np.sum(self.sparseW2)*len(self.sparseW2) , 'area2'                     , un = 'Mpc$^2$' )
-                self.alpha2   = cdb.measurand( np.sum(self.wAlpha2)/np.sum(self.sparseW2) , 'alpha2', label='$\\alpha2$', un = '' )
-            Development END'''
+
                 
       def asign_cluster(self, GCl):
             self.GCl = GCl
@@ -1261,8 +1286,6 @@ class Survey(object):
       def FilterCluster(self, minrel=1, eff=None, zborder=0, ztype='>', minimumLAS=0, GClflux=0, index=None, getindex=False, verbose=False,  **kwargs):
           ''' Gives all the cluster with the relics that fullfill given criteria '''
           
-          
-
           if index is not None:
               if index == 'All':
                   return self.GCls
@@ -1276,10 +1299,11 @@ class Survey(object):
             
           if eff is None: eff = self.Rmodel.effList[0]
           GCls = [GCl.updateInformation(eff=eff, Filter=True) for GCl in self.GCls]
-      
-          
-          results = [(ii,GCl)  for ii,GCl in enumerate(GCls) if len(GCl.filterRelics(eff=eff, **kwargs))>=minrel and get_truth(GCl.z, ztype, zborder) and 
+     
+          verbose = True
+          results = [(ii,GCl)  for ii,GCl in enumerate(GCls) if len(GCl.filterRelics(eff=eff, **kwargs))>=minrel and  get_truth(GCl.z, ztype, zborder) and 
                      GCl.largestLAS() >  minimumLAS and GCl.flux() > GClflux and GCl.stoch_drop(self.dropseed)] 
+          
        
           ''' and get_truth(GCl.z, ztype, zborder) and 
                      GCl.largestLAS() >  minimumLAS and GCl.flux() > GClflux and GCl.stoch_drop(self.dropseed) '''
