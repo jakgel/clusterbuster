@@ -1,16 +1,17 @@
 ''' A two way road for a conversion from numpy arrays to -fits files with the correct format
-    Currentlythe header is initialized by a template.fitswhich should be changesin the future!
+    Currently the header is initialized by a template.fits which should be changed in the future!
+    I could also provide the funtionality to provide CASA (standard radioastronomical software) readable images
 '''
 
-#import sys
-#sys.path.insert(0, os.getcwd())
+
 from __future__ import division,print_function
+
+from   astropy.io import fits  #import pyfits as fits
 import os
-from astropy.io import fits  #import pyfits as fits
 import warnings
-import numpy as np
 import clusterbuster
-import scipy.ndimage.morphology    as morp #morp.binary_dilation(input, structure=None, iterations=1, mask=None, output=None, border_value=0, origin=0, brute_force=False)
+import numpy as np
+import scipy.ndimage.morphology as morp #morp.binary_dilation(input, structure=None, iterations=1, mask=None, output=None, border_value=0, origin=0, brute_force=False)
 
 
 
@@ -26,7 +27,7 @@ hduTemplateHead = hduTemplate[0]
      
      
      
-def FITS2numpy (fitsfile) :    
+def fits2numpy (fitsfile) :    
   
   hdulist = fits.open(fitsfile)
 
@@ -49,15 +50,15 @@ def FITS2numpy (fitsfile) :
 
 
 
-def Map2FITS (array,dinfo,outfile):
+def map2fits (array,dinfo,outfile):
     '''
     Maps numpy info and detinfo directly to outfile
     This function uses some of the ObjectClass.py data, so it should in principle become part it.
     Detection info should be changed to mapinfo + detinfo (detection threshold etc.) '''
-    numpy2FITS(array,outfile,dinfo.spixel,center=dinfo.center,pcenter=dinfo.pcenter, nuobs=dinfo.nucen,beam=dinfo.beam,telescope=dinfo.telescope)
+    numpy2fits(array,outfile,dinfo.spixel,center=dinfo.center,pcenter=dinfo.pcenter, nuobs=dinfo.nucen,beam=dinfo.beam,telescope=dinfo.telescope)
     
 
-def numpy2FITS ( array,  outfile, spixel, center=[-1,-1], pcenter = [-1,-1], oname='', nuobs=1.4, beam=[45/3600,45/3600,0],telescope='UnknownRadioTelescope') : #, header=hdutemplateHead.header
+def numpy2fits ( array,  outfile, spixel, center=[-1,-1], pcenter = [-1,-1], oname='', nuobs=1.4, beam=[45/3600,45/3600,0],telescope='UnknownRadioTelescope') : #, header=hdutemplateHead.header
 
     ''' Creates an FITS file out of an 2D numpy map 
    

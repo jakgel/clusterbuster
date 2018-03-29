@@ -1,12 +1,22 @@
-#In CASA
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Created on 2017
+
+@author: jakobg
+"""
+
 from __future__ import division,print_function
 
 import os
 import numpy as np
+import time
+
+
 
 #============== Smart timing to subject classes
-import time
-# Define a new object: relic
+
+
 class SmartTiming():
   """
   Class to allow timing of specific task blocks within the code. with 

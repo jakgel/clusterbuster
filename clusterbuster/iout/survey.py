@@ -1,34 +1,40 @@
 #!/usr/bin/env python
 
-''' This .py provides the functionalities of higher-level data products from the pickled relic catalogues, including:
+''' 
+Created on 2017
+@author: jakobg
+
+This .py provides the functionalities of higher-level data products from the pickled relic catalogues, including:
 - Creating pandas data tables (implement saving them as .csv or o.ods files)
 - Creating .pandas scatter matrixes
 - Creating .fits or .png images of the simulated objects and their galaxy clusters
-- Creating 
+- Creating ...
 '''
 
 from __future__ import division,print_function
 
 
+
+
 import copy
 import os
+import warnings
+import clusterbuster.surveyclasses as cbclass
+import clusterbuster.dbclasses     as dbc 
+import clusterbuster.iout.misc     as iom
+import matplotlib.pyplot           as plt
+import matplotlib.colors           as colors
+import math                        as math
+import numpy                       as np
 
-
-import numpy as np
-
-import matplotlib.pyplot                   as plt
-import matplotlib.colors                   as colors
 from   matplotlib      import cm
 from matplotlib.ticker import NullFormatter
-import clusterbuster.Custom_DatabaseClasses    as cdb 
-import clusterbuster.ObjectClasses             as CBclass
-import clusterbuster.IOutil                    as iout
-import math  as math
-import warnings
 
-#from matplotlib.colors import ListedColormap
 
-def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=True, additive=False, aligned=False, cbar=True, addinfo=False, mirrored=False,minrel=1,eff=None, zborder  = 0.05, plottype = 'flux', title="Polar binned radio relic flux", dpi=None, Histo=cdb.Histogram2D()):
+def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=True, additive=False, 
+                             aligned=False, cbar=True, addinfo=False, mirrored=False,minrel=1,eff=None, 
+                             zborder  = 0.05, plottype = 'flux', title="Polar binned radio relic flux", 
+                             dpi=None, Histo=dbc.Histogram2D()):
     ''' posible inprovements: http://stackoverflow.com/questions/22562364/circular-histogram-for-python 
     minrel : minimal number of relics to be consided for the histogramm
 
@@ -70,11 +76,11 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
         survey.set_binning(Histo)
         
         nowfolder = '%s/Relics_polar/' % (survey.outfolder) 
-        iout.check_mkdir(nowfolder)
+        iom.check_mkdir(nowfolder)
 
         buckedfolder = os.path.abspath(os.path.join(survey.outfolder, '..', 'bucket'))
     #    buckedfolder = '../%s' % (survey.outfolder) 
-        iout.check_mkdir(buckedfolder)
+        iom.check_mkdir(buckedfolder)
         effs = survey.Rmodel.effList
         
         for eff in effs:
@@ -268,11 +274,14 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
             
     return 0
         
-def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=False, DS9regions=False, diamF=2.6, colorbar=False, beam=True, shapes=True, recenter=True, infolabel = False, sectors=False, xray=False, highres=False, show_rot=False, vectors = False, label_sheme='balanced', maxdist=1700, filterargs = {'zborder':0, 'ztype':'>', 'minimumLAS':4, 'GClflux':20, 'index':None}):
+def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=False, DS9regions=False, diamF=2.6, 
+                  colorbar=False, beam=True, shapes=True, recenter=True, infolabel = False, sectors=False, 
+                  xray=False, highres=False, show_rot=False, vectors = False, label_sheme='balanced', 
+                  maxdist=1700, filterargs = {'zborder':0, 'ztype':'>', 'minimumLAS':4, 'GClflux':20, 'index':None}):
     import aplpy # check https://aplpy.readthedocs.io/en/v0.9.9/_generated/aplpy.aplpy.FITSFigure.html  for comands
 #    import matplotlib.colors as MPLcolors  # for more information, delve into http://matplotlib.org/users/colormapnorms.html
     import Analysis_MUSIC2.CreateMockObsXray as Xray
-    from astropy import units as u   
+#    from astropy import units as u   
     from PyPDF2 import PdfFileMerger
      
     pdfs  = []
@@ -344,12 +353,6 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
 
 
 
-        
-        levels = [1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7]
-        levels = [l-3.5 for l in levels]  
-        
-
-
         # The basic image
         if dynamicscale:
             vmax    = np.max(f._data)
@@ -365,8 +368,8 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
         vmid    = -2  #0.00006  * GCl.dinfo.rms
         exponent= np.log(vmax/vmin)
          
-        levels   = survey.cnt_levels    
-
+        levels   = [l*1e-6 for l in levels]
+        print(levels, survey.cnt_levels)
 
         if not xray:
             
@@ -382,13 +385,13 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
             addargs = {'vmid':vmid,'vmin':vmin,'vmax':vmax,'stretch':'log','exponent':exponent}
             
             ''' It seems like you can only have one interactive contours '''
-            print(levels)
+
 #            f.show_colorscale(vmin=1e9, vmax=1e11,  stretch='linear', cmap='afmhot') #gist_heat    
             f.show_colorscale(vmid=vmid, vmin=vmin, vmax=vmax,  stretch='log', exponent=exponent, cmap='afmhot') #gist_heat      
 #            f.show_contour(GCl.mapdic['Diffuse'], linewidth=0.15, overlap = True, levels=[l for l in levels if l<vmax*survey.m_cnt], cmap='afmhot',filled=True, alpha=0.49, extend='max', **addargs) #
             f.show_contour(GCl.mapdic['Diffuse'], linewidth=0.15, overlap = True, levels=levels, colors='green',filled=False)
         else:
-             if 1==2: #MUSIC-2
+             if 'MUSIC' in survey.name: #MUSIC-2
                 vmin_xr    = 2.5
                 vmax_xr    = 9.7 #6.2
                 vmid_xr    = -1.5
@@ -404,7 +407,9 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
 #             return 0
 #             f.show_contour(GCl.xname[-1], colors='grey', linewidth=0.5,  levels=levels, overlap = True)
              #development
-             
+#             ''' X-ray '''
+#        levels = [1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7]
+#        levels = [l-3.5 for l in levels]   
                          
              if highres:
                  key      = "Raw"
@@ -415,17 +420,13 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
                  key_comp = "Subtrated"
                  
 
-             addargs = {'vmid':vmid,'vmin':vmin,'vmax':vmax,'stretch':'log','exponent':exponent}
+#             addargs = {'vmid':vmid,'vmin':vmin,'vmax':vmax,'stretch':'log','exponent':exponent}
              if key_comp in GCl.mapdic:
                  f.show_contour(GCl.mapdic[key], linewidth=0.15, overlap = True, levels=levels, colors='green',filled=False)
              if key_comp in GCl.mapdic and subtracted: 
                  f.show_contour(GCl.mapdic[key_comp], linewidth=0.15, overlap = True, levels=levels, colors='red', filled=False )  
 
              
-        if infolabel:
-            f.add_label(0.97, 0.95, '  %s'     % (GCl.name.replace('_', ' ')), relative=True, style='oblique', size='xx-large', horizontalalignment='right', **laargs) #-0.01*len(Cl_name)
-            f.add_label(0.97, 0.90, '$z=%.2f$' % (GCl.z()),  relative=True, style='oblique', size='xx-large', horizontalalignment='right', **laargs) #-0.01*len(Cl_name)
-        
         
         if shapes:
             for relic in GCl.filterRelics(maxcomp=100) : 
@@ -457,7 +458,7 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
             _, center, spixel = 0,(0,0),7.5
 
         if relicregions:
-            #contours, contourinfos = iout.readDS9regions('Regions/RR_%s.reg'% (GCl.name), spixel, center[0], center[1], pixelcoords=False)  
+            #contours, contourinfos = iom.readDS9regions('Regions/RR_%s.reg'% (GCl.name), spixel, center[0], center[1], pixelcoords=False)  
             styles  = ['--',':','-','-','-']
             f.show_polygons( [np.transpose(np.squeeze(region.cnt_WCS)) for region in GCl.regions], lw=2, linestyle=styles[GCl.relics[0].region.rtype.classi+1], **laargs) # , alpha=1.0, facecolor='orange'
         
@@ -483,7 +484,14 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
             f.add_label(0.97, 0.08, '$\\phi  =%.3f$' % (GCl.mockobs.phi)  ,  relative=True, style='oblique', size='large', horizontalalignment='right', **laargs) #-0.01*len(Cl_name)
             f.add_label(0.97, 0.04, '$\\psi  =%.3f$' % (GCl.mockobs.psi)  ,  relative=True, style='oblique', size='large', horizontalalignment='right', **laargs) #-0.01*len(Cl_name)
                   
-                       
+        if infolabel:
+            f.add_label(0.97, 0.95, '  %s'     % (GCl.name.replace('_', ' ')), relative=True, style='oblique', size='xx-large', horizontalalignment='right', **laargs) #-0.01*len(Cl_name)
+            f.add_label(0.97, 0.90, '$z=%.2f$' % (GCl.z()),  relative=True, style='oblique', size='xx-large', horizontalalignment='right', **laargs) #-0.01*len(Cl_name)
+        else:
+            f.add_label(0.97, 0.95, '$z=%.2f$' % (GCl.z()),  relative=True, style='oblique', size='xx-large', horizontalalignment='right', **laargs) #-0.01*len(Cl_name)
+          
+            
+            
         if colorbar:
             f.add_colorbar()
             f.colorbar.show()
@@ -506,7 +514,7 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
         '''DEVELOPMENT END'''
 
         nowfolder = '%s/Images/' % (survey.outfolder)
-        iout.check_mkdir(nowfolder)
+        iom.check_mkdir(nowfolder)
         f.save('%s/%s-%s%s.pdf' % (nowfolder,survey.name, GCl.name,'HR'*highres))
         f.save('%s/%s-%s%s.png' % (nowfolder,survey.name, GCl.name,'HR'*highres), dpi=400)     
         pdfs.append('%s/%s-%s%s.pdf' % (nowfolder,survey.name, GCl.name,'HR'*highres))
@@ -525,8 +533,8 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
 #============== Reads relic information out of an ds9 region file
 def readDS9relics(regfile, spixel, center, pixref, Test=False): 
 
-   contours   , contourinfos = iout.readDS9regions(regfile, spixel, center, pixref)     
-   contoursWCS, _            = iout.readDS9regions(regfile, spixel, center, pixref, pixelcoords=False)    
+   contours   , contourinfos = iom.readDS9regions(regfile, spixel, center, pixref)     
+   contoursWCS, _            = iom.readDS9regions(regfile, spixel, center, pixref, pixelcoords=False)    
 
    rinfo =   []
    for ii,info in enumerate(contourinfos):
@@ -543,9 +551,9 @@ def readDS9relics(regfile, spixel, center, pixref, Test=False):
           alpha      = split[0]
           alpha_err  = 0
 
-       reg        =  CBclass.RelicRegion(name = info[0], cnt=[contours[ii]], cnt_WCS=[contoursWCS[ii]], rtype=int(info[1]), alpha=alpha, alphaFLAG=('false'  not in alpha.lower()), alpha_err=alpha_err)
+       reg        =  cbclass.RelicRegion(name = info[0], cnt=[contours[ii]], cnt_WCS=[contoursWCS[ii]], rtype=int(info[1]), alpha=alpha, alphaFLAG=('false'  not in alpha.lower()), alpha_err=alpha_err)
      except:
-       reg        =  CBclass.RelicRegion(name =  '',  cnt=[contours[ii]], cnt_WCS=[contoursWCS[ii]], rtype=-1, alphaFLAG=False )  
+       reg        =  cbclass.RelicRegion(name =  '',  cnt=[contours[ii]], cnt_WCS=[contoursWCS[ii]], rtype=-1, alphaFLAG=False )  
        
      if ('test'  not in info[0].lower() ) or not Test:
         rinfo.append( reg )
@@ -670,17 +678,6 @@ def PlotDistribution_FluxRatioLAS(location, ClList, RList):
     plt.savefig(location+'.pdf') 
     plt.close(fig)
   
-
-
-#def ratio_limit(F, Fmin):
-#    ''' input: 
-#        F    -  numpy array of fluxes
-#        Fmin -  minimal allowed flux 
-#        returns:
-#        numpy array of maximal allowed ratio
-#    '''
-#    return (F-Fmin)/Fmin
-#  
 
 def stats_lineregress(name, data_x, data_y, verbose = False):
     
@@ -927,7 +924,7 @@ def create_Mass_redshift2( SurveySamples, zrange,colors, markers = np.asarray(['
         # ask for the surveys model
         # nowfolder  = Survey.outfolder + '/PostProcessing/%s_%s' % ( parA(meas).dic, parB(meas).dic )   #parA(meas).name, parB(meas).name)
         nowfolder  = SurveySamples[0].outfolder + '/PostProcessing/'  
-        iout.check_mkdir(nowfolder)
+        iom.check_mkdir(nowfolder)
         print('Gonna save:  %s' % (nowfolder + nowfile))                           
         fig.savefig('%s%s_scatter.png' % (nowfolder,nowfile)) #filename
         fig.savefig('%s%s_scatter.pdf' % (nowfolder,nowfile)) #filename	    #fig.clf()
@@ -937,7 +934,7 @@ def create_Mass_redshift2( SurveySamples, zrange,colors, markers = np.asarray(['
     return 0
 
 
-def create_Test( SurveySamples, (zrange,colors,z_symbols), R200exp=False, markers = np.asarray(['.','s']), effi=[], log=[False,False], logplot=[True,True], lockedaxis=False, minrel=1):
+def create_Test( SurveySamples, symbolsism, R200exp=False, markers = np.asarray(['.','s']), effi=[], log=[False,False], logplot=[True,True], lockedaxis=False, minrel=1):
     """
     Takes as inputs;
     Surveysample - a list of galaxyclusters
@@ -947,6 +944,8 @@ def create_Test( SurveySamples, (zrange,colors,z_symbols), R200exp=False, marker
     inspired by : http://www.astrobetter.com/blog/2014/02/10/visualization-fun-with-python-2d-histogram-with-1d-histograms-on-axes/  
              and: http://matplotlib.org/examples/pylab_examples/scatter_hist.html
     """
+    
+    (zrange,colors,z_symbols) = symbolism
     
     # (r.iner_rat/(r.LAS/(r.dinfo.beam[0]/60.)))
     if len(effi)==0: effi = SurveySamples[0].Rmodel.effList
@@ -1149,7 +1148,7 @@ def create_Test( SurveySamples, (zrange,colors,z_symbols), R200exp=False, marker
             # ask for the surveys model
             # nowfolder  = Survey.outfolder + '/PostProcessing/%s_%s' % ( parA(meas).dic, parB(meas).dic )   #parA(meas).name, parB(meas).name)
             nowfolder  = SurveySamples[0].outfolder + '/PostProcessing/'  
-            iout.check_mkdir(nowfolder)
+            iom.check_mkdir(nowfolder)
             print('Gonna save:  %s' % (nowfolder + nowfile) )                          
             fig.savefig('%s%s_scatter.png' % (nowfolder,nowfile)) #filename
             fig.savefig('%s%s_scatter.pdf' % (nowfolder,nowfile)) #filename	    #fig.clf()
@@ -1169,7 +1168,7 @@ def fetchpandas(survey, plotmeasures, kwargs_FilterCluster={}, kwargs_FilterObje
         
     plotmeasures = [             
                     lambda x: x.alpha,
-                    lambda x: cdb.measurand( x.Dproj_pix()/x.GCl.R200(), 'Dproj',label='$Dproj_rel$',  un = None )
+                    lambda x: dbc.measurand( x.Dproj_pix()/x.GCl.R200(), 'Dproj',label='$Dproj_rel$',  un = None )
                     ]
     
     idmeasures: lambda x: x.alpha
@@ -1178,7 +1177,7 @@ def fetchpandas(survey, plotmeasures, kwargs_FilterCluster={}, kwargs_FilterObje
                     lambda x: x.Rho, 
                     lambda x: x.Mach,              
                     lambda x: x.T, 
-                    lambda x: cdb.measurand( -x.alpha(), 'alpha',label='$\\alpha$',  un = None ),
+                    lambda x: dbc.measurand( -x.alpha(), 'alpha',label='$\\alpha$',  un = None ),
                     lambda x: x.LLS, 
                     lambda x: x.P_rest
                     ]
@@ -1231,7 +1230,7 @@ def fetchpandas(survey, plotmeasures, kwargs_FilterCluster={}, kwargs_FilterObje
         datalist.append(datavalues)
         
 
-#                      + [GCl.M200.labels(log=False),cdb.measurand(0,'$D_\mathrm{proj}$',un='$R_{200}$').labels(log=False)]
+#                      + [GCl.M200.labels(log=False),dbc.measurand(0,'$D_\mathrm{proj}$',un='$R_{200}$').labels(log=False)]
 
     ''' Create a pandas dataframe '''
     columns =[measure(relic).labels(log=log) for measure,log in zip(plotmeasures,logs)] #\
@@ -1317,7 +1316,7 @@ def create_scattermatrix( SurveySamples, plotmeasures, suffix=''):
     # ask for the surveys model
     # nowfolder  = Survey.outfolder + '/PostProcessing/%s_%s' % ( parA(meas).dic, parB(meas).dic )   #parA(meas).name, parB(meas).name)
     nowfolder  = SurveySamples[-1].outfolder + '/PostProcessing/'  
-    iout.check_mkdir(nowfolder)
+    iom.check_mkdir(nowfolder)
     print('Gonna save:  %s' % (nowfolder + nowfile)  )                         
     plt.savefig('%s%s_scatter%s.png' % (nowfolder,nowfile,suffix),dpi=400) #filename
     plt.savefig('%s%s_scatter%s.pdf' % (nowfolder,nowfile,suffix)) #filename	    #fig.clf()

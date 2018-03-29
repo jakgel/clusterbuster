@@ -47,6 +47,7 @@ class ConstantsCGS :
 
 
 #  Units, conversion factors, and input variables
+#  Many are here for historic reasons and should eventually become swapped out
 radiounit_A  =  1                     # W/Hz        --- Unit of particle luminousity in .radio snaps, formerly 1e23 for Sebastians cubes
 Jy           =  1e-23                 # erg/s/Hz/cm^2
 Jy_SI        =  1e-26                 # W/Hz/m^2

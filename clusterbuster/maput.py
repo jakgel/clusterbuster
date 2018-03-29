@@ -1,13 +1,26 @@
-import numpy as np
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Dec 11 17:34:33 2017
+
+I am quite certain that many functionalities are replaceble by modules that already exist.
+The functionalitie sprovided here are mostly to modify numpy array maps, find contours, 
+
+@author: jakobg
+
+"""
+
+
+from __future__ import division,print_function
+
 import cv2
 import warnings
-import scipy.ndimage as ndi  #new
-import matplotlib.pyplot as plt  #old
-
-
-#=== Thanks to astropy!
+import numpy             as np
+import matplotlib.pyplot as plt 
 
 from astropy.modeling import models, fitting
+
+
 # Rotation angle in radians. The rotation angle increases !clockwise!, from the positive x-axis. Astropy 0.3
 def ImageGaussian(shape, amp, stddev, center, theta=0, FWHM=False, order=2):
 
@@ -65,6 +78,7 @@ def FitGaussian_inv(img, amp, stddev, center, theta=0, FWHM=False):
   g.x_mean  = y
   g.y_mean = x
   return g
+
 #====
 from scipy.fftpack import fft, ifft
 def FourierFilter(image):
@@ -77,9 +91,6 @@ def FourierFilter(image):
   return np.real(np.fft.fft2(filtered))
 
 
-
-
-#import np ... cv2
  
 def is_contour_bad(c):
      # approximate the contour
@@ -183,71 +194,69 @@ def GetThreshContours(image, thresh, contourMask=[]):
 
   
 def PCA_analysis (image, upscale, cutoff, minArea, contourMask = [], Imcenter=[-1,-1]):
-  
+    ''' This was an experiment for the analysisi of X-ray maps. '''
 
-   #=== Setting up the params for the blob detection 
-    
-    ## Way I: Simple thresholding
-    
 
-        #=== Define Image parameters
-   if Imcenter[0] == -1:
-      Imcenter = [image.shape[0]/2,image.shape[1]/2]
+
+    #=== Define Image parameters
+    if Imcenter[0] == -1:
+        Imcenter = [image.shape[0]/2,image.shape[1]/2]
 
         
-   (contours, hierarchy)  = GetThreshContours(image, cutoff, upscale, contourMask)   
-   while len(contours) == 0 or np.contourArea(sorted(contours, key=lambda cnt: np.contourArea(cnt), reverse=True)[0]) < minArea:
-       print 'No larger area above threshhold identified, Cutoff reduced by a factor of 0.8!'
-       cutoff                = 0.8*cutoff
-       (contours, hierarchy)  = GetThreshContours(image, cutoff, upscale, contourMask)   
-   cnt = sorted(contours, key=lambda cnt: np.contourArea(cnt), reverse=True)[0]
-   M = np.moments(cnt)
+    (contours, hierarchy)  = GetThreshContours(image, cutoff, upscale, contourMask)   
+    while len(contours) == 0 or np.contourArea(sorted(contours, key=lambda cnt: np.contourArea(cnt), reverse=True)[0]) < minArea:
+        print('No larger area above threshhold identified. Cutoff reduced by a factor of 0.8!')
+        cutoff                = 0.8*cutoff
+        (contours, hierarchy)  = GetThreshContours(image, cutoff, upscale, contourMask)   
+    cnt = sorted(contours, key=lambda cnt: np.contourArea(cnt), reverse=True)[0]
+    M = np.moments(cnt)
 
-   if cnt.shape[0] < 2 :
-      print 'Contour of less than three point identified:', cnt, '. It will not be further considered.'
-      return None
-   if M['m00']    != 0 :
-      cx = int(M['m10']/M['m00'])
-      cy = int(M['m01']/M['m00'])
+    if cnt.shape[0] < 2 :
+        print('Contour of less than three point identified:', cnt, '. It will not be further considered.')
+        return 
+    if M['m00']    != 0 :
+        cx = int(M['m10']/M['m00'])
+        cy = int(M['m01']/M['m00'])
 
-      # Miimal enclosing circle
-      (x,y),radius = np.minEnclosingCircle(cnt)
-      center = (x,y)
+        # Miimal enclosing circle
+        (x,y),radius = np.minEnclosingCircle(cnt)
+        center = (x,y)
 	
-      # Fitting an ellipse
-      if cnt.shape[0] > 4:
-	  ellipse = np.fitEllipse(cnt)
-	  a =  ellipse[1][1]
-	  b =  ellipse[1][0]
-      else:
-	  a = 0
-	  b = 0
+        # Fitting an ellipse
+    if cnt.shape[0] > 4:
+        ellipse = np.fitEllipse(cnt)
+        a =  ellipse[1][1]
+        b =  ellipse[1][0]
+    else:
+        a = 0
+        b = 0
 
-      # mask image, so that every value is set to zero
-      mask    = np.zeros(image.shape[:2], dtype="uint8") 
-      np.drawContours(mask, [cnt], -1, 1, -1)
-      region  = np.multiply(image,mask)  
-      region[np.isnan(region)] = 0     #For contour masked  NVSS images I encountered the isue that some values where nan
+        # mask image, so that every value is set to zero
+        mask    = np.zeros(image.shape[:2], dtype="uint8") 
+        np.drawContours(mask, [cnt], -1, 1, -1)
+        region  = np.multiply(image,mask)  
+        region[np.isnan(region)] = 0     #For contour masked  NVSS images I encountered the isue that some values where nan
 	  
-      PCA_histo = np.where(region > cutoff/upscale )   #
-      PCA_array = np.column_stack((PCA_histo[0],PCA_histo[1],image[PCA_histo]))    #np.hstack( (PCA_histo, image[PCA_histo]) )
-      PCA_array_b = np.column_stack((PCA_histo[0],PCA_histo[1]))
+        PCA_histo = np.where(region > cutoff/upscale )   #
+        PCA_array = np.column_stack((PCA_histo[0],PCA_histo[1],image[PCA_histo]))    #np.hstack( (PCA_histo, image[PCA_histo]) )
+        PCA_array_b = np.column_stack((PCA_histo[0],PCA_histo[1]))
           
   
-      # compute flux and luminosity weighted coordinaetes/distance to cluster center
-      flux       = np.sum(region)
+        # compute flux and luminosity weighted coordinaetes/distance to cluster center
+        flux       = np.sum(region)
       
-      xmean    = np.average( PCA_array_b[:,0], weights = image[PCA_histo])
-      ymean    = np.average( PCA_array_b[:,1], weights = image[PCA_histo])
-      #mean   = np.mean(PCA_array, axis=0  )  
+        xmean    = np.average( PCA_array_b[:,0], weights = image[PCA_histo])
+        ymean    = np.average( PCA_array_b[:,1], weights = image[PCA_histo])
+        #mean   = np.mean(PCA_array, axis=0  )  
 
-      plt.imshow(np.log10(region+0.2*image+1e-9))
-      plt.show()
+        plt.imshow(np.log10(region+0.2*image+1e-9))
+        plt.show()
 
 
-# Based on the concept of Image moment (inckuding raw moemnts,  and central moments)
+''' Based on the concept of Image moment (inckuding raw moemnts,  and central moments)
 #===== from http://stackoverflow.com/questions/9005659/compute-eigenvectors-of-image-in-python/9007249#9007249
 #=====    & http://stackoverflow.com/questions/5869891/how-to-calculate-the-axis-of-orientation
+'''
 def raw_moment(data, iord, jord):
     nrows, ncols = data.shape
     y, x = np.mgrid[:nrows, :ncols]
@@ -278,60 +287,59 @@ def inertial_axis(data):
     
 
       
-def plot_subplot(paw, ax, center, cov):
-    ax.imshow(paw)
-    plot_bars(center[0], center[1], cov, ax) #plot_bars_simple(x_bar, y_bar, angle, ax) 
-
-    return
+#def plot_subplot(paw, ax, center, cov):
+#    ax.imshow(paw)
+#    plot_bars(center[0], center[1], cov, ax) #plot_bars_simple(x_bar, y_bar, angle, ax) 
+#
+#    return
 
 #from astropy.nddata import Cutout2D
-from astropy.nddata.utils import extract_array
-def plot(images, size=False, center=False):
-      
-    fig1     = plt.figure()
-    ax1      = fig1.add_subplot(1,1,1)
-    paw = images #.sum(axis=2)
-    x_bar, y_bar, cov, angle = inertial_axis(paw)
-    if not center:
-      center =   (y_bar, x_bar)
-    if size:       
-        #cutout     = Cutout2D(paw, center, size)
-        #paw   = cutout.data
-        #center     = cutout.position_cutout
-
-        paw  =  extract_array(paw, size, center)
-        center    =  ( int(paw.shape[1]/2),int(paw.shape[0]/2) )
-    plot_subplot(paw, ax1, center, cov)
-    
-
-    fig1.suptitle('Original')
+#from astropy.nddata.utils import extract_array
+#def plot(images, size=False, center=False):
+#      
+#    fig1     = plt.figure()
+#    ax1      = fig1.add_subplot(1,1,1)
+#    paw = images #.sum(axis=2)
+#    x_bar, y_bar, cov, angle = inertial_axis(paw)
+#    if not center:
+#      center =   (y_bar, x_bar)
+#    if size:       
+#        #cutout     = Cutout2D(paw, center, size)
+#        #paw   = cutout.data
+#        #center     = cutout.position_cutout
+#
+#        paw  =  extract_array(paw, size, center)
+#        center    =  ( int(paw.shape[1]/2),int(paw.shape[0]/2) )
+#    plot_subplot(paw, ax1, center, cov)
+#    
+#
+#    fig1.suptitle('Original')
     #fig2.suptitle('Rotated')
 
-def plot_bars(x_bar, y_bar, cov, ax):
-    """Plot bars with a length of 2 stddev along the principal axes."""
-    def make_lines(eigvals, eigvecs, mean, i):
-        """Make lines a length of 2 stddev."""
-        std = np.sqrt(eigvals[i])
-        vec = 2 * std * eigvecs[:,i] / np.hypot(*eigvecs[:,i])
-        x, y = np.vstack((mean-vec, mean, mean+vec)).T
-        return x, y
-    mean = np.array([x_bar, y_bar])
-    eigvals, eigvecs = np.linalg.eigh(cov)
-    ax.plot(*make_lines(eigvals, eigvecs, mean, 0), marker='o', color='white')
-    ax.plot(*make_lines(eigvals, eigvecs, mean, -1), marker='o', color='red')
-    ax.axis('image')
-    
-    
-def plot_bars_simple(x_bar, y_bar, angle, ax):
-    def plot_bar(r, x_bar, y_bar, angle, ax, pattern):
-        dx = r * np.cos(angle)
-        dy = r * np.sin(angle)
-        ax.plot([x_bar - dx, x_bar, x_bar + dx], 
-                [y_bar - dy, y_bar, y_bar + dy], pattern)
-    plot_bar(3, x_bar, y_bar, angle + np.radians(90), ax, 'wo-')
-    plot_bar(9, x_bar, y_bar, angle, ax, 'ro-')
-    ax.axis('image')
-
+#def plot_bars(x_bar, y_bar, cov, ax):
+#    """Plot bars with a length of 2 stddev along the principal axes."""
+#    def make_lines(eigvals, eigvecs, mean, i):
+#        """Make lines a length of 2 stddev."""
+#        std = np.sqrt(eigvals[i])
+#        vec = 2 * std * eigvecs[:,i] / np.hypot(*eigvecs[:,i])
+#        x, y = np.vstack((mean-vec, mean, mean+vec)).T
+#        return x, y
+#    mean = np.array([x_bar, y_bar])
+#    eigvals, eigvecs = np.linalg.eigh(cov)
+#    ax.plot(*make_lines(eigvals, eigvecs, mean, 0), marker='o', color='white')
+#    ax.plot(*make_lines(eigvals, eigvecs, mean, -1), marker='o', color='red')
+#    ax.axis('image')
+#    
+#    
+#def plot_bars_simple(x_bar, y_bar, angle, ax):
+#    def plot_bar(r, x_bar, y_bar, angle, ax, pattern):
+#        dx = r * np.cos(angle)
+#        dy = r * np.sin(angle)
+#        ax.plot([x_bar - dx, x_bar, x_bar + dx], 
+#                [y_bar - dy, y_bar, y_bar + dy], pattern)
+#    plot_bar(3, x_bar, y_bar, angle + np.radians(90), ax, 'wo-')
+#    plot_bar(9, x_bar, y_bar, angle, ax, 'ro-')
+#    ax.axis('image')
 
 
 def normalize_image(image, smin=0, smax=1, valmax=0):
@@ -352,62 +360,3 @@ def padwithtens(vector, pad_width, iaxis, kwargs):
     vector[:pad_width[0]]  = 0
     vector[-pad_width[1]:] = 0
     return vector
-
-#===== import end  
-  
-  
-##============ Old but maybe usefull stuff  
-  
-  
-    ##=== Setting up the params for the blob detection 
-    
-    ## Setup SimpleBlobDetector parameters.
-    #params = np.SimpleBlobDetector_Params()
-
-    ## Change thresholds
-    #params.minThreshold = 20;
-    ##params.maxThreshold = 255;
-
-    ## Filter by Area.
-    #params.filterByArea = True
-    #params.minArea = 15
-
-    ## Filter by Circularity
-    #params.filterByCircularity = False
-    #params.minCircularity = 0.1
-
-    ### Filter by Convexity
-    ##params.filterByConvexity = True
-    ##params.minConvexity = 0.67
-
-    ### Filter by Inertia
-    ##params.filterByInertia = True
-    ##params.minInertiaRatio = 0.01
-
-
-    ##=== Create a detector with the parameters
-    #ver = (np.__version__).split('.')
-    #if int(ver[0]) < 3 :
-        #detector = np.SimpleBlobDetector(params)
-    #else : 
-        #detector = np.SimpleBlobDetector_create(params)
-  
-  
-      ##=== Make the image np readable
-    #img = ( np.clip( upscale*image, 0, 255) ).astype(np.uint8)  
-
-    ##=== Define Image parameters
-    #Imcenter = [img.shape[0]/2,img.shape[1]/2]
-
-    ###=== Way I: simple BlobDetection by CV2
-    ### Detect blobs.
-    ##if 1 in way:
-      ##img2 = (255-img)
-      ##keypoints = detector.detect(im2)
-
-      ### Draw detected blobs as red circles. # np.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS ensures the size of the circle corresponds to the size of blob
-      ##im_with_keypoints = np.drawKeypoints(img, keypoints, np.array([]), (0,0,255), np.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-      
-      ##print len(keypoints), keypoints
-      ##np.imshow("Keypoints", im_with_keypoints)
-      ##np.waitKey(0) #& 0xFF

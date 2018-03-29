@@ -11,8 +11,9 @@ import cv2
 from   scipy import ndimage                # used to compute the centroid
 
 #print '###==== Step 1: Loading .py subroutines====###'
-import clusterbuster.ObjectClasses as CBclass
-import clusterbuster.NPimageutil   as pyNPi
+#import clusterbuster.ObjectClasses as CBclass
+import clusterbuster.surveyclasses  as cbclass                
+import clusterbuster.maput          as maput
 
 def RelicExtraction(image, sradio, z, contourMask = [], Imcenter=False, GCl=False, dinfo=False, rinfo= False, faintexcl=False, subtracted=False, term=False, eff=1, cnt_minlength=5, HistoH=0):
   
@@ -25,27 +26,27 @@ def RelicExtraction(image, sradio, z, contourMask = [], Imcenter=False, GCl=Fals
     
     
     if not GCl:
-       GCl      = CBclass.Galaxycluster('NoName', 0, 0, z)
+       GCl      = cbclass.Galaxycluster('NoName', 0, 0, z)
     if not dinfo: #If no detection info specified, create a default one
-       dinfo    = CBclass.DetInfo()
+       dinfo    = cbclass.DetInfo()
     if not rinfo: #If no relic region is specified, create a default one
-       rinfo    = CBclass.RelicRegion(name='', cnt=contourMask, rtype=-1, alpha=1.2)
+       rinfo    = cbclass.RelicRegion(name='', cnt=contourMask, rtype=-1, alpha=1.2)
     if not Imcenter:
       Imcenter = [ [0,0], [image.shape[0]/2,image.shape[1]/2] ]  # [ [Astronomical Coords], [Pixelcoords] ]
         
   
-    if term: print '###==== Sub-Step X.1: Executing RelicExtraction(2d-numpy array) ====###' 
+    if term: print('###==== Sub-Step X.1: Executing RelicExtraction(2d-numpy array) ====###')
     #=== Define Image parameters
     relics  = []
 
 
     ## Way I of extracting relics: Relic detection by simple thresholding
-    (contours, hierarchy)  = pyNPi.GetThreshContours(image, dinfo.limit, rinfo.cnt)   
+    (contours, hierarchy)  = maput.GetThreshContours(image, dinfo.limit, rinfo.cnt)   
     
     
     #img = removingcontours(img)   
     for jj,cnt in enumerate(contours): 
-      if term: print '%6i out of %6i: len(cnt)=%6i' % (jj+1, len(contours), len(cnt) )
+      if term: print('%6i out of %6i: len(cnt)=%6i' % ( jj+1, len(contours), len(cnt) ))
       M = cv2.moments(cnt)
       if cnt.shape[0] < cnt_minlength or M['m00'] == 0 : # cnt >= 3 needed for moment analysis & cnt >= 5 for ellipse fitting
           #print 'Contour of', len(cnt), 'ergo less than', cnt_minlength, 'points identified. It will not be considered further.'
@@ -58,7 +59,7 @@ def RelicExtraction(image, sradio, z, contourMask = [], Imcenter=False, GCl=Fals
         (x,y),radius = cv2.minEnclosingCircle(cnt)
         
         # mask image, so that every value outside of the contour is set to zero
-        region =  pyNPi.ContourMasking(image,[cnt])
+        region =  maput.ContourMasking(image,[cnt])
 
         # compute flux and luminosity weighted coordinaetes/distance to cluster center
         flux             = 1e3*np.sum(region)/dinfo.Abeam[0] #in mJy
@@ -68,7 +69,7 @@ def RelicExtraction(image, sradio, z, contourMask = [], Imcenter=False, GCl=Fals
             continue;
 	
         try:
-            subregion = pyNPi.ContourMasking(subtracted,[cnt])
+            subregion = maput.ContourMasking(subtracted,[cnt])
             flux_ps   = 1e3*np.sum(subregion)/dinfo.Abeam[0]
         except:
             flux_ps   = 0
@@ -76,7 +77,7 @@ def RelicExtraction(image, sradio, z, contourMask = [], Imcenter=False, GCl=Fals
         centroid         = ndimage.measurements.center_of_mass(region) 
         
         # compute moment of inertia and gaussian fit
-        cov, theta_iner  = pyNPi.inertial_axis(region)[2:4]
+        cov, theta_iner  = maput.inertial_axis(region)[2:4]
 
         
         Dec         = Imcenter[0][1] + (centroid[0]-Imcenter[1][1])*dinfo.spixel/3600
@@ -113,7 +114,7 @@ def RelicExtraction(image, sradio, z, contourMask = [], Imcenter=False, GCl=Fals
 
 #            d['mynewkey'] = 'mynewvalue'
             
-        relic       = CBclass.Relic(rinfo, dinfo, RA, Dec, LAS, area, GCl=GCl, alpha=rinfo.alpha, alphaFLAG=rinfo.alphaFLAG, theta_elong=theta_elong, 
+        relic       = cbclass.Relic(rinfo, dinfo, RA, Dec, LAS, area, GCl=GCl, alpha=rinfo.alpha, alphaFLAG=rinfo.alphaFLAG, theta_elong=theta_elong, 
                                     cov=cov, cnt=cnt, F=flux, F_ps=flux_ps, Dproj_pix = Dproj_pix, eff=eff, 
                                     sparseD=sparseD, sparseW=sparseW, sparseA=sparseA, pmask=rel)
         relics.append( relic  )

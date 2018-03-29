@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Created on Mon Dec 11 17:34:32 2017
@@ -6,8 +6,8 @@ Created on Mon Dec 11 17:34:32 2017
 @author: jakobg
 """
 
-#import matplotlib.patches               as patches
 from __future__ import division,print_function
+
 import numpy as np
 
 class entry:

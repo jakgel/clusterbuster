@@ -267,10 +267,14 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB, delal=True, verbose=False, stoch
                     line = "%8.5f %8.5f %8.5f" % (A, B, C) 
                 else: #DEBUGGING purposses
                     line = "None None None"
-                line += ' %+.4e %+.4e %+.4e' % (eff, Rm.B0, Rm.kappa) + ' %+.4e %+.4e %+.4e %+.4e\n' % (Rm.p0, Rm.p_sigma, Rm.sigmoid_0, Rm.sigmoid_width)
+                    
+                if isinstance(Rmodel, CBclass.PreModel_Hoeft):
+                    line += ' %+.4e %+.4e %+.4e' % (eff, Rm.B0, Rm.kappa) + ' %+.4e %+.4e %+.4e %+.4e\n' % (Rm.p0, Rm.p_sigma, Rm.sigmoid_0, Rm.sigmoid_width)
+                if isinstance(Rmodel, CBclass.PreModel_Gelszinnis):
+                    line += ' %+.4e %+.4e %+.4e' % (eff, Rm.B0, Rm.kappa) + ' %+.4e %+.4e %+.4e %+.4e\n' % (Rm.p0, Rm.p_sigma, Rm.sigmoid_0, Rm.sigmoid_width)
                 f.write(line)
             
-
+        if isinstance(Rmodel, CBclass.PreModel_Hoeft):
     return [A,B,C]
 
 

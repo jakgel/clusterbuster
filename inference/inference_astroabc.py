@@ -209,7 +209,10 @@ def plot_chain2D_new(prior, A, walkers, steps, extent = (-0.5,0.5,-1.0,2.0), out
     return 0
 
 
-        
+
+
+
+      
 
 def main_MUSIC_2(newrun=True):
     ''' Runs astroABC on MUSIC-2 vs NVSS'''
@@ -227,7 +230,7 @@ def main_MUSIC_2(newrun=True):
         Ndim     = 3
         mu_lgeff, mu_lgB0  = -5.0 , -0.5  #-6.0,-0.5 with less sky coverage
         means    = [mu_lgeff, mu_lgB0]
-        COV      = [[0.8, -0.5], [-0.5, 0.8]]
+        COV      = [[0.8, -0.5],[-0.5, 0.8]]
 
 
 
@@ -244,12 +247,31 @@ def main_MUSIC_2(newrun=True):
         priors = [('nonstandard', ["output_",1,0]),('nonstandard', ["output_",1,1]), ("uniform",[0,1.0])]  #('uniform', [value_1,value_2]), 
     
     
-        '''  This is the pre-existing electron part '''
+        '''  This is the pre-existing electron part Gelszinnis_Model '''
 #        N_pre    = 4 
 #        Ndim    += N_pre
 #        priors  += [("normal",[-4,2]),("uniform",[0,1.0]),("normal",[-4,2]),("uniform",[0.3,2.0])] #lgp0, p_sigma, lgsigmoid_0, sigmoid_width)
         outfile = folder+"abc_pmc_output_run_05_"+str(Ndim)+"param.txt"
         
+                                                     
+        '''  This is the pre-existing electron part Hoeft_Model 
+        
+        I had to made a decicion about some values, so I tried to fix ...
+        B0,kappa,eff
+        t0,t1    = 0.1,5 --> varying   ---> get these values as logarithmic values? better not
+        Also fix t0 as 10% of t1, because if not, you could get an odd correlation ...
+        
+        ratio    = 0.05 --> varying
+        nu1,nu2  = 1e-6,1e-2
+        
+        
+        Metric: Add mach number and maybe the disance of the mean of the othe rcorrelations?
+           ---> Somehow like the entropy of the correlation matrix ? ...
+           ---> Prewhiten The data (zero, mean, standard etc. for NVSS)
+           ---> Transform the simulated data in the saem frame and measure the distance**2 along PCA1,PCA2,PCA3 as metrices etc, ...
+           --> This wont work, because data with zero scatter would be good. 
+           --> Better take the 
+        '''
 
     #
         prop={'tol_type':'exp',"verbose":1,'adapt_t':True,

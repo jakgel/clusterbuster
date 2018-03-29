@@ -26,18 +26,15 @@ import pandas as pd
 
     
 print( '###==== Step 0a: Executing self written .py subroutines ====###' )
-import clusterbuster.RelicExtraction           as relex
-import clusterbuster.ObjectClasses             as CBclass
-import clusterbuster.Custom_DatabaseClasses    as cdb 
-import clusterbuster.IOutil                    as iout
-import clusterbuster.IOutil_survey             as ioclass
-import clusterbuster.NPimageutil               as npim
-import clusterbuster.FITSutil                  as FITSut
+import clusterbuster.surveyclasses     as cbclass                
+import clusterbuster.sourceextraction  as relex
+import clusterbuster.dbclasses         as cdb 
+import clusterbuster.iout.misc         as iom
+import clusterbuster.iout.survey       as ioclass
+import clusterbuster.maput             as maput
+import clusterbuster.fitsut            as fitsut
 
-
-
-
-
+                
 def updateClusters_missingRegions(ClList,AddList):
     ''' This adds relic regions based on a .csv file to the cluster List 
     It is a workaround to have a fast update of the already existing datafiles with the soon to be standard file system,
@@ -86,7 +83,7 @@ def updateClusters_missingRegions(ClList,AddList):
                     alpha_err =  0  #row['Alpha_error']
                     alphaFLAG =  False
                     candidate =  (row['FLAG_conf'] != True)
-                    region = CBclass.RelicRegion( name = row['Identifier'], cnt=[], rtype=rtype, alpha=alpha, alpha_err=alpha_err, 
+                    region = cbclass.RelicRegion( name = row['Identifier'], cnt=[], rtype=rtype, alpha=alpha, alpha_err=alpha_err, 
                                                   alphaFLAG=alphaFLAG, candidate=candidate)
                                                  
                                                #  row['Cluster'] +  row['Identifier']     
@@ -101,7 +98,7 @@ def updateClusters_missingRegions(ClList,AddList):
                     GCl.add_regions([region])
     return ClList
 
-def Extract_Surveyrelics(surveys, plot=True):
+def runsurvey(surveys, plot=True):
   
     ''' Extracts survey relics from an real world survey '''
     for survey in surveys:
@@ -112,11 +109,11 @@ def Extract_Surveyrelics(surveys, plot=True):
         relics   = []
         subtract    = ['slist','fits'] # im, fits, slist
 
-        smt      = iout.SmartTiming()
+        smt      = iom.SmartTiming()
         Jy_SI    = 1e-26    # W/Hz/m^2
         outfolder = '/data/ClusterBuster-Output/%s' % (survey)
         topfolder = os.getcwd() # '/home/jakobg/lib/ClusterBuster/Relics_Surveys/'
-        iout.check_mkdir(outfolder)  # create folder if necesairy
+        iom.check_mkdir(outfolder)  # create folder if necesairy
 
         print( '###==== Step 1: Load data and anaylise it   ====###' )
         # np.genfromtxt('Analysis_RORRS/ClusterRelics.csv'', delimiter=';')
@@ -128,7 +125,7 @@ def Extract_Surveyrelics(surveys, plot=True):
         
         Clusters.where(Clusters.notnull(), 0)
         
-        ''' Part of development: rpelace nan values with values that can be handled by clsutebruster '''
+        ''' Part of development: rpelace nan values with values that can be handled by clustebruster '''
         
         for strings in ['REF_LX','REF_M200','REF_M500','REF_F']:
             Clusters[strings] = Clusters[strings].replace(np.nan, '', regex=True)
@@ -141,8 +138,14 @@ def Extract_Surveyrelics(surveys, plot=True):
 #        Clusters.fillna(value=nan, inplace=True) 
 
         n= 0
-        for index, CL  in Clusters.iterrows():
+        for index, CL in Clusters.iterrows():
             if CL['Cluster'] and  CL['Cluster'] not in [o.name for o in ClList] and CL['Cluster'] not in ['']: 
+                try:
+                    '''I did this to remove unfinished, but recent additions to the relic database'''
+                    if int(CL['Discovery']) >= 2018:
+                        continue
+                except:
+                    pass
                 
                 n += 1
 #                if n > 5:
@@ -180,7 +183,7 @@ def Extract_Surveyrelics(surveys, plot=True):
                   ClassFlag = False    
                   
                 #create Class object
-                GCl     = CBclass.Galaxycluster(name=Cl_name, RA=RA_host, Dec=Dec_host, z=z, M200=M200, M500=M500, Lx=Lx, Lx_lit=Lx, flux_lit=flux_lit, ClassFlag=ClassFlag, halo=halo, status=status)
+                GCl     = cbclass.Galaxycluster(name=Cl_name, RA=RA_host, Dec=Dec_host, z=z, M200=M200, M500=M500, Lx=Lx, Lx_lit=Lx, flux_lit=flux_lit, ClassFlag=ClassFlag, halo=halo, status=status)
 
                 # add further references
                 GCl.Lx      .ref = cdb.reference(CL['REF_LX'  ], rtype='text', page=None              , nr=None)
@@ -194,7 +197,7 @@ def Extract_Surveyrelics(surveys, plot=True):
                     ClList.append(GCl)
                     continue
                 fitsimage = 'Images_%s/%s-%s.fits' % (survey, survey, Cl_name)
-                image, center, spixel = FITSut.FITS2numpy(fitsimage)
+                image, center, spixel = fitsut.fits2numpy(fitsimage)
                 
                 
                 if survey == 'NVSS':
@@ -204,7 +207,7 @@ def Extract_Surveyrelics(surveys, plot=True):
                         NVSSlimit  = 2*NVSS_rms 
                         NVSSnu     = 1.4
                         telescope  = 'VLA-D'
-                        GCl.dinfo  = CBclass.DetInfo(beam= [NVSSbeam[0], NVSSbeam[0], 0],  
+                        GCl.dinfo  = cbclass.DetInfo(beam= [NVSSbeam[0], NVSSbeam[0], 0],  
                                                      spixel=s_pixel[1], rms=NVSS_rms, 
                                                      limit=NVSSlimit, telescope=telescope, 
                                                      nucen = NVSSnu, center=center[0], pcenter=center[1])
@@ -216,7 +219,7 @@ def Extract_Surveyrelics(surveys, plot=True):
                         beamrec    = 1. if GCl.Dec>19 else 1. / np.cos( np.radians(GCl.Dec - 19 ) ) 
                         TGSSnu     = 0.1475
                         telescope  = 'GMRT'
-                        GCl.dinfo  = CBclass.DetInfo(beam= [TGSSbeam[0]*beamrec, TGSSbeam[0], 0],  
+                        GCl.dinfo  = cbclass.DetInfo(beam= [TGSSbeam[0]*beamrec, TGSSbeam[0], 0],  
                                                      spixel=s_pixel[1], rms=TGSS_rms, 
                                                      limit=TGSSlimit, telescope=telescope, 
                                                      nucen = TGSSnu, center=center[0], pcenter=center[1])
@@ -248,7 +251,7 @@ def Extract_Surveyrelics(surveys, plot=True):
                     slist =  'Sources/slist/%s.slist' % (Cl_name)
                     if os.path.isfile(slist):
                     #if 1==1:
-                      scL = iout.read_para_list( slist )
+                      scL = iom.read_para_list( slist )
 
                       # Either Add up sources
                       for sc in scL:
@@ -258,11 +261,11 @@ def Extract_Surveyrelics(surveys, plot=True):
                          else:
                              g_size      = [GCl.dinfo.beam[0]/GCl.dinfo.spixel,GCl.dinfo.beam[1]/GCl.dinfo.spixel] 
                          freq_factor = (GCl.dinfo.nucen/1.4)**(-0.7)
-                         COOp = iout.CoordinateToPixel(iout.J2000ToCoordinate(sc['dir']), spixel, center[0], center[1]) 
+                         COOp = iom.CoordinateToPixel(iom.J2000ToCoordinate(sc['dir']), spixel, center[0], center[1]) 
                          
                          #This is not good --> better create an unconcolved model and convolve it with the desired beam
-                         model       +=  npim.ImageGaussian_inv(model     .shape, sc['flux']*1e-3*freq_factor, g_size, [COOp[0]-1.,COOp[1]-1], theta = sc['theta'], FWHM=True)  #*gaussian_area
-                         #model_conv  +=  npim.ImageGaussian_inv(model_conv.shape, sc['flux']*1e-3*freq_factor, g_size, [COOp[0]-1.,COOp[1]-1], theta = sc['theta'], FWHM=True)  #*gaussian_area
+                         model       +=  maput.ImageGaussian_inv(model     .shape, sc['flux']*1e-3*freq_factor, g_size, [COOp[0]-1.,COOp[1]-1], theta = sc['theta'], FWHM=True)  #*gaussian_area
+                         #model_conv  +=  maput.ImageGaussian_inv(model_conv.shape, sc['flux']*1e-3*freq_factor, g_size, [COOp[0]-1.,COOp[1]-1], theta = sc['theta'], FWHM=True)  #*gaussian_area
                       model_conv = model   
                       use_list  = True
 #                    except:
@@ -286,16 +289,16 @@ def Extract_Surveyrelics(surveys, plot=True):
                         #from astropy.utils.data import get_pkg_data_filename
     
                         hdu1 = fits.open(fitsimage)[0]
-                        image_2, center_2, spixel_2 = FITSut.FITS2numpy(highres_image)
+                        image_2, center_2, spixel_2 = fitsut.fits2numpy(highres_image)
                         s_pixel_2    = [spixel_2[1]*GCl.cosmoPS*3600,spixel_2[1]*3600]  
-                        FITSut.numpy2FITS ( image_2 ,  'Images_%s/%s-%s_test.fits' % ("FIRST", "FIRST", Cl_name), s_pixel_2[1], center_2[0], center_2[1]) 
+                        fitsut.numpy2fits ( image_2 ,  'Images_%s/%s-%s_test.fits' % ("FIRST", "FIRST", Cl_name), s_pixel_2[1], center_2[0], center_2[1]) 
                         hdu2 = fits.open('Images_%s/%s-%s_test.fits' % ("FIRST", "FIRST", Cl_name))[0]      
                         hdu2.data = hdu2.data.squeeze()
                         hdu2.data[np.isnan(hdu2.data)]      = 0.     # For contour masked  NVSS images I encountered the isue that some values where nan
                         hdu2.data[np.where(hdu2.data<6e-4)] = 0.
                                   
                         pad = 50
-                        hdu2.data = np.lib.pad(hdu2.data, pad, npim.padwithtens)         
+                        hdu2.data = np.lib.pad(hdu2.data, pad, maput.padwithtens)         
                         
                         FWHM2sigma     =  1/2.354 
                         FWHM_FIRST     =  5.4
@@ -324,7 +327,6 @@ def Extract_Surveyrelics(surveys, plot=True):
 #                        hdu2 = fits.open(get_pkg_data_filename('galactic_center/gc_msx_e.fits'))[0]
 ###                      
                         for hdu in [hdu1,hdu2_conv]:
-                            print('GRRRRRRRR')
                             print(hdu.header)
                             try:
                                 hdu.data = hdu1.data[0,0,:,:]
@@ -350,7 +352,7 @@ def Extract_Surveyrelics(surveys, plot=True):
                             hdu.header['EQUINOX']   = 3e3
                             print('====================') 
                             
-                        FITSut.numpy2FITS ( hdu2_conv.data.squeeze(),  'Images_%s/%s-%s_test2.fits' % ("FIRST", "FIRST", Cl_name), s_pixel_2[1], center_2[0], [c+pad for c in center_2[1]])  
+                        fitsut.numpy2fits ( hdu2_conv.data.squeeze(),  'Images_%s/%s-%s_test2.fits' % ("FIRST", "FIRST", Cl_name), s_pixel_2[1], center_2[0], [c+pad for c in center_2[1]])  
 
 
                         print( 'WCS(hdu1.header).wcs.naxis, WCS(hdu2.header).wcs.naxis', WCS(hdu1.header).wcs.naxis, WCS(hdu2_conv.header).wcs.naxis )
@@ -361,27 +363,11 @@ def Extract_Surveyrelics(surveys, plot=True):
 #                        array, footprint = reproject_exact(hdu2_conv, hdu1.header) #does not solve the problem                      
                         print('_______', np.sum(array), footprint)
                        
-                        '''============'''
-                        from astropy.wcs import WCS
-                        import matplotlib.pyplot as plt
 
-                        ax1 = plt.subplot(1,2,1, projection=WCS(hdu1.header))
-                        ax1.imshow(hdu1.data, origin='lower', vmin=-100., vmax=2000.)
-                        ax1.coords.grid(color='white')
-                        ax1.coords['ra'].set_axislabel('Right Ascension')
-                        ax1.coords['dec'].set_axislabel('Declination')
-                        ax1.set_title('A')
-                        
-                        ax2 = plt.subplot(1,2,2, projection=WCS(hdu1.header))
-                        ax2.imshow(array, origin='lower', vmin=-2.e-4, vmax=5.e-4) #hdu2_conv.data
-                        ax2.coords.grid(color='white')
-                        ax2.set_title('B')
-                        plt.show()
-                        '''============'''
                         print('_______________________________', array.shape, image.shape)  
                         array                          = array.squeeze() #could be removed
 
-                        FITSut.Map2FITS(array , GCl.dinfo, 'Images_%s/%s-%s_test3.fits' % ("FIRST", "FIRST", Cl_name))    
+                        fitsut.map2fits(array , GCl.dinfo, 'Images_%s/%s-%s_test3.fits' % ("FIRST", "FIRST", Cl_name))    
                         squeezed = array.squeeze() #could be removed
                         squeezed[np.isnan(squeezed)]      = 0.
                         print( 'fits_subtraction: np.sum(squeezed):', np.sum(squeezed), ', np.sum(array.squeeze()):', np.sum(array.squeeze()) )
@@ -393,11 +379,9 @@ def Extract_Surveyrelics(surveys, plot=True):
 
                 residuum  = image-model_conv
 
-                ''' Development: Only get the flux within the search region '''
-                
-                import clusterbuster.NPimageutil as pyNPi
+                ''' Development: Only get the flux within the search region '''       
                 extreme_res =  True
-                residuum =  pyNPi.ContourMasking(residuum,[region.cnt[0] for region in GCl.regions])
+                residuum =  maput.ContourMasking(residuum,[region.cnt[0] for region in GCl.regions])
                 
 
                 
@@ -443,7 +427,7 @@ def Extract_Surveyrelics(surveys, plot=True):
             for ex in Excluded:
                 mf.write(ex + '\n')
                  
-        ClList = sorted(ClList, key= iout.Object_natural_keys )  
+        ClList = sorted(ClList, key= iom.Object_natural_keys )  
 
     
         print('#=====  Last Step: Output is produced ====#'); smt(task='output') 
@@ -453,7 +437,7 @@ def Extract_Surveyrelics(surveys, plot=True):
         
 
         print( '#=====  A: Pickle Objects ====#' )
-        iout.pickleObject(ClList, outfolder+'pickled/', 'ClList')
+        iom.pickleObject(ClList, outfolder+'pickled/', 'ClList')
         
         print( '#=====  B: Create the Survey and pickle it ====#' )
         cnt_levels = [9e-4,1.8e-3,3.6e-3,7.2e-3,1.44e-2]
@@ -503,11 +487,11 @@ def Extract_Surveyrelics(surveys, plot=True):
             
         norm = cdb.norm('R200',Nexp=1)
         Histo      = cdb.Histogram2D(nbins=(64,46), fromto= [[0,2.*np.pi],[0,1.5]], norm=norm )     # angle_projected(rad), D_proj(R200) 
-        Survey         = CBclass.Survey(ClList, survey, cnt_levels = cnt_levels, synonyms=synonyms, dinfo=GCl.dinfo, mainhist=Histo, surshort=survey)  # 'NVSS' should be replaced with a real survey class
+        Survey         = cbclass.Survey(ClList, survey, cnt_levels = cnt_levels, synonyms=synonyms, dinfo=GCl.dinfo, mainhist=Histo, surshort=survey)  # 'NVSS' should be replaced with a real survey class
         Survey.emi_max = 2e-2
         Survey.scatterkwargs = {"alpha":0.7,"fmt":"o","markersize":10}   
         Survey.histkwargs = {"alpha":0.4}   
-        iout.pickleObject(Survey, outfolder+'/pickled/', 'Survey')
+        iom.pickleObject(Survey, outfolder+'/pickled/', 'Survey')
 
         for GCl in Survey.GCls:
             print(GCl.name, GCl.status)
@@ -518,4 +502,4 @@ def Extract_Surveyrelics(surveys, plot=True):
 
 if __name__ == "__main__":
     surveys   = ['NVSS'] #,'TGSS' 
-    Extract_Surveyrelics(surveys, plot=False)
+    runsurvey(surveys, plot=False)

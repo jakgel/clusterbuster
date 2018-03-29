@@ -14,8 +14,8 @@ from __future__ import division,print_function
 
 import csv
 import numpy as np
-import clusterbuster.ObjectClasses as CBclass
-import clusterbuster.IOutil        as IOutil
+import clusterbuster.surveyclasses as cbclass
+import clusterbuster.iout.misc     as iom
 import os
 
 
@@ -85,7 +85,7 @@ def create_table_frame(protoobj, caption, level, dictionary, delimiter='&', ende
     
     for ii,entry in enumerate(dictionary):
         tabline += ' %s ' % entry[2]
-        if  not isinstance(entry[0], list) and isinstance(entry[0](protoobj), CBclass.measurand):
+        if  not isinstance(entry[0], list) and isinstance(entry[0](protoobj), cbclass.measurand):
              idline += entry[0](protoobj).label   
              unline += entry[0](protoobj).unit 
              
@@ -174,11 +174,11 @@ def create_table(objectlist, dictionary, caption='nocap', level=None, outer=Fals
 def RList2table_paper_new(location, survey, longtab=False):   
     
     RList     = survey.fetch_totalRelics(zborder=0.05)
-    RList.sort(key= IOutil.Object_natural_keys ) 
+    RList.sort(key= iom.Object_natural_keys ) 
     
     
 #'', r/ö/, .label, .unit, rrrr}  
-#lambda x: CBclass.measurand( x.R200/1000       , '$R_{200}$', un = 'Mpc' )  
+#lambda x: cbclass.measurand( x.R200/1000       , '$R_{200}$', un = 'Mpc' )  
     dictionary = [ [lambda x: x.name.replace('_',' ')  , '%25s', 'l' , 'Identifier', ''],
                    [lambda x: x.RA    , '%5.2f' , 'r'],
                    [lambda x: x.Dec   , '%+7.2f', 'r'],
@@ -207,7 +207,7 @@ def RList2table_paper(location, survey, longtab=False):
 
     RList    = survey.fetch_totalRelics(zborder=0.05)
     # To sort the list in place..., sort for Cluster ID
-    RList.sort(key= IOutil.Object_natural_keys ) 
+    RList.sort(key= iom.Object_natural_keys ) 
     outer = False 
   
     if longtab:
@@ -347,7 +347,7 @@ Cluster               &  z   &  $M_{200}$          &  $F_\mathrm{NVSS}$   &   $F
 
     
     
-    #RList.sort(key= IOutil.Object_natural_keys ) 
+    #RList.sort(key= iom.Object_natural_keys ) 
     ''' Start with relic cluster '''
     mf = open(location,"w")
     mf.write(head)
