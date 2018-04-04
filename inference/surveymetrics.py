@@ -6,14 +6,19 @@ Created on Tue Aug 29 12:15:19 2017
 @author: jakobg
 """
 from __future__ import division, print_function
-import pyutil_my.ClusterBuster_pythonClass as CBclass
-import pyutil_my.Custom_DatabaseClasses    as cdb 
+
+import clusterbuster.dbclasses      as dbc
+import clusterbuster.surveyclasses  as cbclass
+#import clusterbuster.surveyut       as suut
+ 
+import os
+import glob
 import numpy as np
 import ndtestMaster                        as KSmaster
 import math
-#import pyutil_my.IOutil                    as iout
+import time
       
-
+SURVEYCOUNT = 0   # This is the global count for the ABC process initiated, somehow hacky
 
 '''=============== Baustelle: Imlement in Metric & Run Survey'''
 def Clusters_discovery_prop(survey, eff=1, discovery_prop=None, maxcomp=None, verbose=False):
@@ -29,7 +34,7 @@ def Clusters_discovery_prop(survey, eff=1, discovery_prop=None, maxcomp=None, ve
     '''
     
 #    import scipy.stats.mstats as mstats
-    if isinstance(survey, CBclass.Survey):
+    if isinstance(survey, cbclass.Survey):
         ''' Assume to work with surveys '''
         relics = survey.fetch_totalRelics(maxcomp=maxcomp, eff=eff)
     else:
@@ -58,9 +63,9 @@ def ABC_summaryStatistics_polarHisto(Surveys, eff):
     zborder = 0.05
     ztype   = '>'
     
-    norm = cdb.norm('R200',Nexp=1.5) # I used Nexp=2.0 in the past! ANd maybe I just should use 1.0!!!!!!!!!!!!!!
+    norm = dbc.norm('R200',Nexp=1.5) # I used Nexp=2.0 in the past! ANd maybe I just should use 1.0!!!!!!!!!!!!!!
     for Survey in Surveys:
-        Survey.mainhist = cdb.Histogram2D(nbins=(32,30), fromto= [[0,2.*np.pi],[0,1.5]], norm=norm )     # angle_projected(rad), D_proj(R200) 
+        Survey.mainhist = dbc.Histogram2D(nbins=(32,30), fromto= [[0,2.*np.pi],[0,1.5]], norm=norm )     # angle_projected(rad), D_proj(R200) 
         Survey.expScale = 0.65
     
     if SurveyB.polar()[0] is None :
@@ -82,7 +87,7 @@ def ABC_summaryStatistics_2DKS(Surveys, eff, parA=lambda x: x.M200, parB = lambd
     [A, B] = Surveys
     
 #    import scipy.stats.mstats as mstats
-    if isinstance(A, CBclass.Survey) and isinstance(B, CBclass.Survey):
+    if isinstance(A, cbclass.Survey) and isinstance(B, cbclass.Survey):
         ''' Assume to work with surveys '''
         cl_A = [gcl.updateInformation()        for gcl in A.GCls]
         cl_B = [gcl.updateInformation(eff=eff) for gcl in B.filteredClusters]
@@ -160,7 +165,7 @@ def ABC_summaryStatistics_logMach(Surveys, eff):
 
     
     import scipy.stats as stats
-    if isinstance(A, CBclass.Survey):
+    if isinstance(A, cbclass.Survey):
         ''' Assume to work with surveys '''
         relicsA = A.fetch_totalRelics(eff=eff)
         relicsB = B.fetch_totalRelics(eff=eff)
@@ -200,7 +205,11 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB, delal=True, verbose=False, stoch
     Returns the distance within the MUSIC-2/NVSS metric
     you have: data,model
     
+    SurveyA: realworld
+    SurveyB: model
+    
     '''
+    global SURVEYCOUNT 
     
 #    
 #    ''' DEBUGGIN G:BEGIN'''
@@ -218,32 +227,82 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB, delal=True, verbose=False, stoch
 
         if stochdrop: SurveyB.set_dropseed()
         if len([gcl.updateInformation() for gcl in SurveyB.FilterCluster(minrel=1)]) < 1:
-            A,B,C   = 1e2,1e2,1e2
-#            print([len(gcl.relics)  for gcl in SurveyB.GCls])
-#            print('!!!!')
+            A,B,C,D   = 1e2,1e2,1e2,1e9
+        #            print([len(gcl.relics)  for gcl in SurveyB.GCls])
+        #            print('!!!!')
         else:
             print ('SurveyB.filteredClusters', len(SurveyB.GCls), len(SurveyB.filteredClusters))
-#            print('A')
+    #            print('A')
             A  = ABC_summaryStatistics_polarHisto([SurveyA,SurveyB], eff)
             B  = ABC_summaryStatistics_numbers([SurveyA,SurveyB], eff)
-            C  = ABC_summaryStatistics_2DKS([SurveyA,SurveyB], eff, parA=lambda x: x.largestLAS, parB = lambda y: y.P_rest)
+#            C  = 1.0 #ABC_summaryStatistics_2DKS([SurveyA,SurveyB], eff, parA=lambda x: x.largestLAS, parB = lambda y: y.P_rest)
             D  = ABC_summaryStatistics_logMach([SurveyA,SurveyB], eff)
-        print(SurveyA.name, SurveyB.name, ': A', A, 'B', B, 'C', C)
             
-        
+            
+            ''' Heavyly inspired by https://plot.ly/ipython-notebooks/principal-component-analysis/ '''
+            newdist      =  lambda x:  dbc.measurand( x.Dproj_pix()/x.GCl.R200(), 'Dproj',label='$D_\mathrm{proj,rel}$',  un = '$R_{200}$' )
+            plotmeasures = [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.Mach, newdist]
+                
+                
+            from sklearn.preprocessing import StandardScaler
+            X = SurveyB.fetchpandas(plotmeasures).data()   #, kwargs_FilterCluster={}, kwargs_FilterObjects={}
+            X_std = StandardScaler().fit_transform(X)
+                
+            
+            from sklearn.decomposition import PCA as sklearnPCA
+            
+            
+            '''
+            # Make a list of (eigenvalue, eigenvector) tuples
+            cor_mat1 = np.corrcoef(X_std.T)
+            
+            eig_vals, eig_vecs = np.linalg.eig(cor_mat1)
+            
+            print('Eigenvectors \n%s' %eig_vecs)
+            print('\nEigenvalues \n%s' %eig_vals)
+
+            eig_pairs = [(np.abs(eig_vals[i]), eig_vecs[:,i]) for i in range(len(eig_vals))]
+            
+            # Sort the (eigenvalue, eigenvector) tuples from high to low
+            eig_pairs.sort()
+            eig_pairs.reverse()
+            
+            # Visually confirm that the list is correctly sorted by decreasing eigenvalues
+            print('Eigenvalues in descending order:')
+            for i in eig_pairs:
+                print(i[0])
+            
+            matrix_w = np.hstack((eig_pairs[0][1].reshape(4,1), 
+                                  eig_pairs[1][1].reshape(4,1)))
+            
+            print('Matrix W:\n', matrix_w)
+            
+            Y = X_std.dot(matrix_w)
+            '''
+            
+            sklearn_pca = sklearnPCA(n_components=2)
+            Y_sklearn = sklearn_pca.fit_transform(X_std)
+            print(Y_sklearn.shape())
+            D = np.sum(Y_sklearn**2)/len(Y_sklearn[0])
+#            Y_sklearn = sklearn_pca.fit_transform(X_std)
+                
+                
+
+        #            import shutil    
+        #            shutil.rmtree(surveypath)     # This is to brutal, we would like to keep at least the survey id
+            
+            
+            
+        print(SurveyA.name, SurveyB.name, ': A', A, 'B', B, 'C', C, 'D', D)
+            
         
         ''' This deletes the survey folder z-snapshot files
         '''
         if delal:
             outpath      = '/data/ClusterBuster-Output/'
             surveypath   = outpath + '%s/' % (SurveyB.name)
-
-#            import shutil    
-#            shutil.rmtree(surveypath)     # This is to brutal, we would like to keep at least the survey id
-            
+        
             #####
-            import os
-            import glob
             
             file_path = "%s/pickled/SurveySample.pickle" % (surveypath)        
             if verbose:
@@ -255,6 +314,17 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB, delal=True, verbose=False, stoch
                     if not CleanUp.endswith('SurveySample.pickle'):    
                         os.remove(CleanUp)
                         
+                n = 0
+                while n < 10:
+                    try:
+                        os.system("cp -rf %s/pickled/SurveySample.pickle %s/SurveySample%05i.pickle" % (surveypath, os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'AllSurveys', SURVEYCOUNT))))
+                        SURVEYCOUNT += 1
+                    except:
+                        n += 1
+                        time.sleep(0.5)
+                os.system("rm -rf %s/pickled/SurveySample.pickle" % (surveypath))
+                    
+                    
             ''' In the future it might be wise to save every Survey output ... you might want to have the walker id and the iteration id,
                 I just don't know where to get them from within the run.            
             '''
@@ -264,17 +334,16 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB, delal=True, verbose=False, stoch
                 Rm  = SurveyB.Rmodel
                 eff = SurveyB.Rmodel.effList[0]
                 if  A<100:
-                    line = "%8.5f %8.5f %8.5f" % (A, B, C) 
+                    line = "%8.5f %8.5f %8.5f, %8.5f" % (A, B, C, D) 
                 else: #DEBUGGING purposses
                     line = "None None None"
                     
-                if isinstance(Rmodel, CBclass.PreModel_Hoeft):
-                    line += ' %+.4e %+.4e %+.4e' % (eff, Rm.B0, Rm.kappa) + ' %+.4e %+.4e %+.4e %+.4e\n' % (Rm.p0, Rm.p_sigma, Rm.sigmoid_0, Rm.sigmoid_width)
-                if isinstance(Rmodel, CBclass.PreModel_Gelszinnis):
+                if isinstance(Rm, cbclass.PreModel_Hoeft):
+                    line += ' %+.4e %+.4e %+.4e' % (eff, Rm.B0, Rm.kappa) + ' %+.4e +.4e %+.4e %+.4e %+.4e\n' % (Rm.kappa, Rm.t0, Rm.t1, Rm.n0, Rm.n1)
+                if isinstance(Rm, cbclass.PreModel_Gelszinnis):
                     line += ' %+.4e %+.4e %+.4e' % (eff, Rm.B0, Rm.kappa) + ' %+.4e %+.4e %+.4e %+.4e\n' % (Rm.p0, Rm.p_sigma, Rm.sigmoid_0, Rm.sigmoid_width)
                 f.write(line)
             
-        if isinstance(Rmodel, CBclass.PreModel_Hoeft):
     return [A,B,C]
 
 

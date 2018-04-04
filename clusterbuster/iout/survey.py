@@ -1159,94 +1159,6 @@ def create_Test( SurveySamples, symbolsism, R200exp=False, markers = np.asarray(
 '''=== Section of single object analysis ==='''   
 '''========================================='''
     
-def fetchpandas(survey, plotmeasures, kwargs_FilterCluster={}, kwargs_FilterObjects={}):
-    ''' Return a panda array generated from the survey catalogue 
-    
-    survey: A ClusterBusterSurveytype
-    
-    Examples for plotmeasures: 
-        
-    plotmeasures = [             
-                    lambda x: x.alpha,
-                    lambda x: dbc.measurand( x.Dproj_pix()/x.GCl.R200(), 'Dproj',label='$Dproj_rel$',  un = None )
-                    ]
-    
-    idmeasures: lambda x: x.alpha
-    
-    plotmeasures = [
-                    lambda x: x.Rho, 
-                    lambda x: x.Mach,              
-                    lambda x: x.T, 
-                    lambda x: dbc.measurand( -x.alpha(), 'alpha',label='$\\alpha$',  un = None ),
-                    lambda x: x.LLS, 
-                    lambda x: x.P_rest
-                    ]
-    
-    plotmeasures = [
-                    lambda x: x.LAS,                                   
-                    lambda x: x.area,                 
-                    lambda x: x.Mach,      
-                    lambda x: x.Dproj_pix,  
-                    lambda x: x.iner_rat, 
-                    lambda x: x.theta_rel,    
-                    ]
-    
-    
-    
-    '''
-    import pandas as pd    
-
-    logs = [True for measure in plotmeasures] # a stub, you should be able to specify this
-
-    ''' This part is outdated and shuld be removed once the eficiency is removed '''
-    eff = survey.Rmodel.effList[0]
-    if survey.Rmodel.simu: 
-        feff = eff
-    else:
-        feff = 1.
-    ''' REMOVE END '''
-
-    List_full = []
-    datalist  = []
-
-    ''' This very ugly steps just creates a List of (relic,GCL) from the survey
-    As in the future galaxy clusters will gain be a property of relcis again this step will be shorter  and more readable'''
-    
-    for GCl in survey.FilterCluster():
-            GCl.updateInformation(eff=feff)
-            List_full.append(  [ (GCl,relic)  for relic in GCl.filterRelics(eff=feff)]  )
-            
-    List_full  = [item for sublist in List_full for item in sublist]
-        
-    print(survey.Rmodel.simu, survey.Rmodel.effList[0], len(List_full),feff)
-    for GCl,relic in List_full:
-
-        relic.asign_cluster(GCl)
-        datavalues = []
-        for measure in plotmeasures:
-            data     = measure(relic).value
-            datavalues.append(data)
-        
-        datalist.append(datavalues)
-        
-
-#                      + [GCl.M200.labels(log=False),dbc.measurand(0,'$D_\mathrm{proj}$',un='$R_{200}$').labels(log=False)]
-
-    ''' Create a pandas dataframe '''
-    columns =[measure(relic).labels(log=log) for measure,log in zip(plotmeasures,logs)] #\
-    pdframe =  pd.DataFrame(np.log10(datalist), columns=columns)
-    pdframe['Survey'] = survey.name
-
-      
-    '''======= New style (begin)'''   
-     
-    print('MyCraftyPlots:',len(pdframe))   
-    if len(pdframe)<3:
-        print('Only %i elements in the pdframe, will skip this one' % (len(pdframe)))
-        return 
-    else:
-        return pdframe
-    
 
 def joinpandas(pdframes):
     pdframe_combined = None
@@ -1267,7 +1179,7 @@ def create_scattermatrix( SurveySamples, plotmeasures, suffix=''):
     import pandas as pd    
     from pandas.tools.plotting import scatter_matrix
  
-    pdframes = [fetchpandas(survey,plotmeasures) for survey in SurveySamples]
+    pdframes = [survey.fetchpandas(plotmeasures) for survey in SurveySamples]
     pdframe_combined = joinpandas(pdframes)                    
 
     print(len(SurveySamples))    

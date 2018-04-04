@@ -14,7 +14,7 @@ from __future__ import division,print_function
 import operator
 import os
 import copy
-
+import pandas as pd  
 #import warnings
 
 import ephem as ephem
@@ -846,7 +846,7 @@ class ApperanceAtFrequ(patches.Ellipse):
       self._angle   = posangle
     
     
-class Radiosource(ephem.FixedBody):
+class RadioSource(ephem.FixedBody):
     ''' REDUNTANT in current implementation'''
     def __init__(self, ra=0, dec=0, flux = 1, frequ=1.4, ha= 0, major=0, minor=0, posangle=0): #ra='00:00:00', dec='00:00:00'
         #"""
@@ -1107,15 +1107,15 @@ class Relic:
 
 
 class Survey(object):  
-      """
-      Simple class for representing a  survey for radio relics in galaxyclusrers galaxy clusters
-      It provides functions and methodologies to run ...
-      To initialize it needs a  list of galaxy clusters to be assigned.
-      ... might add astropy functionalities --> including using astropy quantities (quantity + unt)
-      ... might write it for python 3.X
-      """
-
-      def __init__(self, GCls, survey, cnt_levels=[0], synonyms=[], Rmodel=RModel([],simu=False), Histo=None, emi_max=False, m_cnt=2, scatterkwargs={}, histokwargs={}, saveFITS=True, dinfo=None, mainhist=None, surshort='surshort', logfolder='', outfolder = None):
+    """
+    Simple class for representing a  survey for radio relics in galaxyclusrers galaxy clusters
+    It provides functions and methodologies to run ...
+    To initialize it needs a  list of galaxy clusters to be assigned.
+    ... might add astropy functionalities --> including using astropy quantities (quantity + unt)
+    ... might write it for python 3.X
+    """
+    
+    def __init__(self, GCls, survey, cnt_levels=[0], synonyms=[], Rmodel=RModel([],simu=False), Histo=None, emi_max=False, m_cnt=2, scatterkwargs={}, histokwargs={}, saveFITS=True, dinfo=None, mainhist=None, surshort='surshort', logfolder='', outfolder = None):
         """
         parameters
         """
@@ -1163,13 +1163,13 @@ class Survey(object):
         self.expA       = 1.
         self.dropseed   = None
         
-      def set_binning(self, Histo=None)  :
+    def set_binning(self, Histo=None)  :
           
           if Histo is None: Histo = self.histo
           for GCl in self.GCls:
               GCl.histo = Histo
         
-      def polar(self, eff=None, aligned=True, normalize=True, minrel=1,  mirrored=False, mode='flux', zborder = 0 ,ztype = '>', **kwargs):
+    def polar(self, eff=None, aligned=True, normalize=True, minrel=1,  mirrored=False, mode='flux', zborder = 0 ,ztype = '>', **kwargs):
           
           ''' 
           Input: needs to histogram of the survey to be set, radial axis: 2 N, polar axis: 4 M
@@ -1246,14 +1246,14 @@ class Survey(object):
           else:
               return None, (None,None), None, None, None
         
-      def set_dropseed(self,dropseed=None):
-            if dropseed is not None:
-                self.dropseed = dropseed
-            else:
-                self.dropseed = np.random.RandomState()
+    def set_dropseed(self,dropseed=None):
+        if dropseed is not None:
+            self.dropseed = dropseed
+        else:
+            self.dropseed = np.random.RandomState()
                 
 
-      def FilterCluster(self, minrel=1, eff=None, zborder=0, ztype='>', minimumLAS=0, GClflux=0, index=None, getindex=False, verbose=False,  **kwargs):
+    def FilterCluster(self, minrel=1, eff=None, zborder=0, ztype='>', minimumLAS=0, GClflux=0, index=None, getindex=False, verbose=False,  **kwargs):
           ''' Gives all the cluster with the relics that fullfill given criteria '''
           
           if index is not None:
@@ -1269,12 +1269,12 @@ class Survey(object):
             
           if eff is None: eff = self.Rmodel.effList[0]
           GCls = [GCl.updateInformation(eff=eff, Filter=True) for GCl in self.GCls]
-     
+         
           verbose = True
           results = [(ii,GCl)  for ii,GCl in enumerate(GCls) if len(GCl.filterRelics(eff=eff, **kwargs))>=minrel and  get_truth(GCl.z, ztype, zborder) and 
                      GCl.largestLAS() >  minimumLAS and GCl.flux() > GClflux and GCl.stoch_drop(self.dropseed)] 
           
-       
+           
           ''' and get_truth(GCl.z, ztype, zborder) and 
                      GCl.largestLAS() >  minimumLAS and GCl.flux() > GClflux and GCl.stoch_drop(self.dropseed) '''
                   
@@ -1284,7 +1284,7 @@ class Survey(object):
               indices,self.filteredClusters = map(list,zip(*results))
           else:
               indices,self.filteredClusters = [],[]
-
+        
             
           if verbose: print('____ # FilterCluster:',len(indices))
           
@@ -1294,11 +1294,11 @@ class Survey(object):
               return self.filteredClusters
 
 
-      def fetch_totalRegions(self):
+    def fetch_totalRegions(self):
           
          return [GCl.relicRegions for GCl in self.GCls]
          
-      def fetch_totalRelics(self, eff=None, **kwargs):
+    def fetch_totalRelics(self, eff=None, **kwargs):
           if eff is None: eff = self.Rmodel.effList[0]
           
           relicList = []
@@ -1308,6 +1308,94 @@ class Survey(object):
           return relicList
          
          
-      def fetch_totalHisto(self):
+    def fetch_totalHisto(self):
           
          return sum([GCl.hist for GCl in self.GCls], 0)
+     
+    def fetchpandas(survey, plotmeasures, kwargs_FilterCluster={}, kwargs_FilterObjects={}):
+        ''' Return a panda array generated from the survey catalogue 
+        
+        survey: A ClusterBusterSurveytype
+        
+        Examples for plotmeasures: 
+            
+        plotmeasures = [             
+                        lambda x: x.alpha,
+                        lambda x: dbc.measurand( x.Dproj_pix()/x.GCl.R200(), 'Dproj',label='$Dproj_rel$',  un = None )
+                        ]
+        
+        idmeasures: lambda x: x.alpha
+        
+        plotmeasures = [
+                        lambda x: x.Rho, 
+                        lambda x: x.Mach,              
+                        lambda x: x.T, 
+                        lambda x: dbc.measurand( -x.alpha(), 'alpha',label='$\\alpha$',  un = None ),
+                        lambda x: x.LLS, 
+                        lambda x: x.P_rest
+                        ]
+        
+        plotmeasures = [
+                        lambda x: x.LAS,                                   
+                        lambda x: x.area,                 
+                        lambda x: x.Mach,      
+                        lambda x: x.Dproj_pix,  
+                        lambda x: x.iner_rat, 
+                        lambda x: x.theta_rel,    
+                        ]
+        
+        
+        
+        '''  
+    
+        logs = [True for measure in plotmeasures] # a stub, you should be able to specify this
+    
+        ''' This part is outdated and shuld be removed once the eficiency is removed '''
+        eff = survey.Rmodel.effList[0]
+        if survey.Rmodel.simu: 
+            feff = eff
+        else:
+            feff = 1.
+        ''' REMOVE END '''
+    
+        List_full = []
+        datalist  = []
+    
+        ''' This very ugly steps just creates a List of (relic,GCL) from the survey
+        As in the future galaxy clusters will gain be a property of relcis again this step will be shorter  and more readable'''
+        
+        for GCl in survey.FilterCluster():
+                GCl.updateInformation(eff=feff)
+                List_full.append(  [ (GCl,relic)  for relic in GCl.filterRelics(eff=feff)]  )
+                
+        List_full  = [item for sublist in List_full for item in sublist]
+            
+        print(survey.Rmodel.simu, survey.Rmodel.effList[0], len(List_full),feff)
+        for GCl,relic in List_full:
+    
+            relic.asign_cluster(GCl)
+            datavalues = []
+            for measure in plotmeasures:
+                data     = measure(relic).value
+                datavalues.append(data)
+            
+            datalist.append(datavalues)
+            
+    
+    #                      + [GCl.M200.labels(log=False),dbc.measurand(0,'$D_\mathrm{proj}$',un='$R_{200}$').labels(log=False)]
+    
+        ''' Create a pandas dataframe '''
+        columns =[measure(relic).labels(log=log) for measure,log in zip(plotmeasures,logs)] #\
+        pdframe =  pd.DataFrame(np.log10(datalist), columns=columns)
+        pdframe['Survey'] = survey.name
+    
+          
+        '''======= New style (begin)'''   
+         
+        print('MyCraftyPlots:',len(pdframe))   
+        if len(pdframe)<3:
+            print('Only %i elements in the pdframe, will skip this one' % (len(pdframe)))
+            return 
+        else:
+            return pdframe
+        

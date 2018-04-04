@@ -38,7 +38,7 @@ This .git outlines the overall structure of the software. As no larger release i
 
 
 ## Installation
-Install via pip:
+Install via pip (broken, but fix incoming with next version):
 
     pip install clusterbuster
 
