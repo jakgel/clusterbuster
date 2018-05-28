@@ -13,15 +13,15 @@ import clusterbuster.surveyclasses  as cbclass
  
 import os
 import glob
-import numpy as np
-import ndtestMaster                        as KSmaster
+import numpy  as np
+import ndtest as KSmaster
 import math
 import time
       
 SURVEYCOUNT = 0   # This is the global count for the ABC process initiated, somehow hacky
 
 '''=============== Baustelle: Imlement in Metric & Run Survey'''
-def Clusters_discovery_prop(survey, eff=1, discovery_prop=None, maxcomp=None, verbose=False):
+def Clusters_discovery_prop(survey, discovery_prop=None, maxcomp=None, verbose=False):
     ''' Return a weighted relic number count within all clusters
     input: either  a Clusterbuster Class Surveys
            or      a GalaxyClusterLists including relics
@@ -36,14 +36,14 @@ def Clusters_discovery_prop(survey, eff=1, discovery_prop=None, maxcomp=None, ve
 #    import scipy.stats.mstats as mstats
     if isinstance(survey, cbclass.Survey):
         ''' Assume to work with surveys '''
-        relics = survey.fetch_totalRelics(maxcomp=maxcomp, eff=eff)
+        relics = survey.fetch_totalRelics(maxcomp=maxcomp)
     else:
         ''' Asume to work with lists of galaxy clusters '''
-        relics = [gcl.filterRelics(maxcomp=maxcomp, eff=eff)          for gcl in survey]
+        relics = [gcl.filterRelics(maxcomp=maxcomp)          for gcl in survey]
 
     weightedsum = len(relics)
     if verbose:
-        print('Survey:', survey.name, weightedsum)
+        print('surveymetrics::Clusters_discovery_prop()::Survey:', survey.name, weightedsum)
 
     return weightedsum
 '''==============='''
@@ -69,12 +69,11 @@ def ABC_summaryStatistics_polarHisto(Surveys, eff):
         Survey.expScale = 0.65
     
     if SurveyB.polar()[0] is None :
-        HiA = SurveyA.polar(zborder = zborder, ztype = ztype, normalize=True)[1][0]
-        deviation  =  np.sum(np.abs(HiA-0))
+        HiB = 0
     else:
-        HiA = SurveyA.polar(zborder = zborder,ztype = ztype, normalize=True)[1][0]
         HiB = SurveyB.polar(zborder = zborder,ztype = ztype, normalize=True)[1][0]
-        deviation =  np.sum(np.abs(HiA-HiB))
+    HiA = SurveyA.polar(zborder = zborder,ztype = ztype, normalize=True)[1][0]
+    deviation =  np.sum(np.abs(HiA-HiB))
     
     return deviation
     
@@ -126,10 +125,10 @@ def ABC_summaryStatistics_2DKS(Surveys, eff, parA=lambda x: x.M200, parB = lambd
         if math.isnan(access): access = 1.e-10
     else:
         access = 1.e-10
-    print('ABC_summaryStatistics_2DKS:', access)
+    print('surveymetrics::ABC_summaryStatistics_2DKS()::access', access)
     return np.log10(1/access)
 
-def ABC_summaryStatistics_numbers(Surveys, eff, maxcomp=None, verbose = False):
+def ABC_summaryStatistics_numbers(Surveys, maxcomp=None, verbose = False):
     ''' Compares survey B (simulation) with survey A (real world survey)
     input: either  2 Clusterbuster Class Surveys
            or      2 GalaxyClusterLists including relics
@@ -144,11 +143,11 @@ def ABC_summaryStatistics_numbers(Surveys, eff, maxcomp=None, verbose = False):
     [A, B] = Surveys
 
     sum_A = Clusters_discovery_prop(A, maxcomp=maxcomp)
-    sum_B = Clusters_discovery_prop(B, maxcomp=maxcomp, eff=eff)
+    sum_B = Clusters_discovery_prop(B, maxcomp=maxcomp)
 
     if verbose:
-        print('Survey:', A.name, len(A.GCls)            , sum_A)
-        print('Model :', B.name, len(B.filteredClusters), sum_B)
+        print('surveymetrics::ABC_summaryStatistics_numbers::Survey:', A.name, len(A.GCls)            , sum_A)
+        print('surveymetrics::ABC_summaryStatistics_numbers::Model :', B.name, len(B.filteredClusters), sum_B)
     
     # This is like assuming a students distribution (?) in the number count and taking the the reduced sqrt of the number as the standart deviation
     #deviation =  np.abs(sum_A-sum_B)  / max(1.,np.sqrt(sum_A - 1.))
@@ -157,26 +156,28 @@ def ABC_summaryStatistics_numbers(Surveys, eff, maxcomp=None, verbose = False):
 
 
 
-def ABC_summaryStatistics_logMach(Surveys, eff):
+def ABC_summaryStatistics_logMach(Surveys):
     ''' Compares survey B (simulation) with survey A (real world survey)
         Derives the Histogram of the log(Mach) number and returns the differnce of the medians
     '''
     [A, B] = Surveys
 
-    
-    import scipy.stats as stats
     if isinstance(A, cbclass.Survey):
         ''' Assume to work with surveys '''
-        relicsA = A.fetch_totalRelics(eff=eff)
-        relicsB = B.fetch_totalRelics(eff=eff)
+        relicsA = A.fetch_totalRelics()
+        relicsB = B.fetch_totalRelics()
     else:
         ''' Asume to work with lists of galaxy clusters '''
-        relicsA = [gcl.filterRelics(eff=eff) for gcl in A]
-        relicsB = [gcl.filterRelics(eff=eff) for gcl in B]      
+        relicsA = [gcl.filterRelics() for gcl in A]
+        relicsB = [gcl.filterRelics() for gcl in B]      
     
-    mA = stats.mean([np.log10(relic.mach()) for relic in relicsA])
-    mB = stats.mean([np.log10(relic.mach()) for relic in relicsB])
     
+    # Get mach-numbers and remove nans
+    A = np.array( [np.log10(relic.Mach()) for relic in relicsA]) 
+    B = np.array( [np.log10(relic.Mach()) for relic in relicsB]) 
+    
+    mA = A[~np.isnan(A)].mean()
+    mB = B[~np.isnan(B)].mean()
     
     return abs(mA-mB)
     
@@ -192,7 +193,7 @@ def ABC_dist_music2( SurveyA, SurveyB, delal=False, stochdrop=True):
         
         A,B,C  = ABC_dist_severalMetrices( SurveyA, SurveyB, delal=delal, stochdrop=stochdrop)
         sum_deviation = A+B+C
-        print('ABC_dist_music2:', sum_deviation, eff, 'A %.2e  B %.2e C %.2e' % (A,B,C))
+        print('surveymetrics::ABC_dist_music2()::', sum_deviation, eff, 'A %.2e  B %.2e C %.2e' % (A,B,C))
         returnarg = sum_deviation
     
     ''' We assume that only one model is tested '''
@@ -209,8 +210,6 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB, delal=True, verbose=False, stoch
     SurveyB: model
     
     '''
-    global SURVEYCOUNT 
-    
 #    
 #    ''' DEBUGGIN G:BEGIN'''
 #    surveypath = '/data/ClusterBuster-Output/%s' % (SurveyB)
@@ -226,17 +225,17 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB, delal=True, verbose=False, stoch
     for eff in SurveyB.Rmodel.effList:
 
         if stochdrop: SurveyB.set_dropseed()
-        if len([gcl.updateInformation() for gcl in SurveyB.FilterCluster(minrel=1)]) < 1:
+        if len([gcl.updateInformation() for gcl in SurveyB.FilterCluster(minrel=1)]) < 3:
             A,B,C,D   = 1e2,1e2,1e2,1e9
-        #            print([len(gcl.relics)  for gcl in SurveyB.GCls])
-        #            print('!!!!')
+
         else:
+            SurveyA.FilterCluster(minrel=1)
+            SurveyB.FilterCluster(minrel=1)
             print ('SurveyB.filteredClusters', len(SurveyB.GCls), len(SurveyB.filteredClusters))
-    #            print('A')
-            A  = ABC_summaryStatistics_polarHisto([SurveyA,SurveyB], eff)
-            B  = ABC_summaryStatistics_numbers([SurveyA,SurveyB], eff)
+            A  = ABC_summaryStatistics_numbers([SurveyA,SurveyB])
+            B  = ABC_summaryStatistics_polarHisto([SurveyA,SurveyB], eff)
 #            C  = 1.0 #ABC_summaryStatistics_2DKS([SurveyA,SurveyB], eff, parA=lambda x: x.largestLAS, parB = lambda y: y.P_rest)
-            D  = ABC_summaryStatistics_logMach([SurveyA,SurveyB], eff)
+            D  = ABC_summaryStatistics_logMach([SurveyA,SurveyB])
             
             
             ''' Heavyly inspired by https://plot.ly/ipython-notebooks/principal-component-analysis/ '''
@@ -245,7 +244,7 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB, delal=True, verbose=False, stoch
                 
                 
             from sklearn.preprocessing import StandardScaler
-            X = SurveyB.fetchpandas(plotmeasures).data()   #, kwargs_FilterCluster={}, kwargs_FilterObjects={}
+            X = SurveyB.fetchpandas(plotmeasures, surname=False).dropna().as_matrix()   #.data()   #, kwargs_FilterCluster={}, kwargs_FilterObjects={}
             X_std = StandardScaler().fit_transform(X)
                 
             
@@ -282,47 +281,40 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB, delal=True, verbose=False, stoch
             
             sklearn_pca = sklearnPCA(n_components=2)
             Y_sklearn = sklearn_pca.fit_transform(X_std)
-            print(Y_sklearn.shape())
-            D = np.sum(Y_sklearn**2)/len(Y_sklearn[0])
-#            Y_sklearn = sklearn_pca.fit_transform(X_std)
-                
-                
-
-        #            import shutil    
-        #            shutil.rmtree(surveypath)     # This is to brutal, we would like to keep at least the survey id
+            
+            ''' This gives you an proxy for the average summed square error in the 2-D dimensional reduction via pca '''
+            C = np.sum(Y_sklearn**2)/len(Y_sklearn[0])
             
             
-            
-        print(SurveyA.name, SurveyB.name, ': A', A, 'B', B, 'C', C, 'D', D)
+        print('surveymetrics::ABC_dist_severalMetrices::', SurveyA.name, 'VS', SurveyB.name, ' metric disimilarity: A', A, 'B', B, 'C', C, 'D', D)
             
         
         ''' This deletes the survey folder z-snapshot files
         '''
         if delal:
             outpath      = '/data/ClusterBuster-Output/'
-            surveypath   = outpath + '%s/' % (SurveyB.name)
-        
-            #####
-            
-            file_path = "%s/pickled/SurveySample.pickle" % (surveypath)        
+
+            file_path = "%s/pickled/Survey.pickle" % (SurveyB.outfolder)        
             if verbose:
-                print(surveypath)
-                print(file_path)
-            if os.path.isfile(file_path):
-                #Deletes unneeded files.
-                for CleanUp in glob.glob("%s/pickled/*.pickle" % (surveypath) ):
-                    if not CleanUp.endswith('SurveySample.pickle'):    
-                        os.remove(CleanUp)
-                        
+                print('surveymetrics::ABC_dist_severalMetrices:: SurveyB.name, surveyB.outfolder:', SurveyB.name, SurveyB.outfolder)
+                print('surveymetrics::ABC_dist_severalMetrices:: file_path, os.path.isfile(file_path)', file_path, os.path.isfile(file_path))
+            if os.path.isfile(file_path):             
                 n = 0
                 while n < 10:
                     try:
-                        os.system("cp -rf %s/pickled/SurveySample.pickle %s/SurveySample%05i.pickle" % (surveypath, os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'AllSurveys', SURVEYCOUNT))))
-                        SURVEYCOUNT += 1
+                        with open('/data/ClusterBuster-Output/AllSurveys/count.txt', 'r') as f:
+                            SURVEYCOUNT = int(f.readline())
+                        print(SURVEYCOUNT) # Is implemented to write the correct survey output files for the ABC abbroach
+                        os.system("cp -rf %s/pickled/Survey.pickle %s/Survey%05i.pickle" % (SurveyB.outfolder, os.path.join(SurveyB.outfolder, '..', 'AllSurveys'), SURVEYCOUNT))
+                        with open('/data/ClusterBuster-Output/AllSurveys/count.txt', 'w') as f:
+                            f.write(str(SURVEYCOUNT+1))
+                        n=10
                     except:
                         n += 1
                         time.sleep(0.5)
-                os.system("rm -rf %s/pickled/SurveySample.pickle" % (surveypath))
+                        print('surveymetrics::ABC_dist_severalMetrices:: Could not write counter.')
+
+                os.system("rm -rf %s/pickled/Survey.pickle" % (SurveyB.outfolder))
                     
                     
             ''' In the future it might be wise to save every Survey output ... you might want to have the walker id and the iteration id,
@@ -336,15 +328,20 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB, delal=True, verbose=False, stoch
                 if  A<100:
                     line = "%8.5f %8.5f %8.5f, %8.5f" % (A, B, C, D) 
                 else: #DEBUGGING purposses
-                    line = "None None None"
+                    line = "None None None None"
                     
                 if isinstance(Rm, cbclass.PreModel_Hoeft):
                     line += ' %+.4e %+.4e %+.4e' % (eff, Rm.B0, Rm.kappa) + ' %+.4e +.4e %+.4e %+.4e %+.4e\n' % (Rm.kappa, Rm.t0, Rm.t1, Rm.n0, Rm.n1)
                 if isinstance(Rm, cbclass.PreModel_Gelszinnis):
                     line += ' %+.4e %+.4e %+.4e' % (eff, Rm.B0, Rm.kappa) + ' %+.4e %+.4e %+.4e %+.4e\n' % (Rm.p0, Rm.p_sigma, Rm.sigmoid_0, Rm.sigmoid_width)
                 f.write(line)
-            
-    return [A,B,C]
+    
+
+    '''PhD Thesis plot '''
+    return [A]     
+    '''PhD Thesis END '''
+    return [A,B,C,D]
+    
 
 
 

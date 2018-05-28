@@ -12,24 +12,36 @@ import os
 import numpy                   as np
 import clusterbuster.iout.misc as iom
 
-''' former MUSIC-2 '''
 def AddFilesToSurvey(survey, savefolder, verbose = True, clusterwise=False):
+    '''
+    Adds galaxy cluster in a specified folder to an survey.
+    
+    Currently clusterwise=True is the case for the normal Run() and clusterwise=False is the case for the ABC-routine.
+    How about CW?
+    '''
+    
+    
     ''' This replaces tha galaxy clusters of a survey object with all pickled galaxy clusters in an particular 'savefolder' '''
     minsize        = 1
     location       = savefolder+'/pickled/'
+    location       = location.replace('//','/')
     GCls           = []
+        
+    
 
-#    print '%sMonsterPickle*.pickle' % (location)             
-    print(location)
-    if verbose: print('%sMonsterPickle*.pickle' % (location))
     if clusterwise: 
         fn = 'GCl'
     else:
         fn = 'MonsterPickle'
+        
+
+    if verbose: print('%s%s*.pickle' % (location, fn))
+        
     for filename in glob.glob('%s%s*.pickle' % (location,fn)):  #glob.glob('%srelics/*.pickle' % (location)):  ;  (relics, histo, Bmodel, eff, mockobs)
-#        print'!!!'
+        if verbose:
+            print('surveyutil::AddFilesToSurvey()::', filename)
         if os.path.getsize(filename) > minsize:
-             if verbose: print(filename)
+             if verbose: print('surveyutil::AddFilesToSurvey()::filename', filename)
              items = iom.unpickleObjectS(filename)
              for (Cluster, Rmodel) in items: #(relics, eff, mockobs) in items:
                  GCls.append(Cluster)
@@ -38,6 +50,9 @@ def AddFilesToSurvey(survey, savefolder, verbose = True, clusterwise=False):
     GCls = sorted(GCls, key= iom.Object_natural_keys)
     survey.GCls =  GCls
      
+    if len(GCls) == 0:
+        print('surveyutil::AddFilesToSurvey() len(GCls)', len(GCls))
+    
     iom.pickleObject(survey, location, 'Survey')
     return survey
 
@@ -82,7 +97,7 @@ def TestPar(var):
 
 
 
-def interpret_parset(parfile, repository='/parsets/', default='default.parset', relative=None):
+def interpret_parset(parfile, repository='/parsets/', default='default.parset', verbose=False, relative=None):
 #This set loads a parset and replaxes one with the default one, alternatively you can give the default one and then modify the entries by another parset2dict
     from pathlib2 import Path
     import os
@@ -107,6 +122,8 @@ def interpret_parset(parfile, repository='/parsets/', default='default.parset', 
     eff_arr  =  iom.createlist(iom.str2list(comb_dict['eff_range']),comb_dict['eff_steps'], interpol= comb_dict['eff_type'])[::-1]  #invert array   
     z_arr    =  [float(z) for z in   iom.str2list(comb_dict['z_range']) ]
    
+    if verbose: 
+        print(parfile, comb_dict)
     return (comb_dict, B0_arr, nu_arr, eff_arr, z_arr) 
      
 ''' former CW '''

@@ -19,9 +19,12 @@ from __future__ import division,print_function
 import copy
 import os
 import warnings
+import aplpy # check https://aplpy.readthedocs.io/en/v0.9.9/_generated/aplpy.aplpy.FITSFigure.html  for comands
+
 import clusterbuster.surveyclasses as cbclass
 import clusterbuster.dbclasses     as dbc 
 import clusterbuster.iout.misc     as iom
+import clusterbuster.maput         as maput
 import matplotlib.pyplot           as plt
 import matplotlib.colors           as colors
 import math                        as math
@@ -29,7 +32,13 @@ import numpy                       as np
 
 from   matplotlib      import cm
 from matplotlib.ticker import NullFormatter
+from scipy import stats
+import matplotlib.patches as patches
 
+
+
+import surveysim.music2.mockobsxray as Xray
+from PyPDF2 import PdfFileMerger
 
 def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=True, additive=False, 
                              aligned=False, cbar=True, addinfo=False, mirrored=False,minrel=1,eff=None, 
@@ -85,48 +94,43 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
         
         for eff in effs:
 #            print (eff) #DEBUGGING
-            for ii,GCl in enumerate(survey.FilterCluster(minrel=minrel,eff=eff,zborder=zborder,ztype='>')):
-                
-
-                ''' Deriving the Histogramm should be a functionality of the survey or the relic cluster, so this should become outdated '''
-                GCl.updateInformation(eff=eff, Filter=True)  
-                if GCl.histo is not None and np.sum(GCl.histo.hist) != 0:
-#                    print(':::__:::')  #DEBUGGING
-                    inner  = Histo.bins[1][0:-1]
-                    outer  = Histo.bins[1][1::]
-                    angle  = Histo.ticks[0]
-                    angles, innerZ = np.meshgrid(angle, inner, sparse=True)
-                    angles, outerZ = np.meshgrid(angle, outer, sparse=True)
-                    AreaHist  = 2*np.pi*(2*np.pi)/len(angle)*(outerZ**2-innerZ**2)   
-                    shiftHist  = np.roll(Histo.hist.T, -int(aligned*(GCl.relic_pro_index)), axis=1) / AreaHist**(survey.expA)  #+1e-10        
-                                        
-        #            return  0               
-                    
-                    # Plots the single clusters
-                    if single:
-                        fig, ax    = plt.subplots(figsize=(14,14),subplot_kw=dict(projection='polar'), dpi=dpi)  #,subplot_kw=dict(projection='polar')  
-                        ax.pcolormesh(Histo.bins[0], Histo.bins[1],  shiftHist, cmap=cmap)
-                        ax.set_theta_offset(addangle)
-                        ax.annotate("", xy=(int(not aligned)*(GCl.relic_pro_angle), 1.5), xytext=(0, 0), arrowprops=dict(arrowstyle="->"))
-                        from matplotlib import transforms as mtransforms
-                        ax.arrow(0, 0, 0, 0.5, linewidth=3, width=0.005, transform=mtransforms.Affine2D().translate( int(not aligned)*(GCl.relic_pro_angle), 0) + ax.transData)
-            
-                            
-                        ax.text(0.01, 1.05, '%s' %(GCl.name.replace('_',' ')), fontsize=20, transform=ax.transAxes)
-                        if addinfo:
-                            ax.text(0.3, 0.9, 'Summed relic flux: %.2e Jy' %(np.sum(Histo.hist)), fontsize=20, transform=ax.transAxes, color='w')
-                            ax.text(0.3, 0.87, 'Ratio pro: %.2e  anti: %.2e' %(GCl.ratio_pro(), GCl.ratio_anti()), fontsize=20, transform=ax.transAxes, color='w') 
-                        ax.set_yticks(yticks) 
-                        ax.tick_params(axis='x'                , labelsize=25)
-                        ax.tick_params(axis='y', colors='white', labelsize=25)
-                        ax.grid(True)
-                        if title is not None: ax.set_title(title, va='bottom')
-                        for ftype in ['pdf','png']:
-                            plt.savefig('%s%s-polar.%s' % (nowfolder,GCl.name, ftype))
-                #        if np.sum(Histo.hist>0):
-                #            HistoDD('Output/s%s/PostProcessing/%s' % (survey.name,GCl.name), Histo, survey.name, logging=False)
-                        
-                        fig.clf()     
+#            for ii,GCl in enumerate(survey.FilterCluster(minrel=minrel,eff=eff,zborder=zborder,ztype='>')):
+#                
+#
+#                ''' Deriving the Histogramm should be a functionality of the survey or the relic cluster, so this should become outdated '''
+#                GCl.updateInformation(eff=eff, Filter=True)  
+#                if GCl.histo is not None and np.sum(GCl.histo.hist) != 0:
+#                    inner  = Histo.bins[1][0:-1]
+#                    outer  = Histo.bins[1][1::]
+#                    angle  = Histo.ticks[0]
+#                    angles, innerZ = np.meshgrid(angle, inner, sparse=True)
+#                    angles, outerZ = np.meshgrid(angle, outer, sparse=True)
+#                    AreaHist  = 2*np.pi*(2*np.pi)/len(angle)*(outerZ**2-innerZ**2)   
+#                    shiftHist  = np.roll(Histo.hist.T, -int(aligned*(GCl.relic_pro_index)), axis=1) / AreaHist**(survey.expA)  #+1e-10        
+#                                        
+#                    # Plots the single clusters
+#                    if single:
+#                        fig, ax    = plt.subplots(figsize=(14,14),subplot_kw=dict(projection='polar'), dpi=dpi)  #,subplot_kw=dict(projection='polar')  
+#                        ax.pcolormesh(Histo.bins[0], Histo.bins[1],  shiftHist, cmap=cmap)
+#                        ax.set_theta_offset(addangle)
+#                        ax.annotate("", xy=(int(not aligned)*(GCl.relic_pro_angle), 1.5), xytext=(0, 0), arrowprops=dict(arrowstyle="->"))
+#                        from matplotlib import transforms as mtransforms
+#                        ax.arrow(0, 0, 0, 0.5, linewidth=3, width=0.005, transform=mtransforms.Affine2D().translate( int(not aligned)*(GCl.relic_pro_angle), 0) + ax.transData)
+#            
+#                            
+#                        ax.text(0.01, 1.05, '%s' %(GCl.name.replace('_',' ')), fontsize=20, transform=ax.transAxes)
+#                        if addinfo:
+#                            ax.text(0.3, 0.9, 'Summed relic flux: %.2e Jy' %(np.sum(Histo.hist)), fontsize=20, transform=ax.transAxes, color='w')
+#                            ax.text(0.3, 0.87, 'Ratio pro: %.2e  anti: %.2e' %(GCl.ratio_pro(), GCl.ratio_anti()), fontsize=20, transform=ax.transAxes, color='w') 
+#                        ax.set_yticks(yticks) 
+#                        ax.tick_params(axis='x'                , labelsize=25)
+#                        ax.tick_params(axis='y', colors='white', labelsize=25)
+#                        ax.grid(True)
+#                        if title is not None: ax.set_title(title, va='bottom')
+#                        for ftype in ['pdf','png']:
+#                            plt.savefig('%s%s-polar.%s' % (nowfolder,GCl.name, ftype))
+#
+#                        fig.clf()     
                         
     
             
@@ -140,8 +144,7 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
                         if compsurvey: ax.pcolormesh(Histo.bins[0][int(len(Histo.bins[0])/2):], Histo.bins[1],  comppol, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot)  )                 
                     else:   
                         meshed = ax.pcolormesh(Histo.bins[0][int(len(Histo.bins[0])/2):], Histo.bins[1],  halfHist, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot)  )
-                        if compsurvey: ax.pcolormesh(Histo.bins[0][0:int(len(Histo.bins[0])/2)+1], Histo.bins[1],  comppol, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot)  )                 
-#                else:   
+                        if compsurvey: ax.pcolormesh(Histo.bins[0][0:int(len(Histo.bins[0])/2)+1], Histo.bins[1],  comppol, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot)  )                  
                     ax.set_theta_offset(addangle)
                     if addinfo: ax.text(0.3, 0.9,  'Summed relic flux: %.2e Jy (all cluster)' %(stat), fontsize=20, transform=ax.transAxes, color='w')
                     ax.set_yticks(yticks)
@@ -160,14 +163,14 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
                 radials.append(radial)
                 stats.append(stat)
                 if compsurvey is not None: deviations.append(np.sum(np.abs(radial-comprad)))
-
-            if development:
-                fig, ax    = plt.subplots(figsize=(14,14), dpi=dpi)  #,subplot_kw=dict(projection='polar') 
-                ax.pcolormesh(np.asarray(range(35))*3.5/35, np.asarray(range(46))*1.5/46, mesh, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot)  )  # Histo.ticks[0]/2
-                plt.xlabel('$R_{200}/\mathrm{Mpc}$')
-                plt.ylabel('$D_\mathrm{proj}/R_{200}$')
-                plt.savefig('%s/butterfly-%s%.2f.%s' % (   nowfolder,survey.name, np.log10(eff), ftype))
-                
+#
+#            if development:
+#                fig, ax    = plt.subplots(figsize=(14,14), dpi=dpi)  #,subplot_kw=dict(projection='polar') 
+#                ax.pcolormesh(np.asarray(range(35))*3.5/35, np.asarray(range(46))*1.5/46, mesh, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot)  )  # Histo.ticks[0]/2
+#                plt.xlabel('$R_{200}/\mathrm{Mpc}$')
+#                plt.ylabel('$D_\mathrm{proj}/R_{200}$')
+#                plt.savefig('%s/butterfly-%s%.2f.%s' % (   nowfolder,survey.name, np.log10(eff), ftype))
+#                
                 
                 # plot ratio of relics flux, 
                 # plot average/median pro relic distance
@@ -218,18 +221,20 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
             ax1.text(0.40, 0.90       , '$\log_{10}(eff) =%+.2f$,' % ( np.log10(eff)),   **kwargs)
             ax1.text(0.40, 0.90-1*dist, '$\log_{10}(B_0) =%+.2f$,' % ( np.log10(mod.B0)),**kwargs)
             ax1.text(0.40, 0.90-2*dist, '$\kappa       = %+0.2f$ ' % ( mod.kappa),       **kwargs)
-            if compsurvey  is not None: ax1.text(0.40, 0.90-3*dist, '$\Delta\\,\\mathrm{signal}  = %0.2f$ '% ( np.average(deviations)),       **kwargs)
+            if compsurvey  is not None: 
+                ax1.text(0.40, 0.90-3*dist, '$\Delta\\,\\mathrm{signal}  = %0.2f$ '% ( np.average(deviations)),       **kwargs)
+            if isinstance(mod, cbclass.PreModel_Hoeft):
+                ax1.text(0.40, 0.90-4*dist, '$t_{1;2}  = %0.3f\,;\,%0.3f$ '% ( mod.t0, mod.t1) ,       **kwargs)
+                ax1.text(0.40, 0.90-5*dist, 'ratio$\\mathrm{_{pre}}  = %0.2f$ '% ( mod.ratio ),       **kwargs)                
     
             
             if survey.Rmodel.pre:
                 ''' NOT implemented yet '''
-#                print( p0, pre, p_sigma, sigmoid_0, sigmoid_width )
-        
-        
+#                print( p0, pre, p_sigma, sigmoid_0, sigmoid_width )        
     #            ax2.set_yscale('log')
         for ftype in ['pdf','png']: #,'jpg'
-            plt.savefig('%s/%s%.2f-sums-BUCKET.%s' % (   nowfolder,survey.name, np.log10(eff), ftype))
-            plt.savefig('%s/%s%.2f-sums-BUCKET.%s' % (buckedfolder,survey.name, np.log10(eff), ftype))
+            plt.savefig('%s/%s%.2f-sumprofile.%s' % (   nowfolder,survey.name, np.log10(eff), ftype))
+            plt.savefig('%s/%s%.2f-sumprofile.%s' % (buckedfolder,survey.name, np.log10(eff), ftype))
 
         
         # Statistics, contribution
@@ -239,7 +244,7 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
             statistic = np.divide(stat,np.sum(stat))
             ax1.hist(statistic, color='b', alpha=1/len(stats), bins='auto')  # arguments are passed to np.histogram
         for ftype in ['pdf','png']: #,'jpg'
-            plt.savefig('%s/%s%.2f-sums-stats.%s' % (   nowfolder,survey.name, np.log10(eff), ftype))
+            plt.savefig('%s/%s%.2f-sumsstats.%s' % (   nowfolder,survey.name, np.log10(eff), ftype))
             plt.savefig('%s/%s%.2f-sums-stats.%s' % (buckedfolder,survey.name, np.log10(eff), ftype))
             
         
@@ -278,11 +283,6 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
                   colorbar=False, beam=True, shapes=True, recenter=True, infolabel = False, sectors=False, 
                   xray=False, highres=False, show_rot=False, vectors = False, label_sheme='balanced', 
                   maxdist=1700, filterargs = {'zborder':0, 'ztype':'>', 'minimumLAS':4, 'GClflux':20, 'index':None}):
-    import aplpy # check https://aplpy.readthedocs.io/en/v0.9.9/_generated/aplpy.aplpy.FITSFigure.html  for comands
-#    import matplotlib.colors as MPLcolors  # for more information, delve into http://matplotlib.org/users/colormapnorms.html
-    import Analysis_MUSIC2.CreateMockObsXray as Xray
-#    from astropy import units as u   
-    from PyPDF2 import PdfFileMerger
      
     pdfs  = []
     eff   = survey.Rmodel.effList[0]
@@ -368,8 +368,9 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
         vmid    = -2  #0.00006  * GCl.dinfo.rms
         exponent= np.log(vmax/vmin)
          
-        levels   = [l*1e-6 for l in levels]
-        print(levels, survey.cnt_levels)
+#        print(levels, survey.cnt_levels)
+#        levels   = [l*1e-3 for l in levels]
+
 
         if not xray:
             
@@ -386,9 +387,10 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
             
             ''' It seems like you can only have one interactive contours '''
 
-#            f.show_colorscale(vmin=1e9, vmax=1e11,  stretch='linear', cmap='afmhot') #gist_heat    
+#            f.show_colorscale(vmin=1e9, vmax=1e11,  stretch='linear', cmap='afmhot') #gist_heat 
             f.show_colorscale(vmid=vmid, vmin=vmin, vmax=vmax,  stretch='log', exponent=exponent, cmap='afmhot') #gist_heat      
 #            f.show_contour(GCl.mapdic['Diffuse'], linewidth=0.15, overlap = True, levels=[l for l in levels if l<vmax*survey.m_cnt], cmap='afmhot',filled=True, alpha=0.49, extend='max', **addargs) #
+            print(levels, survey.cnt_levels)
             f.show_contour(GCl.mapdic['Diffuse'], linewidth=0.15, overlap = True, levels=levels, colors='green',filled=False)
         else:
              if 'MUSIC' in survey.name: #MUSIC-2
@@ -450,10 +452,9 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
                 f.add_label(P1[0],P1[1],  'ratio= %.1e' % (GCl.ratio_relics()), size='x-large', **ciargs)
         
         # Workaround ... in future it would be better to take the image information from the image and read the contours directly
-        import clusterbuster.FITSutil                  as FITSut
         
         try:
-            _, center, spixel = FITSut.FITS2numpy( GCl.mapdic['Raw'] )
+            _, center, spixel = maput.FITS2numpy( GCl.mapdic['Raw'] )
         except:
             _, center, spixel = 0,(0,0),7.5
 
@@ -512,12 +513,15 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
 #           dy = GCl.mapdic['dy']  #fits with angle of signal     (use nan, where no vector should be)
 #           f.show_arrows(x, y, dx, dy, step=15,scale=1e-2,alpha=0.2, color='blue',lw=2) # , mutation_scale=4 ,ls='-.-', 0.3, head_width=5
         '''DEVELOPMENT END'''
+#
 
         nowfolder = '%s/Images/' % (survey.outfolder)
         iom.check_mkdir(nowfolder)
-        f.save('%s/%s-%s%s.pdf' % (nowfolder,survey.name, GCl.name,'HR'*highres))
-        f.save('%s/%s-%s%s.png' % (nowfolder,survey.name, GCl.name,'HR'*highres), dpi=400)     
-        pdfs.append('%s/%s-%s%s.pdf' % (nowfolder,survey.name, GCl.name,'HR'*highres))
+        savefile = '%s/%s-%s%s' % (nowfolder,survey.name, GCl.name,'HR'*highres)
+        f.save('%s.png' % savefile, dpi=400)    
+        f.save('%s.pdf' % savefile)
+        circular_cutout(f, savefile)
+        pdfs.append('%s.pdf' % savefile)
         f.close()
         plt.close("all")
         print(len(pdfs))
@@ -529,6 +533,24 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
     
     merger.write('%s/%s-All%s.pdf' % (survey.outfolder,survey.name,'HR'*highres))
         
+
+
+def circular_cutout(f, savefile):
+    
+    """
+    Demo of image that's been clipped by a circular patch.
+    """
+    
+    
+#    image = plt.imread(image_file)
+#    
+    fig, ax = plt.subplots()
+#    im = ax.imshow(image)
+    patch = patches.Circle((260, 200), radius=200, transform=ax.transData)
+    f._figure.set_clip_path(patch)
+    
+    ax.axis('off')
+    f.save(savefile+'_circular.png')
 
 #============== Reads relic information out of an ds9 region file
 def readDS9relics(regfile, spixel, center, pixref, Test=False): 
@@ -681,7 +703,6 @@ def PlotDistribution_FluxRatioLAS(location, ClList, RList):
 
 def stats_lineregress(name, data_x, data_y, verbose = False):
     
-    from scipy import stats
     if len([np.log10(x) for x in data_x]) > 0:
         slope, intercept, r_value, p_value, std_err = stats.linregress( [np.log10(x) for x in data_x], [np.log10(y) for y in data_y])
         if verbose:
@@ -1175,8 +1196,7 @@ def create_scattermatrix( SurveySamples, plotmeasures, suffix=''):
      
     ''' Creates a scatter matrix, off a list of quantities ... nice! 
     Input: SurveySamples ... there is currently no differnciation between different Survey Samples (symbolwise or else)
-    '''
-    import pandas as pd    
+    ''' 
     from pandas.tools.plotting import scatter_matrix
  
     pdframes = [survey.fetchpandas(plotmeasures) for survey in SurveySamples]
@@ -1220,7 +1240,7 @@ def create_scattermatrix( SurveySamples, plotmeasures, suffix=''):
 
     
     #== Save file
-    nowfile = 'CraftyPlot_Scattermatrix'
+    nowfile = 'Scattermatrix'
     #                fig2,ax1,proxyB, lockedaxis = create_Samples_A_histo( SurveySamples, parB, (zrange,colors), eff=eff, **addargs)  
     #                fig.add_subplot(1,1,1)
     #                fig.add_subplot(1,1,1)
@@ -1230,73 +1250,73 @@ def create_scattermatrix( SurveySamples, plotmeasures, suffix=''):
     nowfolder  = SurveySamples[-1].outfolder + '/PostProcessing/'  
     iom.check_mkdir(nowfolder)
     print('Gonna save:  %s' % (nowfolder + nowfile)  )                         
-    plt.savefig('%s%s_scatter%s.png' % (nowfolder,nowfile,suffix),dpi=400) #filename
-    plt.savefig('%s%s_scatter%s.pdf' % (nowfolder,nowfile,suffix)) #filename	    #fig.clf()
+    plt.savefig('%s%s%s.png' % (nowfolder,nowfile,suffix),dpi=400) #filename
+    plt.savefig('%s%s%s.pdf' % (nowfolder,nowfile,suffix)) #filename	    #fig.clf()
 
     plt.clf() 
 #    fig.clf() 
             
 
-
-def oldscattermatrix(R200exp=False, markers = np.asarray(['.','s']), log=[False,False], logplot=[True,True], lockedaxis=False, minrel=1):
-    '''    
-        if 1 == 2:
-            
-            if cc == 0:    
-                fig, axes = scatter_matrix(pdframe, alpha=0.65, figsize=(12, 12), c=col, cmap=massmap, edgecolors=(0,0,0,0.3)) #    ps=6,  , diagonal='kde', , **{'scale':'log'}
-        
-                if masscolor:
-                    cbarplot = plt.scatter(cvalues_mass, cvalues_mass, c=cvalues_mass, cmap=massmap, vmin=0.0, vmax=1.0) #viridis
-                    colorbar_ax = fig.add_axes([0.11, 0.03, 0.80, 0.03])  # [left, bottom, width, height]
-                    cb =  fig.colorbar(cbarplot, cax=colorbar_ax, orientation="horizontal") 
-                    cb.set_label('$\log_{10} (M_\mathrm{cl}/M_\odot)$' )
-            
-                a = np.linspace(0.0,1.0,0.1, endpoint=True)
-                b = np.ones_like(a)
-                cbarplot2 = plt.scatter(a, a,  c=b, cmap=cormap, vmin=0.0, vmax=1.0)
-                colorbar_ax2 = fig.add_axes([0.11, 0.93, 0.80, 0.03])  # [left, bottom, width, height]
-                cb =  fig.colorbar(cbarplot2, cax=colorbar_ax2, orientation="horizontal")
-                cb.set_label('Correlation strength')
-            else:
-                scatter_matrix(pdframe, alpha=0.65, figsize=(12, 12), c=col, cmap=massmap, edgecolors=(0,0,0,0.3))
-
-            plt.subplot_tool()
-            plt.show()
-    '''
-    cm = plt.cm #.get_cmap('RdYlBu')
-#     titlepost = ''
-    
-    colList = ['b','r','g','greyy','yellow']
-
-    '''======= New style (begin)'''   
-    masscolor = False
-    
-    if masscolor:
-        col =  cvalues_mass #cm.plasma    
-    else: 
-        col       = colList[cc]
-    
-    cormap    = cm.magma #cm.viridis
-    massmap   = cm.plasma #cm.magma    #cm.viridis
-
-     
-    ''' A workaround, you optionally could initialize the scatterplot with the log argument '''
-    for i, axs in enumerate(axes):
-        for j, ax in enumerate(axs):
-            if i < j and cc==0:  # only the scatter plots
-#                    ax.set_xscale('log')
-#                    ax.set_yscale('log')
-
-#                    fig.delaxes(ax)
-
-                ax.clear()
-                ''' Plot correlation '''
-                ax.imshow([[np.abs(pdframe.corr().iloc[i,j])]], vmin=0.0, vmax=1.0, cmap=cormap)
-                ax.text(0.5, 0.5,'%.2f' % (np.abs(pdframe.corr().iloc[i,j])), horizontalalignment='center',verticalalignment='center',transform=ax.transAxes, fontsize=30, color='white')
-
-            if i == j and cc>0:  # only the scatter plots
-                ax.hist(pdframe[pdframe.index == i], normed=1, facecolor=colList[cc], alpha=0.6)
-                
-            if i > j and cc >0:       
-                ax.scatter(pdframe[pdframe.index == i], pdframe[pdframe.index == j], color=colList[cc], alpha=0.6)
+#
+#def oldscattermatrix(R200exp=False, markers = np.asarray(['.','s']), log=[False,False], logplot=[True,True], lockedaxis=False, minrel=1):
+#    '''    
+#        if 1 == 2:
+#            
+#            if cc == 0:    
+#                fig, axes = scatter_matrix(pdframe, alpha=0.65, figsize=(12, 12), c=col, cmap=massmap, edgecolors=(0,0,0,0.3)) #    ps=6,  , diagonal='kde', , **{'scale':'log'}
+#        
+#                if masscolor:
+#                    cbarplot = plt.scatter(cvalues_mass, cvalues_mass, c=cvalues_mass, cmap=massmap, vmin=0.0, vmax=1.0) #viridis
+#                    colorbar_ax = fig.add_axes([0.11, 0.03, 0.80, 0.03])  # [left, bottom, width, height]
+#                    cb =  fig.colorbar(cbarplot, cax=colorbar_ax, orientation="horizontal") 
+#                    cb.set_label('$\log_{10} (M_\mathrm{cl}/M_\odot)$' )
+#            
+#                a = np.linspace(0.0,1.0,0.1, endpoint=True)
+#                b = np.ones_like(a)
+#                cbarplot2 = plt.scatter(a, a,  c=b, cmap=cormap, vmin=0.0, vmax=1.0)
+#                colorbar_ax2 = fig.add_axes([0.11, 0.93, 0.80, 0.03])  # [left, bottom, width, height]
+#                cb =  fig.colorbar(cbarplot2, cax=colorbar_ax2, orientation="horizontal")
+#                cb.set_label('Correlation strength')
+#            else:
+#                scatter_matrix(pdframe, alpha=0.65, figsize=(12, 12), c=col, cmap=massmap, edgecolors=(0,0,0,0.3))
+#
+#            plt.subplot_tool()
+#            plt.show()
+#    '''
+#    cm = plt.cm #.get_cmap('RdYlBu')
+##     titlepost = ''
+#    
+#    colList = ['b','r','g','greyy','yellow']
+#
+#    '''======= New style (begin)'''   
+#    masscolor = False
+#    
+#    if masscolor:
+#        col =  cvalues_mass #cm.plasma    
+#    else: 
+#        col       = colList[cc]
+#    
+#    cormap    = cm.magma #cm.viridis
+#    massmap   = cm.plasma #cm.magma    #cm.viridis
+#
+#     
+#    ''' A workaround, you optionally could initialize the scatterplot with the log argument '''
+#    for i, axs in enumerate(axes):
+#        for j, ax in enumerate(axs):
+#            if i < j and cc==0:  # only the scatter plots
+##                    ax.set_xscale('log')
+##                    ax.set_yscale('log')
+#
+##                    fig.delaxes(ax)
+#
+#                ax.clear()
+#                ''' Plot correlation '''
+#                ax.imshow([[np.abs(pdframe.corr().iloc[i,j])]], vmin=0.0, vmax=1.0, cmap=cormap)
+#                ax.text(0.5, 0.5,'%.2f' % (np.abs(pdframe.corr().iloc[i,j])), horizontalalignment='center',verticalalignment='center',transform=ax.transAxes, fontsize=30, color='white')
+#
+#            if i == j and cc>0:  # only the scatter plots
+#                ax.hist(pdframe[pdframe.index == i], normed=1, facecolor=colList[cc], alpha=0.6)
+#                
+#            if i > j and cc >0:       
+#                ax.scatter(pdframe[pdframe.index == i], pdframe[pdframe.index == j], color=colList[cc], alpha=0.6)
 

@@ -15,6 +15,7 @@ from __future__ import division,print_function
 import csv
 import numpy as np
 import clusterbuster.surveyclasses as cbclass
+import clusterbuster.dbclasses     as dbclass
 import clusterbuster.iout.misc     as iom
 import os
 
@@ -85,7 +86,7 @@ def create_table_frame(protoobj, caption, level, dictionary, delimiter='&', ende
     
     for ii,entry in enumerate(dictionary):
         tabline += ' %s ' % entry[2]
-        if  not isinstance(entry[0], list) and isinstance(entry[0](protoobj), cbclass.measurand):
+        if  not isinstance(entry[0], list) and isinstance(entry[0](protoobj), dbclass.measurand):
              idline += entry[0](protoobj).label   
              unline += entry[0](protoobj).unit 
              
@@ -162,10 +163,12 @@ def create_table_columns(objectlist, level, dictionary, delimiter='&', ender='\\
 
 
 def create_table(objectlist, dictionary, caption='nocap', level=None, outer=False, longtab=False):
+    ''' A function to create a late table based on an object list and an dictionary of values '''
     
     header, ender = create_table_frame(objectlist[0], caption, level, dictionary, outer=outer, longtab=outer)
     columns       = create_table_columns(objectlist, level, dictionary)
         
+    print(columns)
     return header + columns + ender
 
 
@@ -173,7 +176,8 @@ def create_table(objectlist, dictionary, caption='nocap', level=None, outer=Fals
 
 def RList2table_paper_new(location, survey, longtab=False):   
     
-    RList     = survey.fetch_totalRelics(zborder=0.05)
+    survey.FilterCluster(zborder=0.05)
+    RList     = survey.fetch_totalRelics()
     RList.sort(key= iom.Object_natural_keys ) 
     
     

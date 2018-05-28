@@ -13,11 +13,12 @@ import abcpmc
 import corner
 import time
 import matplotlib.pyplot                   as plt
-import Analysis_MUSIC2.RunSurvey           as MUSIC2
-import pyutil_my.SurveyMetrics             as surmet
+import clusterbuster.iout.misc             as iom
+import surveysim.music2.runsurvey          as music2run
+import inference.surveymetrics             as surmet
 import seaborn as sns
 
-import pyutil_my.IOutil                    as iout
+
 
 ''' The Test Part: Taken from http://nbviewer.jupyter.org/github/jakeret/abcpmc/blob/master/notebooks/dual_abc_pmc.ipynb'''
 
@@ -35,10 +36,10 @@ def dist_measure(x, y):
 
 def main_test(Nthreads=7):
     
- 
+    
     import matplotlib
     import pandas as pd
-
+    
 
     sns.set_style("white")
     np.random.seed(10)
@@ -198,7 +199,7 @@ def launch(sampler,prior,alpha,eps,ratio_min = 4e-2,surveypath=None, pool=None):
         eps.eps = np.percentile(pool.dists, alpha, axis=0) # reduce eps value
         pools.append(pool)
         
-        iout.pickleObject(pools, surveypath, 'launch_pools', append = False)
+        iom.pickleObject(pools, surveypath, 'launch_pools', append = False)
         
         
         
@@ -239,8 +240,11 @@ def main_MUSIC_2(dataNVSS, Nthreads=15, new_run=True):
     '''
     import matplotlib
     import pandas as pd
-    surveypath = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_COOLING/'
+    surveypath = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS/'
 
+    with open('/data/ClusterBuster-Output/AllSurveys/count.txt', 'w') as f:
+        f.write('0')
+    
     sns.set_style("white")
     #np.random.seed(10)
     matplotlib.rc("font", size=30)
@@ -250,48 +254,45 @@ def main_MUSIC_2(dataNVSS, Nthreads=15, new_run=True):
     T         = 12     # Maximum number of iterations
     Nw        = 135    # Number of walkers per iteration
     maxtasksperchild=1 #int(Nw/Nthreads/2)  # e.g. 252/14/2 = 9
-    eps_start = [1, 3, 4] 
+    eps_start = [3, 1, 4, 2] 
     
     
     ''' The abcpmc part starts: Define thetas i.e. parameter values to be inferred '''
-    mu_lgeff, mu_lgB0, mu_kappa  = -4.5 , 0.0, 0.5  #-4.5,0.5 with full sky coverage
-    means    = [mu_lgeff, mu_lgB0, mu_kappa]
+#    mu_lgeff, mu_lgB0, mu_kappa  = -5,0 , 0.0, 0.5  #-4.5,0.5 with full sky coverage
+#    means    = [mu_lgeff, mu_lgB0, mu_kappa]
 #    COV      = [[0.8, -0.5, 0], [-0.5, 0.8, 0], [0, 0, 0.3]]
 
 #    prior = abcpmc.GaussianPrior(mu=means, sigma=COV)
-    prior = abcpmc.TophatPrior([-6,-1.5,-0.8], [-3.5,2,2])
+    prior = abcpmc.TophatPrior([-6.5,-1.5,-1], [-4.5,2,1.5])
     
-    
-    
+
     '''PhD plots'''
 #    eps_start =  [5.3, 5.3, 5.3 ]
-    T                = 1
+    T                = 20
     maxtasksperchild = 3
-    Nw               = 20
-    mu_lgeff, mu_lgB0, mu_kappa  = -5.0, 0.0, 0.5
-    means    = [mu_lgeff, mu_lgB0, mu_kappa]
-    COV      = [[0.0, -0.0, 0], [-0.0, 0.0, 0], [0, 0, 0.0]]
-    prior = abcpmc.GaussianPrior(mu=means, sigma=COV)
-
-    print('maxtasksperchild', maxtasksperchild)
-
-    '''DEBUGGIN END'''
-    
+    prior            = abcpmc.TophatPrior([-7], [-4])
+    eps_start        = [5]            
+#    mu_lgeff, mu_lgB0, mu_kappa  = -5.0, 0.0, 0.5
+#    means    = [mu_lgeff, mu_lgB0, mu_kappa]
+#    COV      = [[0.0, -0.0, 0], [-0.0, 0.0, 0], [0, 0, 0.0]]
+#    prior = abcpmc.GaussianPrior(mu=means, sigma=COV)
+    '''PhD plots' END'''
+ 
     
     eps = abcpmc.ConstEps(T, eps_start)
 #    sampler = abcpmc.Sampler(N=Nw, Y=data, postfn=testrand, dist=testmetric, threads=Nthreads, maxtasksperchild=maxtasksperchild)
-    sampler = abcpmc.Sampler(N=Nw, Y=data, postfn=MUSIC2.main_ABC, dist=surmet.abcpmc_dist_severalMetrices, threads=Nthreads, maxtasksperchild=maxtasksperchild)
+    sampler = abcpmc.Sampler(N=Nw, Y=data, postfn=music2run.main_ABC, dist=surmet.abcpmc_dist_severalMetrices, threads=Nthreads, maxtasksperchild=maxtasksperchild)
     sampler.particle_proposal_cls = abcpmc.OLCMParticleProposal
     
     ''' compare with AstroABC
     sampler = astroabc.ABC_class(Ndim,walkers,data,tlevels,niter,priors,**prop)
-    sampler.sample(MUSIC2.main_astroABC)    
+    sampler.sample(music2run.main_astroABC)    
     '''
     
     
     t0 = time.time()
     
-    #	startfrom=iout.unpickleObject('/data/ClusterBuster-Output/MUSIC_NVSS02_Test01/launch_pools')
+    #	startfrom=iom.unpickleObject('/data/ClusterBuster-Output/MUSIC_NVSS02_Test01/launch_pools')
     pool     = None #startfrom[-1]
     pools = launch(sampler,prior,alpha,eps,surveypath=surveypath,pool=pool)
     print("took", (time.time() - t0))
@@ -301,7 +302,7 @@ def main_MUSIC_2(dataNVSS, Nthreads=15, new_run=True):
 
 if __name__ == "__main__":
     folder    = '/data/ClusterBuster-Output/'
-    dataNVSS   = iout.unpickleObject('%s%s/pickled/Survey' % (folder,'NVSS'))
-#    dataMUSIC2 = iout.unpickleObject('%s%s/pickled/Survey' % (folder,'MUSIC2COOL_NVSS_SSD_00002'))
+    dataNVSS   = iom.unpickleObject('%s%s/pickled/Survey' % (folder,'NVSS'))
+#    dataMUSIC2 = iom.unpickleObject('%s%s/pickled/Survey' % (folder,'MUSIC2COOL_NVSS_SSD_00002'))
 #    surmet.abcpmc_dist_severalMetrices( dataMUSIC2, dataNVSS, delal=False)
     main_MUSIC_2(dataNVSS, new_run=True, Nthreads=20)

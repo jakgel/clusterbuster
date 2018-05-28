@@ -51,8 +51,8 @@ class DetInfo:
 
         self.FWHM2sigma =1/2.354 
         self.name    = name     # name/id of the survey , e.g. NVSS, MSSS, TGSS
-    #    self.survey  = survey   # survey  as a string, e.g. NVSS, MSSS, TGSS --> outdated and now in the survey class
-        self.beam    = beam     # beam size [major [arcsec], minor[arcsec], theta]
+    #    self.survey  = survey  # survey  as a string, e.g. NVSS, MSSS, TGSS --> outdated and now in the survey class
+        self.beam    = beam     # beam size FWHM [major [arcsec], minor[arcsec], theta]
     
         self.spixel  = spixel   # pixel size in arcsec
         self.rms     = rms      # rms noise in Jy/beam
@@ -128,10 +128,10 @@ class PreModel_Hoeft(RModel):
       ''' Model of preexisting electrons, see internal .pdf description'''
       RModel.__init__(self, id, pre=True, **kwargs)
       self.t0      = 0.5   # Minimal time since reacceleration
-      self.t1      = 10    # Maximal time since reacceleration
+      self.t1      = 5     # Maximal time since reacceleration
       self.n0      = 1e-6  # Number density of accretion shocks
       self.n1      = 1e-2  # Number density of 'core'
-      self.kappa    = 0.05 # Initial normalisation PRE and thermal at shockfront
+      self.ratio   = 0.05 # Initial normalisation PRE and thermal at shockfront
 
 class PreModel_Gelszinnis(RModel):
   """
@@ -470,9 +470,8 @@ class Galaxycluster(object):
             m_index   = np.argmin(massTest)
             self.M200.value = checkMass[m_index]   # [0:2pi]
           
-            
-    ''' This method is VERY slow, it takes around 2 seconds per computation '''        
     def infer_M200_MX(self, Mx, x):
+        ''' This method is VERY slow, it takes around 2 seconds per computation '''     
         if self.M200() == 0 and Mx() != 0:
 
             checkMass = [10**m for m in np.arange(13.0,16,0.05)]
@@ -502,12 +501,8 @@ class Galaxycluster(object):
             This procedure depends on gcl.histo, if flux is outside the given range it won't be put into consideration (radius etc!)'''
         
 
-        eps = 1.e-15 #15  # 1  Femto Jy ... hopefully this doesn't change the results
-#        for relics in self.filterRelics(kwargs):
-#            self.histo.hist += dddd
-#            
-            
-            
+        eps = 1.e-15 #15  # 1  Femto Jy as offset ... hopefully this doesn't change the results
+
         if self.histo is not None:
             collabsed  = np.sum(self.histo.hist, axis=(1))   # Collabses along the distance axis
             N = collabsed.shape[0]
@@ -952,6 +947,8 @@ class Relic:
         self.wMach       =  None  # a sparse numpy array; flux weighted Mach number
         self.wArea       =  None  # a sparse numpy array; flux weighted Mach number       
         self.wAlpha      =  None  # a sparse numpy array; flux weighted Mach number          
+        self.wB          =  None  # a sparse numpy array; flux weighted Mach number    
+        self.wPre        =  None  # a sparse numpy array; flux weighted Mach number    
 
         self.wDoG_rel    =  None
 #        self.wRho_up     =  None
@@ -1029,8 +1026,10 @@ class Relic:
                 self.Mach    = dbc.measurand( np.sum(self.wMach)/np.sum(self.sparseW)              , 'M_av'   , label='$\overline{M}$', un = None )
                 self.Rho     = dbc.measurand( np.sum(self.wRho)/np.sum(self.sparseW)               , 'rho_av' , label='$\overline{\\rho}_\mathrm{down}$', un = 'cm$^{-3}$' ) #label='$\overline{\rho}_\mathrm{down}$',
                 self.Area_av = dbc.measurand( np.sum(self.wArea)/np.sum(self.sparseW)*1e6          , 'area_av', label='$\overline{\mathrm{area}}$', un = 'kpc$^2$' ) 
-                self.Area    = dbc.measurand( np.sum(self.wArea)/np.sum(self.sparseW)*len(self.sparseW) , 'area'                     , un = 'Mpc$^2$' )
-            
+                self.Area    = dbc.measurand( np.sum(self.wArea)/np.sum(self.sparseW)*len(self.sparseW) , 'area'               , un = 'Mpc$^2$' )
+                self.B       = dbc.measurand( np.sum(self.wB)/np.sum(self.sparseW), 'B'                , un = '$\mu G$' )
+                self.fpre    = dbc.measurand( np.sum(self.wPre)/np.sum(self.sparseW), 'f_\mathrm{Pre}' , un = '' )
+                
                 self.DoG_rel  = dbc.measurand( np.sum(self.wDoG_rel) , 'DoG_\mathrm{rel}')
 #                self.Rho_up   = dbc.measurand( np.sum(self.wRho_up)/np.sum(self.sparseW)            , 'rho_up' , label='$\overline{\\rho}_\mathrm{up}$'  , un = 'cm$^{-3}$' )
 #                self.Rho_down = dbc.measurand( np.sum(self.wRho_down)/np.sum(self.sparseW)          , 'rho_dow', label='$\overline{\\rho}_\mathrm{down}$', un = 'cm$^{-3}$' )
@@ -1179,18 +1178,22 @@ class Survey(object):
           
           set normalize=True: if you want to get the cumulative signal divided by the number of relic hosting clusters
          
-          Output:
-          halfHist_new (np.array) : halfHist for analysis issues, shape stays same
-          radial & tickz          : (radial,[-h for h in reversed(Histo.ticks[1])]+[h for h in Histo.ticks[1]]), 
-          halfHist_plot           : halfHist for plotting purposses, shape may change depending on the output format
-          sigstats  (float)       :  total accumulated signal
+          Output an Tuple of 4 outputs:
+              halfHist_new (np.array) : halfHist for analysis issues, shape stays same
+              radial & tickz          : (radial,[-h for h in reversed(Histo.ticks[1])]+[h for h in Histo.ticks[1]]), 
+              halfHist_plot           : halfHist for plotting purposses, shape may change depending on the output format
+              sigstats  (float)       :  total accumulated signal
           
           
           BUG: For a very low angular bin size the estimate of the projected flux ratio of pro and anti axis changes!
           '''
           
           '''DEVELOPMENT'''
-          mesh        = np.zeros((46,35))
+          npolar      = 46    #-->deprecated! but a better umber (nicer looking then the raw grid)
+          ndist       = 35    #-->deprecated! but a better umber (nicer looking then the raw grid)
+          distmax     = 3500  # very important, should somehow part of the histogramm class
+          # This is a design desicion ... in the standart case, the histogramm should ourient itself on the histogram variable of the Survey class
+          mesh        = np.zeros_like( self.mainhist.hist.T )   #np.zeros((npolar,ndist))
           '''DEVELOPMENT END'''
           
           mainhist = np.zeros_like( self.mainhist.hist.T )
@@ -1205,18 +1208,19 @@ class Survey(object):
     
                   Histo = GCl.histo
                   shiftHist  = np.roll(Histo.hist.T, -int(aligned*(GCl.relic_pro_index)), axis=1)  # This was a bug:/ AreaHist**(self.expA)    
-                  ''' The scale is very important, it would be good to normalize the flux we do this by impelementing the expScale parameter.
-                  This is flexible enough to give different weights to bright/faitn relics. Another question for statistical analysisi is, if
-                  the average  or an integrated value is more itneresting.
+                  ''' The scale is very important, it would be good to normalize the flux we do this by implementing the expScale parameter.
+                  This is flexible enough to give different weights to bright/faitn relics. Another question for statistical analysis is, if
+                  the average  or an integrated value is more interesting.
                   '''               
                   if   mode == 'flux':
                       scale     = 1. 
                   elif mode =='power':
-                       scale    = 1. * GCl.flux2power_woRedening()     
+                      scale    = 1. * GCl.flux2power_woRedening()    
+                   
                        
                   signal    = np.divide (shiftHist*scale, (np.sum(shiftHist)*scale)**self.expScale) 
                   mainhist += signal
-                  Clusterbin           = int(GCl.R200()/3500 *35)
+                  Clusterbin           = int(GCl.R200()/distmax *ndist)
                   mesh[:,Clusterbin]  += np.sum(signal,axis=1) 
                   sigstats.append(np.sum(signal)) 
                 
@@ -1312,7 +1316,7 @@ class Survey(object):
           
          return sum([GCl.hist for GCl in self.GCls], 0)
      
-    def fetchpandas(survey, plotmeasures, kwargs_FilterCluster={}, kwargs_FilterObjects={}):
+    def fetchpandas(survey, plotmeasures, surname=True, kwargs_FilterCluster={}, kwargs_FilterObjects={}):
         ''' Return a panda array generated from the survey catalogue 
         
         survey: A ClusterBusterSurveytype
@@ -1387,7 +1391,8 @@ class Survey(object):
         ''' Create a pandas dataframe '''
         columns =[measure(relic).labels(log=log) for measure,log in zip(plotmeasures,logs)] #\
         pdframe =  pd.DataFrame(np.log10(datalist), columns=columns)
-        pdframe['Survey'] = survey.name
+        if surname:
+            pdframe['Survey'] = survey.name
     
           
         '''======= New style (begin)'''   
