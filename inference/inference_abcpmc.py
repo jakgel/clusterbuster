@@ -8,84 +8,124 @@ Created on Fri Jun 30 11:51:56 2017
 from __future__ import division, print_function
 
 # start by importing astroabc and numpy
+import json
+import argparse
+import configparser
+
 import numpy as np
 import abcpmc
 import corner
 import time
+import matplotlib
 import matplotlib.pyplot                   as plt
 import clusterbuster.iout.misc             as iom
 import surveysim.music2.runsurvey          as music2run
 import inference.surveymetrics             as surmet
 import seaborn as sns
 
+from functools import partial
 
 
-''' The Test Part: Taken from http://nbviewer.jupyter.org/github/jakeret/abcpmc/blob/master/notebooks/dual_abc_pmc.ipynb'''
 
-def create_new_sample(theta, samples_size=1000):
-    mu,sigma = theta
-    if sigma<=0:
-        sigma=10
-    return np.random.normal(mu, sigma, samples_size)
+'''=== Here starts the flesh and meet of the analysis done for my PhD ==='''
+def main_abcpmc_MUSIC2(conf, new_run=True, test=False):
+
+    ''' 
+    config should contain
+    [][]: a list etc.
+    
+    
+    eps_start is actually important as the next iteration will only start if the number of computed trials within these boundaries will be Nw.
+    So in one case I had to draw and compute twice as many particles than Nw.
+    
+    
+    
+    About the treads: 14-16 treads are fine, as more treats wont be fully used and just stuff the taskqueue
+    '''
+    
+    
+    # Loads the real data to compare with (and if neccessary also test data)
+    data   = iom.unpickleObject(conf['paths']['surveyreal'])
+    if test:
+        dataMUSIC2 = iom.unpickleObject(conf['paths']['surveysim'])
+        surmet.abcpmc_dist_severalMetrices(dataMUSIC2, data, delal=False) 
+    
+    # Prepares the file for counting
+    with open(conf['paths']['allsurveys'] + 'count.txt', 'w') as f:
+        f.write('0')
 
 
-def dist_measure(x, y):
-    return [np.abs(np.mean(x, axis=0) - np.mean(y, axis=0)),
-            np.abs(np.var(x, axis=0) - np.var(y, axis=0))]
+
+    ''' The abcpmc part starts: Define thetas i.e. parameter values to be inferred  and priors'''
+
+    if conf['prior']['type'] == 'tophat':
+        bounds = json.loads(conf['prior']['bounds'])
+        prior  = abcpmc.TophatPrior( bounds[0], bounds[1] )
+    elif conf['prior']['type'] == 'gaussian':
+        means    = json.loads(conf['prior']['means'])
+        COV      = json.loads(conf['prior']['covariance'])
+        prior = abcpmc.GaussianPrior(mu=means, sigma=COV)
+    else:
+        print('inference_abcpmc::main_abcpmc_MUSIC2: prior %s is unknown!' % (conf['prior']['type']))
+        return 0
 
 
-def main_test(Nthreads=7):
-    
-    
-    import matplotlib
-    import pandas as pd
-    
-
-    sns.set_style("white")
-    np.random.seed(10)
-    matplotlib.rc("font", size=30)
-
-    
-    samples_size = 1500
-    N_varySame   = 2000
-    mean = 2
-    sigma = 1
-    data = np.random.normal(mean, sigma, samples_size)
-    print(data)
-    
-    ''' Plot 1 '''
-    f,ax = plt.subplots()
-    sns.distplot(data)
-    
-    
-    ''' Plot 2 '''
-    distances = [dist_measure(data, create_new_sample((mean, sigma), samples_size)) for _ in range(N_varySame)]
-    dist_labels = ["mean", "var"]
-    
-    f, ax = plt.subplots()
-    sns.distplot(np.asarray(distances)[:, 0], axlabel="distances", label=dist_labels[0])
-    sns.distplot(np.asarray(distances)[:, 1], axlabel="distances", label=dist_labels[1])
-    plt.title("Variablility of distance from simulations")
-    plt.legend()
-    
-    
-    ''' The abcpmc part starts '''
-    prior = abcpmc.GaussianPrior(mu=[3.5, 2.0], sigma=np.eye(2) * 0.5)
-    
-    alpha = 85  
-    T = 20
-    eps_start = [1.0, 1.0]
-    
-    sampler = abcpmc.Sampler(N=1000, Y=data, postfn=create_new_sample, dist=dist_measure, threads=Nthreads)
+    eps = abcpmc.ConstEps(conf.getint('pmc','T'), json.loads(conf['metrics']['eps_startlimits']))
+       
+    if test:
+        sampler = abcpmc.Sampler(N=conf.getint('pmc','Nw'), Y=data, postfn=testrand, dist=testmetric, 
+                                 threads=conf.getint('mp','Nthreads'), maxtasksperchild=conf.getint('mp','maxtasksperchild'))
+    else:
+        sampler = abcpmc.Sampler(N=conf.getint('pmc','Nw'), Y=data, postfn=music2run.main_ABC, 
+                                 dist=partial(surmet.abcpmc_dist_severalMetrices, metrics= json.loads(conf['metrics']['used']), outpath=conf['paths']['abcpmc']), 
+                                 threads=conf.getint('mp','Nthreads'), maxtasksperchild=conf.getint('mp','maxtasksperchild'))
+        #dist=surmet.abcpmc_dist_severalMetrices, 
     sampler.particle_proposal_cls = abcpmc.OLCMParticleProposal
-    eps = abcpmc.ConstEps(T, eps_start)
+    
+    ''' compare with AstroABC
+    sampler = astroabc.ABC_class(Ndim,walkers,data,tlevels,niter,priors,**prop)
+    sampler.sample(music2run.main_astroABC)    
+    '''
+    
+    
+    t0 = time.time()
+    
+    #	startfrom=iom.unpickleObject('/data/ClusterBuster-Output/MUSIC_NVSS02_Test01/launch_pools')
+    pool     = None #startfrom[-1]
+    launch(sampler,prior,conf.getfloat('pmc','alpha'),eps,surveypath=conf['paths']['abcpmc'],pool=pool)
+    print("took", (time.time() - t0))
+
+
+def launch(sampler,prior,alpha,eps,ratio_min = 4e-2,surveypath=None, pool=None, plotting=False):
+    ''' Launches pools
+     Could become implemeted in abcpmc itself'''
+    
+    pools = []
+    for pool in sampler.sample(prior, eps, pool):
+        eps_str = ", ".join(["{0:>.4f}".format(e) for e in pool.eps])
+        print("T: {0}, eps: [{1}], ratio: {2:>.4f}".format(pool.t, eps_str, pool.ratio))
+
+        for i, (mean, std) in enumerate(zip(*abcpmc.weighted_avg_and_std(pool.thetas, pool.ws, axis=0))):
+            print(u"    theta[{0}]: {1:>.4f} \u00B1 {2:>.4f}".format(i, mean,std))
+
+        eps.eps = np.percentile(pool.dists, alpha, axis=0) # reduce eps value
+        pools.append(pool)
+        
+        iom.pickleObject(pools, surveypath, 'launch_pools', append = False)
+        
+        
+        
+        ''' Creates plots on the fly '''
+        if plotting:
+            plot_abctraces(pools,surveypath)
+ 
+        if pool.ratio < ratio_min:
+            print('Ended abcpmc because ratio_min < %.3e' % (ratio_min))
+            break
+    sampler.close()
+    return pools
     
 
-    t0 = time.time()
-    pools = launch(sampler,prior,alpha,eps)
-    print("took", (time.time() - t0))
-    
-     
 
 
 ''' My own testpart '''
@@ -117,7 +157,8 @@ def plot_abctraces(pools, surveypath=''):
     ''' Input: a list of pools in the abc format 
         Generates trace plots of the thetas,eps and metrics '''
 
-
+    sns.set_style("white")
+    matplotlib.rc("font", size=30)
 
     ''' Plot Metric-Distances '''
     distances = np.array([pool.dists for pool in pools])
@@ -144,6 +185,7 @@ def plot_abctraces(pools, surveypath=''):
     plt.ylabel('Theta')
     plt.legend()
     plt.savefig('%s/Thetas.png' % (surveypath))
+    
     
     ''' Plot Variables '''
     thetas = pool.thetas
@@ -172,7 +214,7 @@ def plot_abctraces(pools, surveypath=''):
 
         
     ''' Plot Parameters'''
-    for ii,_ in enumerate(pools):
+    for ii,_ in enumerate(pools):     
         jg = sns.jointplot(pools[ii].thetas[:, 0], 
                       pools[ii].thetas[:, 1], 
                       kind="kde", 
@@ -184,125 +226,18 @@ def plot_abctraces(pools, surveypath=''):
     return 0
 
 
-def launch(sampler,prior,alpha,eps,ratio_min = 4e-2,surveypath=None, pool=None):
-    ''' Launches '''
-    ''' Could become impleneted in abcpmc '''
-    
-    pools = []
-    for pool in sampler.sample(prior, eps, pool):
-        eps_str = ", ".join(["{0:>.4f}".format(e) for e in pool.eps])
-        print("T: {0}, eps: [{1}], ratio: {2:>.4f}".format(pool.t, eps_str, pool.ratio))
-
-        for i, (mean, std) in enumerate(zip(*abcpmc.weighted_avg_and_std(pool.thetas, pool.ws, axis=0))):
-            print(u"    theta[{0}]: {1:>.4f} \u00B1 {2:>.4f}".format(i, mean,std))
-
-        eps.eps = np.percentile(pool.dists, alpha, axis=0) # reduce eps value
-        pools.append(pool)
-        
-        iom.pickleObject(pools, surveypath, 'launch_pools', append = False)
-        
-        
-        
-        ''' Creates plots on the fly '''
-        plot_abctraces(pools,surveypath)
- 
-        if pool.ratio < ratio_min:
-            print('Ended abcpmc because ratio_min < %.3e' % (ratio_min))
-            break
-    sampler.close()
-    return pools
-    
-    
-    
-    
-'''=== Here starts the flesh and meet of the analysis done for my PhD ==='''
-
-def main_MUSIC_2(dataNVSS, Nthreads=15, new_run=True):
-
-    ''' 
-    eps_start is actually important as the next iteration will only start if the number of computed trials within these boundaries will be Nw.
-    So in one case I had to draw and compute twice as many particles than Nw.
-    
-    
-    
-    
-    About the treads: 14-16 treads are fine, as more treats wont be fully used and just stuff the taskqueue
-    
-    Test & Development History: 
-      05855 range(192):   16? iterations: ...         was done with screen. Terminated early ..., ...  
-      10295 range(192):   > 1 iterations: ...         acceptance rate (0.80 instead of 0.875  & introduced maxtsksperchild & chunksize BUT should work nice!
-      28914 range(240):   16? iterations: ... smaller acceptance rate (0.7 instead of 0.85 --> faster prunning and more noise), Flat prior. Ran into swap  before 80 computations
-      21631 range(128):   12+ iterations ... a mix of models, a try towards a real model inference. Somehow worked (even with some memory overrun and no temrination like exspected)
-      22326 range(40):  failed iteration ... amix of different models directly from the prior
-      XXXX  range(20):      no iteration ... kappa    much  flatter than baseline
-      27581 range(20):      no iteration ... kappa a little flatter than baseline
-      9229  range (20)      no iteration ... the baseline model
-    '''
-    import matplotlib
-    import pandas as pd
-    surveypath = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS/'
-
-    with open('/data/ClusterBuster-Output/AllSurveys/count.txt', 'w') as f:
-        f.write('0')
-    
-    sns.set_style("white")
-    #np.random.seed(10)
-    matplotlib.rc("font", size=30)
-
-    data      = dataNVSS
-    alpha     = 75     # acceptance percentile i.e. best 85 percent
-    T         = 12     # Maximum number of iterations
-    Nw        = 135    # Number of walkers per iteration
-    maxtasksperchild=1 #int(Nw/Nthreads/2)  # e.g. 252/14/2 = 9
-    eps_start = [3, 1, 4, 2] 
-    
-    
-    ''' The abcpmc part starts: Define thetas i.e. parameter values to be inferred '''
-#    mu_lgeff, mu_lgB0, mu_kappa  = -5,0 , 0.0, 0.5  #-4.5,0.5 with full sky coverage
-#    means    = [mu_lgeff, mu_lgB0, mu_kappa]
-#    COV      = [[0.8, -0.5, 0], [-0.5, 0.8, 0], [0, 0, 0.3]]
-
-#    prior = abcpmc.GaussianPrior(mu=means, sigma=COV)
-    prior = abcpmc.TophatPrior([-6.5,-1.5,-1], [-4.5,2,1.5])
     
 
-    '''PhD plots'''
-#    eps_start =  [5.3, 5.3, 5.3 ]
-    T                = 20
-    maxtasksperchild = 3
-    prior            = abcpmc.TophatPrior([-7], [-4])
-    eps_start        = [5]            
-#    mu_lgeff, mu_lgB0, mu_kappa  = -5.0, 0.0, 0.5
-#    means    = [mu_lgeff, mu_lgB0, mu_kappa]
-#    COV      = [[0.0, -0.0, 0], [-0.0, 0.0, 0], [0, 0, 0.0]]
-#    prior = abcpmc.GaussianPrior(mu=means, sigma=COV)
-    '''PhD plots' END'''
- 
-    
-    eps = abcpmc.ConstEps(T, eps_start)
-#    sampler = abcpmc.Sampler(N=Nw, Y=data, postfn=testrand, dist=testmetric, threads=Nthreads, maxtasksperchild=maxtasksperchild)
-    sampler = abcpmc.Sampler(N=Nw, Y=data, postfn=music2run.main_ABC, dist=surmet.abcpmc_dist_severalMetrices, threads=Nthreads, maxtasksperchild=maxtasksperchild)
-    sampler.particle_proposal_cls = abcpmc.OLCMParticleProposal
-    
-    ''' compare with AstroABC
-    sampler = astroabc.ABC_class(Ndim,walkers,data,tlevels,niter,priors,**prop)
-    sampler.sample(music2run.main_astroABC)    
-    '''
-    
-    
-    t0 = time.time()
-    
-    #	startfrom=iom.unpickleObject('/data/ClusterBuster-Output/MUSIC_NVSS02_Test01/launch_pools')
-    pool     = None #startfrom[-1]
-    pools = launch(sampler,prior,alpha,eps,surveypath=surveypath,pool=pool)
-    print("took", (time.time() - t0))
-
-
-    return 0
 
 if __name__ == "__main__":
-    folder    = '/data/ClusterBuster-Output/'
-    dataNVSS   = iom.unpickleObject('%s%s/pickled/Survey' % (folder,'NVSS'))
-#    dataMUSIC2 = iom.unpickleObject('%s%s/pickled/Survey' % (folder,'MUSIC2COOL_NVSS_SSD_00002'))
-#    surmet.abcpmc_dist_severalMetrices( dataMUSIC2, dataNVSS, delal=False)
-    main_MUSIC_2(dataNVSS, new_run=True, Nthreads=20)
+    ''' Full routines for parsing a combination of argparse, configparser and json'''
+    parser = argparse.ArgumentParser(description='Evaluates the best solutions of survey simulations with the abc abbroach.')
+    parser.add_argument('-parini', dest='parini'  , action='store', default='params.ini', type=str,help='set filepath for parameter initialisation file.')
+    args = parser.parse_args()
+
+#    fd = open(args.parini, 'r')
+    config = configparser.ConfigParser()
+    config.read(args.parini)
+    args = parser.parse_args()
+    
+    main_abcpmc_MUSIC2(config, new_run=True)  #dataNVSS

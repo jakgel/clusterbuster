@@ -1,0 +1,45 @@
+# Specify model parameters A:  B-field models
+B0        =   [1e-1,1e2]    # muG for a particle density of 1e-3(4?)/cm^3
+B0_N      =   6             # Number of intervall steps
+B0_type   =   log           # Type of interpolation
+nu        =   [0,1]         # Exponent for the magnetic field scalling
+nu_N      =   6             # Number of intervall steps    
+nu_type   =   lin           # Type of interpolation
+
+# Specify model parameters B:  Efficency parameters
+eff_range      = [1e-5,2e-3]  # Xi_e as energy fraction of suprathermal electrons, around 10^(-4...-2)
+eff_steps      =  6
+eff_type       =  log
+
+# Additional physics
+ add_seeds     =  []  # AGN, RangeToCenter
+ mod_eff       =  []  # modifies Mach based efficency
+
+# Specify used survey A: clusters 
+ClFile          = ClusterList/CreatedClusterDistribution_huge.dat   # clusterfile: jakob, sebastian
+startfrom       = 10000                                             # from 0 to lenght of clusterfile (600k)
+surv_compl      = 0.8                                               # If < 1 seen as coverage, If > 1 seen as number of clusters (roundet to int)
+z_range         = [0.05,0.9]                                        # Gives the lower and higher boundary for z of the cosmic slice
+# Because of Z_range and eff_cover a filter should be generated to choose objects out of the list
+
+# Specify used survey B: observational parameters
+S_beam         =  45      # FWHM arcsec
+S_pixel        = 7.5      # arcsec
+RMSnoise       = 450      # muJy
+Detthresh      =   2      # times RMS-noise
+nu_obs         = 1.4      # obsfrequency in GHz
+UVcoverage     = NVSS     # Int out of ... to specify survey
+
+# MockObs parameters
+realism        = simpleconv #  one out of [simpleconv, fouriertrunc, deconv]
+  genfits      = []         #  list of    [radio, xray, mass]
+  alpha        = 1.3        #  fixed our due to shockmaps ...
+binmax         = 800        #  maximal image size in pixel [can modify S_pixel!] 
+ hsize         = 6000       #  size of cube in kpc
+ 
+# Specify output
+Histout        = True       # Plot Histogramms on the fly?
+snapfolder     = /radioarchive/MergerTrees/Clusters/            #folder where the clustersnapshots are stores
+Output         = [spearman,angles,relicpixels] # list of tasks
+smarttime_sub  = 800     # '' for default
+outf           = /home/jakobg/lib/ClusterBuster/Analysis-MUSIC-2/Output/ # outfile, Is going to get tweaked

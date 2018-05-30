@@ -182,26 +182,8 @@ def ABC_summaryStatistics_logMach(Surveys):
     return abs(mA-mB)
     
 
-
-
-def ABC_dist_music2( SurveyA, SurveyB, delal=False, stochdrop=True):
-    ''' 
-    Returns the distance within the MUSIC-2/NVSS metric
-    '''
-
-    for eff in SurveyB.Rmodel.effList:
-        
-        A,B,C  = ABC_dist_severalMetrices( SurveyA, SurveyB, delal=delal, stochdrop=stochdrop)
-        sum_deviation = A+B+C
-        print('surveymetrics::ABC_dist_music2()::', sum_deviation, eff, 'A %.2e  B %.2e C %.2e' % (A,B,C))
-        returnarg = sum_deviation
-    
-    ''' We assume that only one model is tested '''
-    return returnarg
-
-
-
-def ABC_dist_severalMetrices( SurveyA, SurveyB, delal=True, verbose=False, stochdrop=True):
+def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics = ['numbers'],
+                             outpath = '', delal=True, verbose=False, stochdrop=True):
     ''' 
     Returns the distance within the MUSIC-2/NVSS metric
     you have: data,model
@@ -210,89 +192,60 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB, delal=True, verbose=False, stoch
     SurveyB: model
     
     '''
-#    
-#    ''' DEBUGGIN G:BEGIN'''
-#    surveypath = '/data/ClusterBuster-Output/%s' % (SurveyB)
-#    with open("%s.txt" % (surveypath), "a") as f:
-#        s = np.random.normal(5, 0.3, 3)
-#        f.write("Test %.3f %.3f %.3f \n" %(s[0], s[1], s[2]))
-#    return s
-#    '''DEBUGGING:END'''
 
     if verbose: print(SurveyA.name, SurveyB.name)
     
 
+    ''' the efficiency is outdated and should be repalced asap '''
     for eff in SurveyB.Rmodel.effList:
 
         if stochdrop: SurveyB.set_dropseed()
+        
+        
         if len([gcl.updateInformation() for gcl in SurveyB.FilterCluster(minrel=1)]) < 3:
-            A,B,C,D   = 1e2,1e2,1e2,1e9
-
-        else:
+            distances = [1e9 for m in metrics]
+        else:  
+            distances = []
             SurveyA.FilterCluster(minrel=1)
             SurveyB.FilterCluster(minrel=1)
             print ('SurveyB.filteredClusters', len(SurveyB.GCls), len(SurveyB.filteredClusters))
-            A  = ABC_summaryStatistics_numbers([SurveyA,SurveyB])
-            B  = ABC_summaryStatistics_polarHisto([SurveyA,SurveyB], eff)
-#            C  = 1.0 #ABC_summaryStatistics_2DKS([SurveyA,SurveyB], eff, parA=lambda x: x.largestLAS, parB = lambda y: y.P_rest)
-            D  = ABC_summaryStatistics_logMach([SurveyA,SurveyB])
-            
-            
-            ''' Heavyly inspired by https://plot.ly/ipython-notebooks/principal-component-analysis/ '''
-            newdist      =  lambda x:  dbc.measurand( x.Dproj_pix()/x.GCl.R200(), 'Dproj',label='$D_\mathrm{proj,rel}$',  un = '$R_{200}$' )
-            plotmeasures = [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.Mach, newdist]
+            for metric in metrics:
                 
+                if metric == 'number':
+                    distance  = ABC_summaryStatistics_numbers([SurveyA,SurveyB])
+                if metric == 'polarHisto':
+                    distance  = ABC_summaryStatistics_polarHisto([SurveyA,SurveyB], eff)
+                if metric == 'logMach':
+                    distance  = ABC_summaryStatistics_logMach([SurveyA,SurveyB])
+                if metric == 'PCA':       
+                    ''' Heavyly inspired by https://plot.ly/ipython-notebooks/principal-component-analysis/ '''
+                    newdist      =  lambda x:  dbc.measurand( x.Dproj_pix()/x.GCl.R200(), 'Dproj',label='$D_\mathrm{proj,rel}$',  un = '$R_{200}$' )
+                    plotmeasures = [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.Mach, newdist]
+                    
+                    
+                    from sklearn.preprocessing import StandardScaler
+                    X = SurveyB.fetchpandas(plotmeasures, surname=False).dropna().as_matrix()   #.data()   #, kwargs_FilterCluster={}, kwargs_FilterObjects={}
+                    X_std = StandardScaler().fit_transform(X)
+                        
+                    
+                    from sklearn.decomposition import PCA as sklearnPCA
+                    
+                    
+                    sklearn_pca = sklearnPCA(n_components=2)
+                    Y_sklearn = sklearn_pca.fit_transform(X_std)
+                    
+                    ''' This gives you an proxy for the average summed square error in the 2-D dimensional reduction via pca '''
+                    distance = np.sum(Y_sklearn**2)/len(Y_sklearn[0])
                 
-            from sklearn.preprocessing import StandardScaler
-            X = SurveyB.fetchpandas(plotmeasures, surname=False).dropna().as_matrix()   #.data()   #, kwargs_FilterCluster={}, kwargs_FilterObjects={}
-            X_std = StandardScaler().fit_transform(X)
-                
-            
-            from sklearn.decomposition import PCA as sklearnPCA
+                distances.append(distance)
             
             
-            '''
-            # Make a list of (eigenvalue, eigenvector) tuples
-            cor_mat1 = np.corrcoef(X_std.T)
-            
-            eig_vals, eig_vecs = np.linalg.eig(cor_mat1)
-            
-            print('Eigenvectors \n%s' %eig_vecs)
-            print('\nEigenvalues \n%s' %eig_vals)
-
-            eig_pairs = [(np.abs(eig_vals[i]), eig_vecs[:,i]) for i in range(len(eig_vals))]
-            
-            # Sort the (eigenvalue, eigenvector) tuples from high to low
-            eig_pairs.sort()
-            eig_pairs.reverse()
-            
-            # Visually confirm that the list is correctly sorted by decreasing eigenvalues
-            print('Eigenvalues in descending order:')
-            for i in eig_pairs:
-                print(i[0])
-            
-            matrix_w = np.hstack((eig_pairs[0][1].reshape(4,1), 
-                                  eig_pairs[1][1].reshape(4,1)))
-            
-            print('Matrix W:\n', matrix_w)
-            
-            Y = X_std.dot(matrix_w)
-            '''
-            
-            sklearn_pca = sklearnPCA(n_components=2)
-            Y_sklearn = sklearn_pca.fit_transform(X_std)
-            
-            ''' This gives you an proxy for the average summed square error in the 2-D dimensional reduction via pca '''
-            C = np.sum(Y_sklearn**2)/len(Y_sklearn[0])
-            
-            
-        print('surveymetrics::ABC_dist_severalMetrices::', SurveyA.name, 'VS', SurveyB.name, ' metric disimilarity: A', A, 'B', B, 'C', C, 'D', D)
+        print('surveymetrics::ABC_dist_severalMetrices::', SurveyA.name, 'VS', SurveyB.name, ' metric disimilarity:', 'metric disimilarity:', ['%s: %.3e' % (m,d) for (m,d) in zip(metric,distances)] )
             
         
-        ''' This deletes the survey folder z-snapshot files
+        ''' This puts the survey to a bagged sutvey folde rand increases the counter. It might be interesting to know if this number is also the number of the runs.
         '''
         if delal:
-            outpath      = '/data/ClusterBuster-Output/'
 
             file_path = "%s/pickled/Survey.pickle" % (SurveyB.outfolder)        
             if verbose:
@@ -302,11 +255,11 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB, delal=True, verbose=False, stoch
                 n = 0
                 while n < 10:
                     try:
-                        with open('/data/ClusterBuster-Output/AllSurveys/count.txt', 'r') as f:
+                        with open('%s/count.txt' % (outpath), 'r') as f:
                             SURVEYCOUNT = int(f.readline())
                         print(SURVEYCOUNT) # Is implemented to write the correct survey output files for the ABC abbroach
                         os.system("cp -rf %s/pickled/Survey.pickle %s/Survey%05i.pickle" % (SurveyB.outfolder, os.path.join(SurveyB.outfolder, '..', 'AllSurveys'), SURVEYCOUNT))
-                        with open('/data/ClusterBuster-Output/AllSurveys/count.txt', 'w') as f:
+                        with open('%s/count.txt' % (outpath), 'w') as f:
                             f.write(str(SURVEYCOUNT+1))
                         n=10
                     except:
@@ -316,39 +269,33 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB, delal=True, verbose=False, stoch
 
                 os.system("rm -rf %s/pickled/Survey.pickle" % (SurveyB.outfolder))
                     
-                    
-            ''' In the future it might be wise to save every Survey output ... you might want to have the walker id and the iteration id,
-                I just don't know where to get them from within the run.            
-            '''
+                
             
             ''' We increment the current logfile number by one ... just to show how much we have progressed '''
-            with open("%s//%s.txt" % (outpath,SurveyB.name), "a") as f:
+            with open("%s/logfile.txt" % (outpath), "a") as f:
                 Rm  = SurveyB.Rmodel
                 eff = SurveyB.Rmodel.effList[0]
-                if  A<100:
-                    line = "%8.5f %8.5f %8.5f, %8.5f" % (A, B, C, D) 
-                else: #DEBUGGING purposses
-                    line = "None None None None"
-                    
+
+                line = ''
+                for dist in distances:
+                    line += "%8.5e " % (dist)
+                line += '%+.4e %+.4e %+.4e' % (eff, Rm.B0, Rm.kappa)
+      
                 if isinstance(Rm, cbclass.PreModel_Hoeft):
-                    line += ' %+.4e %+.4e %+.4e' % (eff, Rm.B0, Rm.kappa) + ' %+.4e +.4e %+.4e %+.4e %+.4e\n' % (Rm.kappa, Rm.t0, Rm.t1, Rm.n0, Rm.n1)
+                    line += ' %+.4e +.4e %+.4e %+.4e %+.4e\n' % (Rm.kappa, Rm.t0, Rm.t1, Rm.n0, Rm.n1)
                 if isinstance(Rm, cbclass.PreModel_Gelszinnis):
-                    line += ' %+.4e %+.4e %+.4e' % (eff, Rm.B0, Rm.kappa) + ' %+.4e %+.4e %+.4e %+.4e\n' % (Rm.p0, Rm.p_sigma, Rm.sigmoid_0, Rm.sigmoid_width)
+                    line += ' %+.4e %+.4e %+.4e %+.4e\n' % (Rm.p0, Rm.p_sigma, Rm.sigmoid_0, Rm.sigmoid_width)
                 f.write(line)
     
-
-    '''PhD Thesis plot '''
-    return [A]     
-    '''PhD Thesis END '''
-    return [A,B,C,D]
+    return distances
     
 
 
 
-def abcpmc_dist_severalMetrices( SurveyA, SurveyB, delal=True, stochdrop=True):
+def abcpmc_dist_severalMetrices( SurveyA, SurveyB, metrics=['number'], outpath = '', delal=True, stochdrop=True):
   ''' abcpmc differs from astroABC in that sense that the model data is called before the data in the metric arguement,
       so it is metric(model,data) instead of metric(data,model)
       
   So this is just a wrapper    
   '''
-  return ABC_dist_severalMetrices( SurveyB, SurveyA, delal=True, stochdrop=stochdrop)
+  return ABC_dist_severalMetrices( SurveyB, SurveyA, metrics=metrics, outpath = outpath, delal=delal, stochdrop=stochdrop)

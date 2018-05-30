@@ -1,0 +1,67 @@
+# Computing Run parameter:
+Nfree     =   8            # Number of cores left free for any specific task
+default   =   False        # Choose 'True' if you want to create the mockobs library, 'False' if you just want to compute the radiocubes and measure their total flux brightenes
+
+# Specify model parameters A:  B-field models
+B0        =   [4e-1,1.6e0]   # muG for a particle density of 1e-4/cm^3
+B0_N      =   3             # Number of intervall steps
+B0_type   =   log           # Type of interpolation
+nu        =   [0.2,0.8]     # Exponent for the magnetic field scalling
+nu_N      =   3             # Number of intervall steps    
+nu_type   =   lin           # Type of interpolation
+compress  =   0.85            # Exponent for effective increase of B with respect to the compresion ratio. Take 2/3 if adiabatic, 1 if emission is very sensitive to parallel field component, -1 if Nuza2016+ model, ... 0.85
+
+# Specify model parameters B:  Efficency parameters
+eff_range      =  [1e-5,1e-4]  # Xi_e as energy fraction of suprathermal electrons, around 10^(-4...-2)
+eff_steps      =  5
+eff_type       =  log
+
+# Additional physics
+ add_seeds     =  []  # AGN, RangeToCenter
+ mod_eff       =  []  # modifies Mach based efficency
+
+# Specify used survey A: clusters 
+startfrom       = 100000                                            # from 0 to lenght of clusterfile (600k)
+surv_compl      = 0.85                                              # If < 1 seen as coverage, If > 1 seen as number of clusters (roundet to int)
+z_range         = [0.05,0.7]                                        # Gives the lower and higher boundary for z of the cosmic slice
+# Because of Z_range and eff_cover a filter should be generated to choose objects out of the list
+
+# Specify used survey B: observational parameters
+S_beam         =  45      # FWHM arcsec
+S_pixel        =  10      # arcsec
+RMSnoise       = 450      # muJy
+Detthresh      =   2      # times RMS-noise
+nu_obs         = 1.4      # obsfrequency in GHz
+UVcoverage     = NVSS     # Int out of ... to specify survey
+
+# MockObs parameters
+realism        = simpleconv #  one out of [simpleconv, fouriertrunc, deconv]
+  genfits      = []         #  list of    [radio, xray, mass]
+  alpha        = 1.3        #  fixed our due to shockmaps ...
+binmax         = 800        #  maximal image size in pixel [can modify S_pixel!] 
+ hsize         = 6000       #  size of cube in kpc
+  
+# Specify output
+FITSout        = True       # Save fits files?
+pickleClusters = True       # Pickle Clusters?
+Mach           = True       # Add MachNumberImage?
+snapfolder     = /data2/MUSIC-2/                              #folder where the clustersnapshots are stored
+xrayfolder     = /radioarchive/MergerTrees/WithCoolSfrAgn/    #folder where the full X-ray data is stored
+headerC        = kpc                                          #Unit of the central header coordinates
+Output         = [spearman,angles,relicpixels] # list of tasks
+smarttime_sub  = 1800     # '' for default
+outf           = /data/ClusterBuster-Output/ # outfile, Is going to get tweaked
+
+#MiscFolders
+missFile       = ClusterList/AllMUSIC-AGN-missing.dat
+snaplistz      = [8.068,3.972,3.470,2.986,2.497,2.321,1.490,0.997,0.817,0.661,0.537,0.428,0.332,0.247,0.173,0.108,0.050,0.000]         
+snapidlist     = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]
+
+#Non default radio cubes
+useMiniCube    = True         # Uses a cube with an reduced number of particles for radio computations. This is to fasten up the loading & binning
+cutradio       = 0            # Cuts particles below this radio power in W/Hz for the given frequency and an frequency of one. Put 0 if you dont want to cut the cube
+                 
+# Restart
+reCube         = False      # Put True if you want to read from the taskcube 
+reCL           = 0          # Ignore clusters before, ... in case something crashed... there is the chance of corrupting the data, so be cautious
+reRM           = 0          # ID, starts from 0

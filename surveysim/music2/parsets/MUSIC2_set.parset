@@ -1,0 +1,33 @@
+# Computing Run parameter:
+Nfree     =   8             # Number of cores left free for any specific task
+default   =   False         # Choose 'True' if you want to create the mockobs library, 'False' if you just want to compute the radiocubes and measure their total flux brightenes
+
+# Specify used survey A: clusters 
+surv_compl      = 0.85                                            # If < 1 seen as coverage, If > 1 seen as number of clusters (roundet to int)
+z_range         = [0.05,0.7]                                      # Gives the lower and higher boundary for z of the cosmic slice
+# Because of Z_range and eff_cover a filter should be generated to choose objects out of the list
+
+# Specify used survey B: observational parameters
+S_beam         =  45      # FWHM arcsec
+S_pixel        =  10      # arcsec
+RMSnoise       = 450      # muJy
+Detthresh      =   2      # times RMS-noise
+nu_obs         = 1.4      # obsfrequency in GHz
+UVcoverage     = NVSS     # Int out of ... to specify survey
+  
+# Specify output
+pickleClusters = True       # Pickle Clusters?
+snapfolder     = /radioarchive/MergerTrees/Clusters/     #folder where the clustersnapshots are stored
+xrayfolder     = /radioarchive/MergerTrees/Clusters/     #folder where the full X-ray data is stored
+smarttime_sub  = 1800                                    # '' for default
+outf           = /data2/MUSIC-2/                         # outfile, Is going to get tweaked
+
+#MiscFolders
+missFile     = ClusterList/AllMUSIC-missing.dat
+snaplistz    = [4.000,2.333,1.500,1.000,0.818,0.667,0.538,0.429,0.333,0.240,0.176,0.111,0.053,0.000]
+snapidlist   = [1,2,3,4,5,6,7,8,9,10,11,12,13,14]
+  
+#Non default radio cubes
+redSnap        = True
+useMiniCube    = False         # Uses a cube with an reduced number of particles for radio combinations. This is to fasten up the loading & binning
+cutradio       = 0             # Cuts particles below this radio power in W/Hz for the given frequency and an frequency of one. Put 0 if you dont want to cut the cube
