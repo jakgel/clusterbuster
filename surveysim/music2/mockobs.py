@@ -230,78 +230,7 @@ def Run_MockObs( bulked, GClrealisations, locations, steps = [1,2,3,4,5,6,7], CA
             if CASAmock:
                 ''' Removed implementation
                 Any synthetic observations would need to be run in python within this shell. So we have to somehow put it as an module into python '''
-    	    
-            	    # If relic detected, ....
-            	    # start a bash script & modify it
-            	    # try read it output image
-            	    # except wait
-            	    # Extract relics again
-            	    # ...
-    	  
-                smt(task='SimObs_[sub]'); #print( '###==== Step 5:  Simulating Observation ====###'
-                if log: print( '  ###====          - Using the CASA simobsserve and simanalyse tasks to predict an real observation ====###' )
-                if log: print( '  ###==== -- 5a:  Creating visibilities ====###' )
-                
-                casa.run_script(['tasklist'])
-                casa.run_script(['default(simobserve)'])
-                
-                # Ajust parameters
-                #casa.run_script(['skymodel = %s'%(outfile)])
-                #casa.run_script(['incell = "7.5arcsec"'])
-                #casa.run_script(['indirection = "J2000 10h00m00 30d00m00"'])
-                #casa.run_script(['incenter = "1.40GHz"'])
-                #casa.run_script(['compwidth  = "42MHz"'])
-                #casa.run_script(['inwidth    = "14MHz"'])
-                #casa.run_script(['integration = "23s"'])       # sampling time
-                #casa.run_script(['totaltime   = "1"'])         # total time of observation
-                #casa.run_script(['antennalist =  "vla.d.cfg"'])
-                #casa.run_script(['maptype = "hexagonal"'])
-                #casa.run_script(['pointingspacing = "26arcmin"'])  #setpointings = True
-                #casa.run_script(['thermalnoise = ""'])
-                #thermalnoise = 'tsys-manual'
-                #t_ground     = '33.'
-                #t_sky        = '50.'
-                #user_pwv     = '0'
-                #tau0         = '0'
-    
-                #casa.run_script(['simobserve()'])
-                '''
-                casa.run_script(['simobserve(skymodel = %s,incell = "7.5arcsec",indirection = "J2000 10h00m00 30d00m00",incenter = "1.40GHz",compwidth  = "42MHz",inwidth    = "14MHz",integration = "23s",totaltime   = "1",antennalist =  "vla.d.cfg",maptype = "hexagonal",pointingspacing = "26arcmin",thermalnoise = "")' %(outfile)])
-                
-                script=[]
-                #uvfits_path = '/path/to/uvdata.fits'
-                vis = 'sim/sim.vla.d.ms'           #rica.commands.import_uvfits(script, uvfits_path)
-                clean_args = {
-                    "spw": '0:3~7',
-                    "imsize": [512, 512],
-                    "cell": ['7.5arcsec'],
-                    "weighting": 'briggs',
-                    "robust": 0.5,
-                    }
-                dirty_maps = drica.commands.clean(script, vis, niter=0, threshold_in_jy=1,
-                                                  other_clean_args=clean_args)
-                dirty_map_fits_image = drica.commands.export_fits(script, dirty_maps.image)
-                casa.run_script(script)
-                '''
-                
-                #casa.run_script(['sm.openfromms("sim/sim.vla.d.ms")'])
-                ##sm.predict("sim/sim.vla.d.noisy.FAKE.IMAGE")           # predict is not working because of the wrong image file given ...
-                #casa.run_script(['sm.setnoise( mode="simplenoise", simplenoise="0.23mJy")']) # shall emulate 0.45 mJy/beam rms at the image center
-                #casa.run_script(['sm.setpa( mode="calculate")'])
-                #casa.run_script(['sm.corrupt()'])
-                #casa.run_script(['sm.done()'])
-                
-                if log: print( '###==== -- 5b:  Image ====###' )
-                #casa.run_script( ["simanalyze( imsize = %s, analyze = True, showconvolved = True, showfidelity = True, weighting = 'uniform', threshold = '1.25mJy',  niter=3000, pbcor = False, interactive = False)" % ( str(H1.shape[1]) )  ] ) #,weighting = 'briggs'
-                
-                if log: print( '###==== -- 5c:  Create additional .image and .fits ====###' )
-                #immath( outfile=  'sim/sim.vla.d.beamcor.image',  mode   ='evalexpr', imagename=[ 'sim/sim.vla.d.image', 'sim/sim.vla.d.flux'],   expr="IM0[IM1>0.15]/IM1")
-    
-                #exportfits( imagename  = 'sim/sim.vla.d.beamcor'+ '.image',  fitsimage  =  'sim.vla.d.beamcor'  + '.fits') 
-                #exportfits( imagename  = 'sim/sim.vla.d'        + '.image',  fitsimage  =  'sim.vla.d'          + '.fits') 
-                
-#                IM0 =  fiut.FITS2numpy('sim.vla.d.fits')
-    #           IM0 = (fits.open('sim.vla.d.fits'))[0].data      
+    	        
             else:
                 if log: print( '  ###====          - Using the simple convolved image ====###' )
                 IM0 = H2  #(fits.open(simpleconv))[0].data 
