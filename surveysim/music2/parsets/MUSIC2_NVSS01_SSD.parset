@@ -21,7 +21,6 @@ eff_type       =  log
  mod_eff       =  []  # modifies Mach based efficency
 
 # Specify used survey A: clusters 
-startfrom       = 100000                                            # from 0 to lenght of clusterfile (600k)
 surv_compl      = 0.85                                              # If < 1 seen as coverage, If > 1 seen as number of clusters (roundet to int)
 z_range         = [0.05,0.7]                                        # Gives the lower and higher boundary for z of the cosmic slice
 # Because of Z_range and eff_cover a filter should be generated to choose objects out of the list
@@ -32,11 +31,8 @@ S_pixel        =  10      # arcsec
 RMSnoise       = 450      # muJy
 Detthresh      =   2      # times RMS-noise
 nu_obs         = 1.4      # obsfrequency in GHz
-UVcoverage     = NVSS     # Int out of ... to specify survey
 
 # MockObs parameters
-realism        = simpleconv #  one out of [simpleconv, fouriertrunc, deconv]
-  genfits      = []         #  list of    [radio, xray, mass]
   alpha        = 1.3        #  fixed our due to shockmaps ...
 binmax         = 800        #  maximal image size in pixel [can modify S_pixel!] 
  hsize         = 6000       #  size of cube in kpc

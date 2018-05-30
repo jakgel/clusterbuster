@@ -76,7 +76,7 @@ def main_abcpmc_MUSIC2(conf, new_run=True, test=False):
         sampler = abcpmc.Sampler(N=conf.getint('pmc','Nw'), Y=data, postfn=testrand, dist=testmetric, 
                                  threads=conf.getint('mp','Nthreads'), maxtasksperchild=conf.getint('mp','maxtasksperchild'))
     else:
-        sampler = abcpmc.Sampler(N=conf.getint('pmc','Nw'), Y=data, postfn=music2run.main_ABC, 
+        sampler = abcpmc.Sampler(N=conf.getint('pmc','Nw'), Y=data, postfn=partial(music2run.main_ABC,parfile=conf['simulation']['parfile']), 
                                  dist=partial(surmet.abcpmc_dist_severalMetrices, metrics= json.loads(conf['metrics']['used']), outpath=conf['paths']['abcpmc']), 
                                  threads=conf.getint('mp','Nthreads'), maxtasksperchild=conf.getint('mp','maxtasksperchild'))
         #dist=surmet.abcpmc_dist_severalMetrices, 

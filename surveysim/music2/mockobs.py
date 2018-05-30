@@ -171,7 +171,7 @@ def Run_MockObs( bulked, GClrealisations, locations, steps = [1,2,3,4,5,6,7], CA
  
             if hasattr(snap,'radiPre'):
                if log: print('Run_MockObs:: Ratio of PREs to total emission', ((np.sum(snap.radiPre[iL]))/(np.sum(snap.radi[iL])+np.sum(snap.radiPre[iL]))) )
-                snap.radi += snap.radiPre
+               snap.radi += snap.radiPre
         
             H1, xedges, yedges = np.histogram2d( -posrot[iL,0], -posrot[iL,1], weights=s_radio_SI*snap.radi[iL], range=[[-hsize,hsize], [-hsize,hsize]], bins=nbins) #norm=LogNorm(), ,  cmin=1e-3   
             ''' DEVELOPMENT BEGIN

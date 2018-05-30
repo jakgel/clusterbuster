@@ -891,15 +891,6 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
         count             = 0
         
         missing=False
-#        for miss in misslist:
-#           if ((miss[0] == 10) and (miss[1] ==6)):
-#               missing=True
-#        if missing:
-#            print('__ Missing snapshot:', 1, 2)
-#            missing=False
-#        else:
-#            print(1, 2)
-#        return 0
 
         for  (zlow,zhigh,VCMlow,VCMhigh) in zip(shells_z[0:-1],shells_z[1:], DCMRs[0:-1],DCMRs[1:]): 
             ''' Iterate through each shell of the observed volume '''
@@ -931,8 +922,7 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
                 if empicut and np.log10(M200)  < (13.8 + 2*z_central):
                     continue
                 
-                
-                
+   
                 ''' Skips missing snapshots '''
                 for miss in misslist:
                     if ((miss[0] == ids) and (miss[1] == snapidlistR[snap])):
@@ -945,11 +935,7 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
                 
                 count += 1
                 if verbose: print(count, M200)
-                
-                ''' DEBUGGING 
-                df = df.append({'ID': ids, 'M200': M200, 'ClID':snapidlistR[snap], 'z_snap':zsnap_list[snap], 'z':z_central }, ignore_index=True)
-                Mhhh'''
-
+            
                 dinfo     = cbclass.DetInfo(beam=[float(pase['S_beam']),float(pase['S_beam']),0], spixel=float(pase['S_pixel']), 
                                                   rms=float(pase['RMSnoise'])*1e-6, limit=float(pase['RMSnoise'])*float(pase['Detthresh'])*1e-6,
                                                   nucen=float(pase['nu_obs']), center=(0,0), survey = 'UVcoverage')
@@ -957,15 +943,6 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
                                             snapfolder=pase['xrayfolder'],xrayfolder=pase['xrayfolder'], headerc=pase['headerC'])   
                 GClList.append( cbclass.Galaxycluster_simulation("MUSIC2%05i-%06i-%06i" % (ids,snapidlistR[snap],count), count, z=z_central, M200=M200, dinfo=dinfo, mockobs=mockObs) ) # , **addargs
                 
-#                if  snapidlistR[snap] < 5:
-#                   print('!______!', snapidlistR[snap], snap, count)
-#                   return 0
-    
-        '''DEBUGGING
-        print(savefolder + '/Test')
-        df.to_csv(savefolder + '/Test.csv')
-        return 0
-        DEBUGGING END'''
     
         # Also create a list of the chosen clusters for later loockup
         GClList = sorted(GClList, key=lambda x: (x.mockobs.clid, -x.mockobs.snap)) 
@@ -982,12 +959,7 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
         if ABC is None:
             '''ISSUE: The issue with the currenly used abc routines is that yyou have to give them arrays. Which is why the corresponding model associated has to be defined at this layer.
                Giving the procedure a function which would create this array would allow all of this to be defined in the top layer of abc '''
-            
-#            RModelID   = 0
-#            for model in np.loadtxt('%sRmodels/Test_ver0.0.txt' % pase['miscdata']):
-#                print(model)
-#                RModel = cbclass.RModel(RModelID, effList=[ model[0]*multi for multi in [2,1,0.5] ], B0=model[1], kappa=model[2])
-#                RModelID += 1     
+             
             RModel = cbclass.RModel(RModelID, effList=[2e-5], B0=3, kappa=0.5, compress=0.85) 
                 
             if suut.TestPar(pase['redSnap']):
@@ -998,7 +970,8 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
                 (lgeff)  = ABC
                 RModel = cbclass.RModel(RModelID, effList=[10**lgeff], B0=1, kappa=0.5, compress=float(pase['compress']))
                 writestring += "%7i" % (RModelID)  + ' %+.4e %+.4e %+.4e %+.3f\n' % (RModel.effList[0], RModel.B0, RModel.kappa, RModel.compress)                
-        elif len(ABC) == 3:                             
+        elif len(ABC) == 3:  
+                ''' Varies the standart model '''                           
                 (lgeff, lgB0, kappa)  = ABC
                 RModel = cbclass.RModel(RModelID, effList=[10**lgeff], B0=10**lgB0, kappa=kappa, compress=float(pase['compress']))
                 writestring += "%7i" % (RModelID)  + ' %+.4e %+.4e %+.4e %+.3f\n' % (RModel.effList[0], RModel.B0, RModel.kappa, RModel.compress)                 
@@ -1157,7 +1130,7 @@ def create_ClusterLibrary(snapfolder='/radioarchive/MergerTrees/Clusters/', Clfi
     return 0
     
 
-def main_ABC(params, parfile='MUSIC2_NVSS02_SSD.parset',  surveyname_new= 'MUSIC2_NVSS01_SSD_00002', workdir='/home/jakobg/lib/ClusterBuster/Analysis_MUSIC2/', Clfile = 'ClusterList/AllMUSIC'):
+def main_ABC(params, parfile='MUSIC2_NVSS02_SSD.parset',  workdir='/home/jakobg/lib/ClusterBuster/Analysis_MUSIC2/', Clfile = 'ClusterList/AllMUSIC'):
     ''' ' parfile='MUSIC2_NVSS02_SSD_small.parset' '''
     
     '''DEBUGGING
@@ -1181,9 +1154,12 @@ def main_ABC(params, parfile='MUSIC2_NVSS02_SSD.parset',  surveyname_new= 'MUSIC
              saveFITS=True, dinfo=None, mainhist=None)
 #    return survey
     DEBUGGING END'''
+    print('!!!!!!!!', parfile)
+    return 0
 
-    survey = main(parfile,ABC=params,Clfile = Clfile)
-#    surveyname = surveyname_new
+    survey = main(parfile, ABC=params, Clfile = Clfile)
+
+
 
     ''' MUSIC-2 '''
 #    print('runsurvey::main_ABC()::', survey.outfolder,survey.name) #DEBUGGING
