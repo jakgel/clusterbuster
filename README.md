@@ -45,11 +45,11 @@ Install via pip (broken, but fix incoming with next version):
 Alternatively clone/fork this directory from  github. 
 
 ## Dependencies
--NumPy >=1.8
--scipy >=0.16
--aplpy >=1.1
--NFW   >=0.2
--astropy >=1.3
+- NumPy >=1.8
+- scipy >=0.16
+- aplpy >=1.1
+- NFW   >=0.2
+- astropy >=1.3
 
 *Additional packaes needed?*
 Install addition packages via

@@ -39,9 +39,11 @@ def get_misc_status(neededmodule):
 def setup_clusterbuster():
 
 
-    import NFW
+#    import NFW
     import clusterbuster  
-    
+    import inference
+    import surveyexample
+    import surveysim
 
     here = path.abspath(path.dirname(__file__))
 
@@ -60,9 +62,8 @@ def setup_clusterbuster():
 #            else:
 #                raise ImportError("{0} is not installed.\n{0}".format(module,module_req_str))
                                   
-    setup(	name='clusterbuster',
-          
-          
+    setup(
+		name='clusterbuster',
 		version='0.9.0',
           
 		# Author details
@@ -118,7 +119,7 @@ def setup_clusterbuster():
         # You can just specify the packages manually here if your project is
         # simple. Or you can use find_packages().
         #packages=find_packages(exclude=['contrib', 'docs', 'tests']), 
-		packages=["clusterbuster","Survey_exampleNVSS"],
+		packages=["clusterbuster","surveyexample","inference","surveysim"],
 		)
         
         
