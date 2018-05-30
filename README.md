@@ -50,6 +50,10 @@ Alternatively clone/fork this directory from  github.
 - aplpy >=1.1
 - NFW   >=0.2
 - astropy >=1.3
+- pandas >= ?
+- ephem >=?
+- matplotlib > (needs matplotlib.mlab)
+
 
 *Additional packaes needed?*
 Install addition packages via
@@ -58,7 +62,7 @@ conda install -c astropy pyregion=1.2
 cosmocalc? --> change to astropy cosmology!
 
 *Optional packages*
-apcpmc
+abcpmc
 astroabc
 
 

@@ -113,7 +113,7 @@ def setup_clusterbuster():
 		install_requires=['NumPy (>=1.8)',
                           'scipy (>=0.16)',
                           'aplpy (>=1.1)',
-                          'NFW   (>=0.2)',
+                          'NFW (>=0.2)',
                           'astropy (>=1.3)'],
           
         # You can just specify the packages manually here if your project is

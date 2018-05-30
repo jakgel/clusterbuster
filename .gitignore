@@ -11,7 +11,6 @@
 *clusterbuster_outsourced
 *clusterbuster.egg*
 *.gitignore*
-*__init__.py*
 *dist
 *build/lib*
 *multiut.py
