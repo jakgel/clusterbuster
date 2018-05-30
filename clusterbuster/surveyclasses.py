@@ -865,11 +865,10 @@ class Relic:
       """
       A class for representing an observed relic (radio relic, phoenix, etc.) in our visible universe.
       To initialize all values it needs a galaxy cluster to be assigned
-      ... each relic (or region?) should have a 'dinfo' be assigned to
       ... region and dinfo might be outdated
-      ... ! the angle computation might be needed to become updated !
-      ... make sure that all possible output quantities that are not arays and lists are measurands
-      --- inconsistencies exist for the alpha value and its usage 
+      ... ! the angle computation might be needed to  updated !
+      ... make sure that all possible output quantities that are not arrays, lists ore class objects are measurands
+      ... inconsistencies exist for the alpha value and its usage 
       ... might add astropy functionalities --> including using astropy quantities (quantity + unt)
       ... In future this might become a child class of the RadioSource class
       """
@@ -1316,10 +1315,11 @@ class Survey(object):
           
          return sum([GCl.hist for GCl in self.GCls], 0)
      
-    def fetchpandas(survey, plotmeasures, surname=True, kwargs_FilterCluster={}, kwargs_FilterObjects={}):
+    def fetchpandas(survey, plotmeasures, surname=True, vkwargs_FilterCluster={}, kwargs_FilterObjects={}):
         ''' Return a panda array generated from the survey catalogue 
         
-        survey: A ClusterBusterSurveytype
+        survey: A ClusterBusterSurvey
+        
         
         Examples for plotmeasures: 
             
@@ -1327,28 +1327,8 @@ class Survey(object):
                         lambda x: x.alpha,
                         lambda x: dbc.measurand( x.Dproj_pix()/x.GCl.R200(), 'Dproj',label='$Dproj_rel$',  un = None )
                         ]
-        
-        idmeasures: lambda x: x.alpha
-        
-        plotmeasures = [
-                        lambda x: x.Rho, 
-                        lambda x: x.Mach,              
-                        lambda x: x.T, 
-                        lambda x: dbc.measurand( -x.alpha(), 'alpha',label='$\\alpha$',  un = None ),
-                        lambda x: x.LLS, 
-                        lambda x: x.P_rest
-                        ]
-        
-        plotmeasures = [
-                        lambda x: x.LAS,                                   
-                        lambda x: x.area,                 
-                        lambda x: x.Mach,      
-                        lambda x: x.Dproj_pix,  
-                        lambda x: x.iner_rat, 
-                        lambda x: x.theta_rel,    
-                        ]
-        
-        
+        simulated
+        simulated
         
         '''  
     
@@ -1374,7 +1354,6 @@ class Survey(object):
                 
         List_full  = [item for sublist in List_full for item in sublist]
             
-        print(survey.Rmodel.simu, survey.Rmodel.effList[0], len(List_full),feff)
         for GCl,relic in List_full:
     
             relic.asign_cluster(GCl)
@@ -1394,10 +1373,7 @@ class Survey(object):
         if surname:
             pdframe['Survey'] = survey.name
     
-          
-        '''======= New style (begin)'''   
-         
-        print('MyCraftyPlots:',len(pdframe))   
+
         if len(pdframe)<3:
             print('Only %i elements in the pdframe, will skip this one' % (len(pdframe)))
             return 
