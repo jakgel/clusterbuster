@@ -72,6 +72,7 @@ def main_abcpmc_MUSIC2(conf, new_run=True, test=False):
 
     eps = abcpmc.ConstEps(conf.getint('pmc','T'), json.loads(conf['metrics']['eps_startlimits']))
        
+    
     if test:
         sampler = abcpmc.Sampler(N=conf.getint('pmc','Nw'), Y=data, postfn=testrand, dist=testmetric, 
                                  threads=conf.getint('mp','Nthreads'), maxtasksperchild=conf.getint('mp','maxtasksperchild'))

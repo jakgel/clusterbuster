@@ -801,8 +801,10 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
     #===  Read parset; then extract fundamental parameters ... Parset OBLIGATORY has be saved as  'parsets/*.parset'
     if workdir is None: workdir=os.path.dirname(__file__)
     
-    pase, B0, kappa, eff, Z = suut.interpret_parset(parfile, repository=workdir+'/parsets/')
+    pase, Z = suut.interpret_parset(parfile, repository=workdir+'/parsets/')
     
+    
+
     
     if survey is None:
         surveyN     =  parfile.replace('.parset','')
@@ -960,8 +962,8 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
             '''ISSUE: The issue with the currenly used abc routines is that yyou have to give them arrays. Which is why the corresponding model associated has to be defined at this layer.
                Giving the procedure a function which would create this array would allow all of this to be defined in the top layer of abc '''
              
-            RModel = cbclass.RModel(RModelID, effList=[2e-5], B0=3, kappa=0.5, compress=0.85) 
-                
+            RModel = cbclass.RModel(RModelID, effList=[float(pase['eff'])], B0=float(pase['B0']), kappa=float(pase['kappa']), compress=float(pase['compress'])) 
+                     
             if suut.TestPar(pase['redSnap']):
                     RModel.effList   = RModel.effList[0]
                      
@@ -980,13 +982,13 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
                 print(ABC)
                 RModel = cbclass.RModel(RModelID, effList=[10**lgeff], B0=10**lgB0, kappa=kappa, compress=float(pase['compress']),  pre=True, p0=10**lgp0,p_sigma=p_sigma, sigmoid_0=10**lgsigmoid_0,sigmoid_width=sigmoid_width)
                 Rm = RModel
-                writestring += "Model #%7i parameters:" % (RModelID)  + ' %+.4e %+.4e %+.4e %+.3f\n' % (eff, Rm.B0, Rm.kappa, Rm.compress) + ' %+.4e %+.4e %+.4e %+.4e\n' % (Rm.p0, Rm.p_sigma, Rm.sigmoid_0, Rm.sigmoid_width)  
+                writestring += "Model #%7i parameters:" % (RModelID)  + ' %+.4e %+.4e %+.4e %+.3f\n' % (Rm.effList[0], Rm.B0, Rm.kappa, Rm.compress) + ' %+.4e %+.4e %+.4e %+.4e\n' % (Rm.p0, Rm.p_sigma, Rm.sigmoid_0, Rm.sigmoid_width)  
         elif len(ABC) == 6:
                 (lgeff, lgB0, kappa, t0, t1, ratio)  = ABC
                 print(ABC)
                 RModel = cbclass.PreModel_Hoeft(RModelID, effList=[10**lgeff], B0=10**lgB0, kappa=kappa, compress=float(pase['compress']), t0=t0, t1=t1, ratio=ratio)
                 Rm = RModel
-                writestring += "Model #%7i parameters:" % (RModelID)  + ' %+.4e %+.4e %+.4e %+.3f\n' % (eff, Rm.B0, Rm.kappa, Rm.compress) + ' %+.4e %+.4e %+.4e %+.4e\n' % (Rm.p0, Rm.p_sigma, Rm.sigmoid_0, Rm.sigmoid_width)  
+                writestring += "Model #%7i parameters:" % (RModelID)  + ' %+.4e %+.4e %+.4e %+.3f\n' % (Rm.effList[0], Rm.B0, Rm.kappa, Rm.compress) + ' %+.4e %+.4e %+.4e %+.4e\n' % (Rm.p0, Rm.p_sigma, Rm.sigmoid_0, Rm.sigmoid_width)  
         else:
             print('RunSurvey::main: model unknown')
             return 
@@ -1154,11 +1156,8 @@ def main_ABC(params, parfile='MUSIC2_NVSS02_SSD.parset',  workdir='/home/jakobg/
              saveFITS=True, dinfo=None, mainhist=None)
 #    return survey
     DEBUGGING END'''
-    print('!!!!!!!!', parfile)
-    return 0
 
     survey = main(parfile, ABC=params, Clfile = Clfile)
-
 
 
     ''' MUSIC-2 '''

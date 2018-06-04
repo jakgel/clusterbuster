@@ -250,10 +250,8 @@ def parset2dict(parfile, relative=False):
   if relative:
       import os
       parfile = os.getcwd() + parfile
-    
   with open(parfile) as f:
       lines = f.readlines()
-
 #  import re 
   new_dict = dict()
   for ii, line in enumerate(lines[:]):
@@ -264,7 +262,7 @@ def parset2dict(parfile, relative=False):
       args  = filter(None, args)   # Removes empty string args
       #print( args 
       new_dict[str(args[0])] = args[2]   # We should have a list of the args now [parameter,=,value] ... comments not included
-      
+        
   return new_dict
    
 

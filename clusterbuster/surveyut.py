@@ -109,22 +109,22 @@ def interpret_parset(parfile, repository='/parsets/', default='default.parset', 
         elif Path(repository + default).is_file():
             relative = False
              
-         
-
     def_dict  = iom.parset2dict(repository + default, relative=relative) # relative=relative
+    print(repository + parfile) 
     new_dict  = iom.parset2dict(repository + parfile, relative=relative)
      
+    
     comb_dict = def_dict.copy()
     comb_dict.update(new_dict)
     # Now this parset is used to create some lists needed for this script
-    B0_arr   =  iom.createlist(iom.str2list(comb_dict['B0']       ),comb_dict['B0_N']     , interpol= comb_dict['B0_type'])  
-    nu_arr   =  iom.createlist(iom.str2list(comb_dict['nu']       ),comb_dict['nu_N']     , interpol= comb_dict['nu_type'])   
-    eff_arr  =  iom.createlist(iom.str2list(comb_dict['eff_range']),comb_dict['eff_steps'], interpol= comb_dict['eff_type'])[::-1]  #invert array   
+#    B0_arr   =  iom.createlist(iom.str2list(comb_dict['B0']       ),comb_dict['B0_N']     , interpol= comb_dict['B0_type'])  
+#    nu_arr   =  iom.createlist(iom.str2list(comb_dict['nu']       ),comb_dict['nu_N']     , interpol= comb_dict['nu_type'])   
+#    eff_arr  =  iom.createlist(iom.str2list(comb_dict['eff_range']),comb_dict['eff_steps'], interpol= comb_dict['eff_type'])[::-1]  #invert array   
     z_arr    =  [float(z) for z in   iom.str2list(comb_dict['z_range']) ]
-   
+    
     if verbose: 
         print(parfile, comb_dict)
-    return (comb_dict, B0_arr, nu_arr, eff_arr, z_arr) 
+    return (comb_dict, z_arr) 
      
 ''' former CW '''
 
