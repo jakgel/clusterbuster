@@ -987,13 +987,13 @@ class Relic:
           if Mach is not None:
               self.Mach      = dbc.measurand( Mach              , '$\overline{M}$', un=None )
           else:
-            alpha            = min(self.alpha.value,-1.03) 
-#            self.Mach        = dbc.measurand( np.sqrt( (-alpha+2) / (-alpha+1 ) )              , '$\overline{M}$', un=None ) 
-            if alpha==-1.03 or alpha is None: # or not self.region.alphaFLAG:
-                Mach = np.nan #np.sqrt( (-alpha+1) / (-alpha-1 ) )  #= 
-            else:
-                Mach         = np.sqrt( (-alpha+1) / (-alpha-1 ) )
-            self.Mach        = dbc.measurand( Mach , '$\overline{M}$', un=None ) 
+              if self.alpha.value is None:
+                  alpha = -1.03
+                  Mach = np.nan #np.sqrt( (-alpha+1) / (-alpha-1 ) )  #= 
+              else:
+                  alpha      = min(self.alpha.value,-1.03) 
+                  Mach      = np.sqrt( (-alpha+1) / (-alpha-1 ) )
+              self.Mach        = dbc.measurand( Mach , '$\overline{M}$', un=None ) 
 
       
       def create_Histo(self,GCl,normtype='R200'):

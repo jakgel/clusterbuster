@@ -338,7 +338,8 @@ def J2000ToCoordinate(J2000):
        J2000 = J2000.replace(r,' ')
     COO = str(J2000)
 
-    COO = np.asarray(filter(None, COO.split(' '))) 
+    # In python 3 filter() returns an iteratorwhich is why the list argument is needed
+    COO = np.asarray(list(filter(None, COO.split(' '))))
   return COO
 
   
