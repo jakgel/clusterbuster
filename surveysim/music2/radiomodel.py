@@ -8,8 +8,8 @@ Created on Wed May 10 10:52:22 2017
 
 from __future__ import division,print_function
 
-import interpolate
-import loadsnap                  
+import surveysim.music2.interpolate as interpolate
+import surveysim.music2.loadsnap    as loadsnap                 
 
 import numpy                     as np
 import clusterbuster.mathut      as math

@@ -11,8 +11,8 @@ print( '###==== Step 1: Executing .py subroutines====###' )
 
 import numpy        as np
 import copy
-import loadsnap    
-import radiomodel
+
+import surveysim.music2.loadsnap     as loadsnap
 
 import clusterbuster.surveyclasses    as cbclass
 import clusterbuster.mathut           as mathut

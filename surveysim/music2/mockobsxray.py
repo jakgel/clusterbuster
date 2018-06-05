@@ -18,7 +18,7 @@ Created on Thu Aug 31 17:26:48 2017
 
 from __future__ import division,print_function
 import numpy                as np
-import loadsnap             as LSconv
+import surveysim.music2.loadsnap   as LSconv
 #import CreateRadioCubes     as crrc
 
 import scipy.ndimage               as ndi 
