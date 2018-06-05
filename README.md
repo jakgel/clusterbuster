@@ -52,13 +52,13 @@ Alternatively clone/fork this directory from  github.
 - astropy >=1.3
 - pandas >= ?
 - ephem >=?
-- cpickle
 - matplotlib > (needs matplotlib.mlab)
 
+Add our github path to your bashrc like
+>> export PYTHONPATH="/PATH/TO/clusterbuster:${PYTHONPATH}"
 
 *Additional packaes needed?*
 Install addition packages via
-conda install ephem
 conda install -c astropy pyregion=1.2 
 cosmocalc? --> change to astropy cosmology!
 

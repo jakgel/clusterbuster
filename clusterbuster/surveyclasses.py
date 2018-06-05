@@ -29,11 +29,11 @@ import scipy.ndimage                    as ndi
 import matplotlib.patches               as patches
 import NFW.mass_concentration           as massC
 
-from   cosmocalc           import cosmocalc 
-from   astropy             import units as u 
-from   astropy.coordinates import SkyCoord
-from   astropy.cosmology   import FlatLambdaCDM   # from astropy.cosmology import WMAP9 as cosmo   
-from   scipy               import sparse
+from   clusterbuster.cosmocalc   import cosmocalc 
+from   astropy                   import units as u 
+from   astropy.coordinates       import SkyCoord
+from   astropy.cosmology         import FlatLambdaCDM   # from astropy.cosmology import WMAP9 as cosmo   
+from   scipy                     import sparse
 
 def get_truth(inp, relate, cut):
     ops = {'>': operator.gt,

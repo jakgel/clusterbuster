@@ -60,42 +60,29 @@ def updateClusters_missingRegions(ClList,AddList):
     regions.loc[regions['FLAGS_CLASS'] == 1  &  regions['Counter'], 'FLAGS_CLASS'] =  2      ###Double Relic
     regions.loc[regions['FLAGS_CLASS'] == 3  &  regions['Counter'], 'FLAGS_CLASS'] =  2      ###Double Relic              
      
-
-    ''' FIX ...'''
-
-
     for index, row in regions.iterrows():
-#    for GCl in ClList:
-#        if GCl.status not in ['TRUE']: 
-            ''' Just append the cluster if its status is not True and add the missing relic regions '''
-                   
+        ''' Just append the cluster if its status is not True and add the missing relic regions '''
+        for GCl in ClList:
+            if GCl.status not in ['TRUE'] and GCl.name == row['Cluster']:  
 
-#            for index, row in regions.iterrows():
-            for GCl in ClList:
-                if GCl.status not in ['TRUE'] and GCl.name == row['Cluster']:  
-    
 #                if GCl.name == row['Cluster']:
-                    if int(row['CLASS_int']) == -2: continue  # For now exclude halos, just because they are currently a seperate entry in the clusters file
+                if int(row['CLASS_int']) == -2: continue  # For now exclude halos, just because they are currently a seperate entry in the clusters file
 #                    print( row['Cluster'], row['CLASS_int']           
-                    rtype     = int(row['CLASS_int'])
-                    '''Development'''
-                    alpha     = -1  #row['Alpha']
-                    alpha_err =  0  #row['Alpha_error']
-                    alphaFLAG =  False
-                    candidate =  (row['FLAG_conf'] != True)
-                    region = cbclass.RelicRegion( name = row['Identifier'], cnt=[], rtype=rtype, alpha=alpha, alpha_err=alpha_err, 
-                                                  alphaFLAG=alphaFLAG, candidate=candidate)
-                                                 
-                                               #  row['Cluster'] +  row['Identifier']     
-#                    if len(GCl.regions) >0: 
-#                        continue
-#                        print((row['Cluster'], rtype)
+                rtype     = int(row['CLASS_int'])
+                '''Development'''
+                alpha     = -1  #row['Alpha']
+                alpha_err =  0  #row['Alpha_error']
+                alphaFLAG =  False
+                candidate =  (row['FLAG_conf'] != True)
+                region = cbclass.RelicRegion( name = row['Identifier'], cnt=[], rtype=rtype, alpha=alpha, alpha_err=alpha_err, 
+                                              alphaFLAG=alphaFLAG, candidate=candidate)
+                                             
 
-                    ''' DEVELOPMENT WORKAROUND
-                    GCl.regions.append(region) is not working!
-                    '''
+                ''' DEVELOPMENT WORKAROUND
+                GCl.regions.append(region) is not working!
+                '''
 
-                    GCl.add_regions([region])
+                GCl.add_regions([region])
     return ClList
 
 def runsurvey(surveys, plot=True):
@@ -116,7 +103,6 @@ def runsurvey(surveys, plot=True):
         iom.check_mkdir(outfolder)  # create folder if necesairy
 
         print( '###==== Step 1: Load data and anaylise it   ====###' )
-        # np.genfromtxt('Analysis_RORRS/ClusterRelics.csv'', delimiter=';')
         ClusterFile = 'ClusterList/ClusterAfterNuza2017_clusters.csv' 
         RegionFile  = 'ClusterList/ClusterAfterNuza2017_regions.csv' 
         
@@ -232,9 +218,6 @@ def runsurvey(surveys, plot=True):
                 GCl.regions = ioclass.readDS9relics(regfile, spixel, center[0], center[1])
 
 
-
-
-
                 #============= Subtract Sources  =============#
                 # in Sources folder
                 #try load folder:
@@ -317,9 +300,6 @@ def runsurvey(surveys, plot=True):
                             hdu.header['CRPIX2'] = hdu.header['CRPIX2'] + pad
                             
                             
-                            
-                            
-
 #
 #                        from astropy.io import fits
 #                        from astropy.utils.data import get_pkg_data_filename
