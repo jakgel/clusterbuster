@@ -27,7 +27,7 @@ import copy
 import traceback
 
 ''' In the local folder ... '''
-from   surveysim.music2.mockobs    as mockobs
+import surveysim.music2.mockobs    as mockobs
 import surveysim.music2.loadsnap   as loadsnap
 import surveysim.music2.radiomodel as radiomodel   
 ''' ==='''
