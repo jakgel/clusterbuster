@@ -12,13 +12,10 @@ import clusterbuster.surveyclasses  as cbclass
 #import clusterbuster.surveyut       as suut
  
 import os
-import glob
 import numpy  as np
 import ndtest as KSmaster
 import math
 import time
-      
-SURVEYCOUNT = 0   # This is the global count for the ABC process initiated, somehow hacky
 
 '''=============== Baustelle: Imlement in Metric & Run Survey'''
 def Clusters_discovery_prop(survey, discovery_prop=None, maxcomp=None, verbose=False):

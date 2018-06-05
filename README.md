@@ -52,7 +52,8 @@ Alternatively clone/fork this directory from  github.
 - astropy >=1.3
 - pandas >= ?
 - ephem >=?
-- opencv-python
+- opencv-python >=?
+- PyPDF2 >=?
 - matplotlib > (needs matplotlib.mlab)
 
 Add our github path to your bashrc like
