@@ -18,100 +18,100 @@ import time
 
 
 class SmartTiming():
-  """
-  Class to allow timing of specific task blocks within the code. with 
-  output about the total add taskspecific timecosnumption (real time, and cpu usage).
-  Intermediate complexity.
-  """
+    """
+    Class to allow timing of specific task blocks within the code. with 
+    output about the total add taskspecific timecosnumption (real time, and cpu usage).
+    Intermediate complexity.
+    """
 
-  def __init__(self, rate=5e4, logf=False): #, ini=False
-    """
-    decription
-    """
-    t                =  time.time() 
-    tcpu             =  time.clock() 
-    self.start       = [t,tcpu]
-    self.now         = [t,tcpu]
-    self.lastadd     = [t,tcpu]
-    self.lastout     = t
-    self.tasks       = [ ['unspecified',0,0] ]  #[Task name, processtime, cputime]
-    self.tcurrent    = 'unspecified'
-    self.rate        = rate
-    self.logf        = logf
-    self.ini         = True   
-    self.pos         = 0
+    def __init__(self, rate=5e4, logf=False): #, ini=False
+        """
+        decription
+        """
+        t                =  time.time() 
+        tcpu             =  time.clock() 
+        self.start       = [t,tcpu]
+        self.now         = [t,tcpu]
+        self.lastadd     = [t,tcpu]
+        self.lastout     = t
+        self.tasks       = [ ['unspecified',0,0] ]  #[Task name, processtime, cputime]
+        self.tcurrent    = 'unspecified'
+        self.rate        = rate
+        self.logf        = logf
+        self.ini         = True   
+        self.pos         = 0
     
     
-  def update_pos(self, pos):
-    self.pos = max(self.pos,pos)
+    def update_pos(self, pos):
+        self.pos = max(self.pos,pos)
     
     
-  def output(self, forced=False):
+    def output(self, forced=False):
   
-     if (self.now[0] - self.lastout > self.rate) or forced:
-       print( '#==== Timing report BEGIN \n With a total computing time of %.1f seconds the following tasks took so much of the total time:' %(self.now[0]-self.start[0]) )
-       for task in self.tasks:
-          print( "Task '%24s' ran %5.1e seconds accounting for %7.3f %% of the total computing time. Average CPU usage was %7.3f %%." % ( task[0], task[1], 1e2*task[1]/(self.now[0]-self.start[0]),1e2*task[2]/task[1] ))
-        
-       print( '#==== Timing report END \n ')
-       self.lastout = self.now[0]
-       if self.logf:
-
-         if self.ini:
-           with open(self.logf, 'w') as file:
-            line = '%17s ' % ('Ncl     t_total [s]')
+        if (self.now[0] - self.lastout > self.rate) or forced:
+            print( '#==== Timing report BEGIN \n With a total computing time of %.1f seconds the following tasks took so much of the total time:' %(self.now[0]-self.start[0]) )
             for task in self.tasks:
-               line += '%24s  ' % (task[0])
-            file.write(line+'\n')
-            self.ini = False
-
-         with open(self.logf, 'a') as file:
-           line = '%7i %10.1f  ' % (self.pos, self.now[0]-self.start[0])
-           for task in self.tasks:
-             line += ' %5.1e %7.3f %7.3f' % (task[1], 1e2*task[1]/(self.now[0]-self.start[0]), 1e2*task[2]/task[1])
-           file.write(line+'\n')
+                print( "Task '%24s' ran %5.1e seconds accounting for %7.3f %% of the total computing time. Average CPU usage was %7.3f %%." % ( task[0], task[1], 1e2*task[1]/(self.now[0]-self.start[0]),1e2*task[2]/task[1] ))
+            
+            print( '#==== Timing report END \n ')
+            self.lastout = self.now[0]
+            if self.logf:
     
-  def __call__(self, task='unspecified', forced=False, pos=0):
-    self.now     = [time.time(),time.clock()]
-    tdiff        = [x - y for x,y in zip(self.now,self.lastadd)]   
-    try: 
-      self.tasks[ [x[0] for x in self.tasks].index(self.tcurrent)][1] += tdiff[0] 
-      self.tasks[ [x[0] for x in self.tasks].index(self.tcurrent)][2] += tdiff[1]
-    except:
-      self.tasks.append( [self.tcurrent, tdiff[0], tdiff[1]] )
-      #print( self.tasks[self.tasks[0][:].index(self.tcurrent)]
-       
-    self.update_pos(pos)
-    self.output(forced=forced)
-    self.lastadd = self.now
-    self.tcurrent = task
+                if self.ini:
+                    with open(self.logf, 'w') as file:
+                        line = '%17s ' % ('Ncl     t_total [s]')
+                        for task in self.tasks:
+                            line += '%24s  ' % (task[0])
+                        file.write(line+'\n')
+                        self.ini = False
     
-  def MergeSMT(self, smt):   #Merges to smt tasks ... very bulky however
+                with open(self.logf, 'a') as file:
+                    line = '%7i %10.1f  ' % (self.pos, self.now[0]-self.start[0])
+                    for task in self.tasks:
+                        line += ' %5.1e %7.3f %7.3f' % (task[1], 1e2*task[1]/(self.now[0]-self.start[0]), 1e2*task[2]/task[1])
+                    file.write(line+'\n')
+    
+    def __call__(self, task='unspecified', forced=False, pos=0):
+        self.now     = [time.time(),time.clock()]
+        tdiff        = [x - y for x,y in zip(self.now,self.lastadd)]   
+        try: 
+            self.tasks[ [x[0] for x in self.tasks].index(self.tcurrent)][1] += tdiff[0] 
+            self.tasks[ [x[0] for x in self.tasks].index(self.tcurrent)][2] += tdiff[1]
+        except:
+            self.tasks.append( [self.tcurrent, tdiff[0], tdiff[1]] )
+            #print( self.tasks[self.tasks[0][:].index(self.tcurrent)]
+           
+        self.update_pos(pos)
+        self.output(forced=forced)
+        self.lastadd = self.now
+        self.tcurrent = task
+    
+    def MergeSMT(self, smt):   #Merges to smt tasks ... very bulky however
 
-    for jj,task in enumerate(smt.tasks): 
-        	try: 
-        	  self.tasks[ [x[0] for x in self.tasks].index(task)][1] += task[jj][1]
-        	  self.tasks[ [x[0] for x in self.tasks].index(task)][2] += task[jj][2]
-        	except:
-        	  self.tasks.append( task )  
+        for jj,task in enumerate(smt.tasks): 
+            	try: 
+            	  self.tasks[ [x[0] for x in self.tasks].index(task)][1] += task[jj][1]
+            	  self.tasks[ [x[0] for x in self.tasks].index(task)][2] += task[jj][2]
+            	except:
+            	  self.tasks.append( task )  
 
 
-  def MergeSMT_simple(self, smt, silent = True):   #This implies that the smt tasks are complete! It wont add timings of new tasks
+    def MergeSMT_simple(self, smt, silent = True):   #This implies that the smt tasks are complete! It wont add timings of new tasks
   
-    #print( 'Check:', [t[0] for t in self.tasks],[t[0] for t in smt.tasks]
-    for jj,task_b in enumerate(smt.tasks):
-        found = False
-        for ii,task in enumerate(self.tasks):  
-            if task[0] == task_b[0]: # Compare task names
-                # print( task[0], self.tasks[ii][1], smt.tasks[jj][1], self.tasks[ii][2], smt.tasks[jj][2]
-    
-                self.tasks[ii][1] += smt.tasks[jj][1] # Add up CPU time
-                self.tasks[ii][2] += smt.tasks[jj][2] # Add up System Time
-                found = True
-                continue     # Exit loop
-	if not found:
-	   self.tasks.append( task_b )  
-	   if not silent: print( 'Task not known!!! Task list is getting appended', task_b)
+        #print( 'Check:', [t[0] for t in self.tasks],[t[0] for t in smt.tasks]
+        for jj,task_b in enumerate(smt.tasks):
+            found = False
+            for ii,task in enumerate(self.tasks):  
+                if task[0] == task_b[0]: # Compare task names
+                    # print( task[0], self.tasks[ii][1], smt.tasks[jj][1], self.tasks[ii][2], smt.tasks[jj][2]
+        
+                    self.tasks[ii][1] += smt.tasks[jj][1] # Add up CPU time
+                    self.tasks[ii][2] += smt.tasks[jj][2] # Add up System Time
+                    found = True
+                    continue     # Exit loop
+        if not found:
+        	   self.tasks.append( task_b )  
+        	   if not silent: print( 'Task not known!!! Task list is getting appended', task_b)
                
 
     
@@ -123,13 +123,13 @@ import cPickle as pickle
 
 def pickleObject(obj, location, oname, append = False):
 
-  check_mkdir(location)  
-  commands = ['wb','ab']
-  with open(location+oname+'.pickle', commands[int(append)]  ) as handle:
+    check_mkdir(location)  
+    commands = ['wb','ab']
+    with open(location+oname+'.pickle', commands[int(append)]  ) as handle:
 #      print('misc::pickleObject()::', location+oname+'.pickle') #DEBUGGING
-      pickle.dump(obj, handle, -1)
+        pickle.dump(obj, handle, -1)
       
-  return None    
+    return None    
     
 def pickleObject_old(obj, location, append = False):
     ''' With the check to create the directory, but with the full path '''
@@ -144,9 +144,9 @@ def pickleObject_old(obj, location, append = False):
   
 def unpickleObject(location):
   
-  with open(location+'.pickle', 'rb') as handle:
-      obj = pickle.load(handle)
-  return obj
+    with open(location+'.pickle', 'rb') as handle:
+        obj = pickle.load(handle)
+    return obj
     
     
 # from Lutz Prechelt: http://stackoverflow.com/questions/20716812/saving-and-loading-multiple-objects-in-python-pickle-file  
