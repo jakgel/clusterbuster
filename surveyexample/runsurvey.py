@@ -86,9 +86,10 @@ def updateClusters_missingRegions(ClList,AddList):
                 GCl.add_regions([region])
     return ClList
 
-def runsurvey(surveys, outfoldertop='/data/ClusterBuster-Output/', plot=True):
-  
-    ''' Extracts survey relics from an real world survey '''
+def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', plot=True):
+    ''' Extracts survey relics from an real world survey
+    '''
+    
     for survey in surveys:
         print( '###==== Step 0b: Initialize internal variables/objects for survey: %s ====###' % (survey) )
 
@@ -104,8 +105,9 @@ def runsurvey(surveys, outfoldertop='/data/ClusterBuster-Output/', plot=True):
         iom.check_mkdir(outfolder)  # create folder if necesairy
 
         print( '###==== Step 1: Load data and anaylise it   ====###' )
-        ClusterFile = 'ClusterList/ClusterAfterNuza2017_clusters.csv' 
-        RegionFile  = 'ClusterList/ClusterAfterNuza2017_regions.csv' 
+        # np.genfromtxt('Analysis_RORRS/ClusterRelics.csv'', delimiter=';')
+        ClusterFile = infolder + 'ClusterList/ClusterAfterNuza2017_clusters.csv' 
+        RegionFile  = infolder + 'ClusterList/ClusterAfterNuza2017_regions.csv' 
         
         
         Clusters = pd.read_csv(ClusterFile, comment='#', delimiter=',', quotechar='"')
@@ -139,8 +141,6 @@ def runsurvey(surveys, outfoldertop='/data/ClusterBuster-Output/', plot=True):
 #                     continue
                 print( CL['FLAG_INCLUDED'],  CL['Cluster'] )
                 Cl_name = CL['Cluster']
-
-
                 status   = CL['FLAG_INCLUDED']
                 
                 
@@ -183,7 +183,7 @@ def runsurvey(surveys, outfoldertop='/data/ClusterBuster-Output/', plot=True):
                 if GCl.status not in ['TRUE']: 
                     ClList.append(GCl)
                     continue
-                fitsimage = 'Images_%s/%s-%s.fits' % (survey, survey, Cl_name)
+                fitsimage = infolder + 'Images_%s/%s-%s.fits' % (survey, survey, Cl_name)
                 image, center, spixel = fitsut.fits2numpy(fitsimage)
                 
                 
@@ -215,8 +215,11 @@ def runsurvey(surveys, outfoldertop='/data/ClusterBuster-Output/', plot=True):
 
                 #============= Load relic search region  =============#
                 # Make in np.image
-                regfile     = 'Regions/RR_%s.reg' % (Cl_name) 
+                regfile     = infolder + 'Regions/RR_%s.reg' % (Cl_name) 
                 GCl.regions = ioclass.readDS9relics(regfile, spixel, center[0], center[1])
+
+
+
 
 
                 #============= Subtract Sources  =============#
@@ -232,7 +235,7 @@ def runsurvey(surveys, outfoldertop='/data/ClusterBuster-Output/', plot=True):
                 model_conv           =  np.zeros((image.shape))      
                 use_list, use_im     = (False, False)
                 if 'slist' in subtract:
-                    slist =  'Sources/slist/%s.slist' % (Cl_name)
+                    slist =  infolder + 'Sources/slist/%s.slist' % (Cl_name)
                     if os.path.isfile(slist):
                     #if 1==1:
                       scL = iom.read_para_list( slist )
@@ -257,7 +260,7 @@ def runsurvey(surveys, outfoldertop='/data/ClusterBuster-Output/', plot=True):
 ##                        warnings.warn("No source subtraction list specified for %s. Alternatively the format of the parameter file causes problems."  % (Cl_name))
                         
                 if 'fits' in subtract:
-                    highres_image = 'Images_%s/%s-%s.fits' % ("FIRST", "FIRST", Cl_name)
+                    highres_image = infolder + 'Images_%s/%s-%s.fits' % ("FIRST", "FIRST", Cl_name)
                     if os.path.isfile(highres_image):
     
                         # regridd
@@ -275,8 +278,8 @@ def runsurvey(surveys, outfoldertop='/data/ClusterBuster-Output/', plot=True):
                         hdu1 = fits.open(fitsimage)[0]
                         image_2, center_2, spixel_2 = fitsut.fits2numpy(highres_image)
                         s_pixel_2    = [spixel_2[1]*GCl.cosmoPS*3600,spixel_2[1]*3600]  
-                        fitsut.numpy2fits ( image_2 ,  'Images_%s/%s-%s_test.fits' % ("FIRST", "FIRST", Cl_name), s_pixel_2[1], center_2[0], center_2[1]) 
-                        hdu2 = fits.open('Images_%s/%s-%s_test.fits' % ("FIRST", "FIRST", Cl_name))[0]      
+                        fitsut.numpy2fits ( image_2 ,  infolder + 'Images_%s/%s-%s_test.fits' % ("FIRST", "FIRST", Cl_name), s_pixel_2[1], center_2[0], center_2[1]) 
+                        hdu2 = fits.open(infolder + 'Images_%s/%s-%s_test.fits' % ("FIRST", "FIRST", Cl_name))[0]      
                         hdu2.data = hdu2.data.squeeze()
                         hdu2.data[np.isnan(hdu2.data)]      = 0.     # For contour masked  NVSS images I encountered the isue that some values where nan
                         hdu2.data[np.where(hdu2.data<6e-4)] = 0.
@@ -301,6 +304,9 @@ def runsurvey(surveys, outfoldertop='/data/ClusterBuster-Output/', plot=True):
                             hdu.header['CRPIX2'] = hdu.header['CRPIX2'] + pad
                             
                             
+                            
+                            
+
 #
 #                        from astropy.io import fits
 #                        from astropy.utils.data import get_pkg_data_filename
@@ -333,7 +339,7 @@ def runsurvey(surveys, outfoldertop='/data/ClusterBuster-Output/', plot=True):
                             hdu.header['EQUINOX']   = 3e3
                             print('====================') 
                             
-                        fitsut.numpy2fits ( hdu2_conv.data.squeeze(),  'Images_%s/%s-%s_test2.fits' % ("FIRST", "FIRST", Cl_name), s_pixel_2[1], center_2[0], [c+pad for c in center_2[1]])  
+                        fitsut.numpy2fits ( hdu2_conv.data.squeeze(),  infolder + 'Images_%s/%s-%s_test2.fits' % ("FIRST", "FIRST", Cl_name), s_pixel_2[1], center_2[0], [c+pad for c in center_2[1]])  
 
 
                         print( 'WCS(hdu1.header).wcs.naxis, WCS(hdu2.header).wcs.naxis', WCS(hdu1.header).wcs.naxis, WCS(hdu2_conv.header).wcs.naxis )
@@ -369,9 +375,9 @@ def runsurvey(surveys, outfoldertop='/data/ClusterBuster-Output/', plot=True):
                 print( '%30s source subtraction;  list: %5r; image: %5r'   % (Cl_name , use_list, use_im) )
                 GCl.maps_update(residuum  , 'Diffuse'    , '%s/Images_%s/diffuse/%s-%s.fits'            % (topfolder, survey, survey, Cl_name))
                 if np.sum(model_conv) != 0 or extreme_res:      
-                    GCl.maps_update(image     , 'Raw'       , '%s/Images_%s/raw/%s-%s_res.fits'         % (topfolder, survey, survey, Cl_name))
-                    GCl.maps_update(model     , 'Modell'    , '%s/Images_%s/subtracted/%s-%s.fits'      % (topfolder, survey, survey, Cl_name))
-                    GCl.maps_update(model_conv, 'Subtracted', '%s/Images_%s/subtracted/%s-%s_conv.fits' % (topfolder, survey, survey, Cl_name))
+                    GCl.maps_update(image     , 'Raw'       , infolder + '%s/Images_%s/raw/%s-%s_res.fits'         % (topfolder, survey, survey, Cl_name))
+                    GCl.maps_update(model     , 'Modell'    , infolder + '%s/Images_%s/subtracted/%s-%s.fits'      % (topfolder, survey, survey, Cl_name))
+                    GCl.maps_update(model_conv, 'Subtracted', infolder + '%s/Images_%s/subtracted/%s-%s_conv.fits' % (topfolder, survey, survey, Cl_name))
                 smt()
                 
                 #============= impose relic.search  =============#
@@ -463,9 +469,6 @@ def runsurvey(surveys, outfoldertop='/data/ClusterBuster-Output/', plot=True):
             GCl.updateInformation()
          
 
-
-
-            
         norm = cdb.norm('R200',Nexp=1)
         Histo      = cdb.Histogram2D(nbins=(64,46), fromto= [[0,2.*np.pi],[0,1.5]], norm=norm )     # angle_projected(rad), D_proj(R200) 
         Survey         = cbclass.Survey(ClList, survey, cnt_levels = cnt_levels, synonyms=synonyms, dinfo=GCl.dinfo, mainhist=Histo, surshort=survey)  # 'NVSS' should be replaced with a real survey class
@@ -482,9 +485,11 @@ def runsurvey(surveys, outfoldertop='/data/ClusterBuster-Output/', plot=True):
     return True
 
 if __name__ == "__main__":
+    
     parser = argparse.ArgumentParser(description='Extracts survey relics from an real world survey')
     parser.add_argument('-surveys', dest='surveys', nargs='+', action='store', default=['NVSS'],  type=str, help='Survey names that are to be used')
+    parser.add_argument('-infolder', dest='infolder'  , action='store', default='', type=str,help='filepath for data arrays to be loaded (folder of NVSS paths etc.)')
     parser.add_argument('-outputfolder', dest='outputfolder'  , action='store', default='/data/ClusterBuster-Output/', type=str,help='filepath for data arrays to store')
     args = parser.parse_args()
 
-    runsurvey(surveys=args.surveys, outfoldertop=args.outputfolder, plot=False)
+    runsurvey(surveys=args.surveys, infolder=args.infolder, outfoldertop=args.outputfolder, plot=False)
