@@ -102,13 +102,13 @@ class SmartTiming():
     for jj,task_b in enumerate(smt.tasks):
         found = False
         for ii,task in enumerate(self.tasks):  
-	    if task[0] == task_b[0]: # Compare task names
-	      # print( task[0], self.tasks[ii][1], smt.tasks[jj][1], self.tasks[ii][2], smt.tasks[jj][2]
-
-	      self.tasks[ii][1] += smt.tasks[jj][1] # Add up CPU time
-	      self.tasks[ii][2] += smt.tasks[jj][2] # Add up System Time
-	      found = True
-	      continue     # Exit loop
+            if task[0] == task_b[0]: # Compare task names
+                # print( task[0], self.tasks[ii][1], smt.tasks[jj][1], self.tasks[ii][2], smt.tasks[jj][2]
+    
+                self.tasks[ii][1] += smt.tasks[jj][1] # Add up CPU time
+                self.tasks[ii][2] += smt.tasks[jj][2] # Add up System Time
+                found = True
+                continue     # Exit loop
 	if not found:
 	   self.tasks.append( task_b )  
 	   if not silent: print( 'Task not known!!! Task list is getting appended', task_b)
