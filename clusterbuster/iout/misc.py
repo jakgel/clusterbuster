@@ -12,7 +12,10 @@ import os
 import numpy as np
 import time
 
-
+try:
+    import cPickle as pickle
+except ImportError:
+    import _pickle as pickle
 
 #============== Smart timing to subject classes
 
@@ -116,8 +119,7 @@ class SmartTiming():
 
     
   
- 
-import cPickle as pickle
+
 #import dill as pickle   # To make lambda function pickleable, use with caution
 # See http://stackoverflow.com/questions/4529815/saving-an-object-data-persistence-in-python for an even more sophisticated alternative
 

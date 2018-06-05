@@ -52,6 +52,7 @@ Alternatively clone/fork this directory from  github.
 - astropy >=1.3
 - pandas >= ?
 - ephem >=?
+- cpickle
 - matplotlib > (needs matplotlib.mlab)
 
 
