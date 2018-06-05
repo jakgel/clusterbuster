@@ -155,9 +155,9 @@ def polar_from_to(array,borders):
         elif start >= 0 and end >= N:
             array_polar = np.append(  array[start:N] , array[0:(end % N)+1] )   
         else:
-            print 'Something went wrong in polar_from_to(array,%i,%i)' % (start,end)
+            print('Something went wrong in polar_from_to(array,%i,%i)' % (start,end))
         
-#        print start, end, array_polar # Debugging
+#        print(start, end, array_polar) # Debugging
         return array_polar
 
 

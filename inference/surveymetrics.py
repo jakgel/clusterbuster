@@ -192,15 +192,15 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics = ['numbers'],
     SurveyB: model
     
     '''
+    print('ABC_dist_severalMetrices',metrics)
 
     if verbose: print(SurveyA.name, SurveyB.name)
     
 
-    ''' the efficiency is outdated and should be repalced asap '''
+    ''' The efficiency is outdated and should be replaced asap '''
     for eff in SurveyB.Rmodel.effList:
 
         if stochdrop: SurveyB.set_dropseed()
-        
         
         if len([gcl.updateInformation() for gcl in SurveyB.FilterCluster(minrel=1)]) < 3:
             distances = [1e9 for m in metrics]
@@ -210,6 +210,7 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics = ['numbers'],
             SurveyB.FilterCluster(minrel=1)
             print ('SurveyB.filteredClusters', len(SurveyB.GCls), len(SurveyB.filteredClusters))
             for metric in metrics:
+                print('metric', metric)
                 
                 if metric == 'number':
                     distance  = ABC_summaryStatistics_numbers([SurveyA,SurveyB])
@@ -218,7 +219,7 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics = ['numbers'],
                 if metric == 'logMach':
                     distance  = ABC_summaryStatistics_logMach([SurveyA,SurveyB])
                 if metric == 'PCA':       
-                    ''' Heavyly inspired by https://plot.ly/ipython-notebooks/principal-component-analysis/ '''
+                    ''' Heavily inspired by https://plot.ly/ipython-notebooks/principal-component-analysis/ '''
                     newdist      =  lambda x:  dbc.measurand( x.Dproj_pix()/x.GCl.R200(), 'Dproj',label='$D_\mathrm{proj,rel}$',  un = '$R_{200}$' )
                     plotmeasures = [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.Mach, newdist]
                     
@@ -238,9 +239,8 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics = ['numbers'],
                     distance = np.sum(Y_sklearn**2)/len(Y_sklearn[0])
                 
                 distances.append(distance)
-            
-            
-        print('surveymetrics::ABC_dist_severalMetrices::', SurveyA.name, 'VS', SurveyB.name, ' metric disimilarity:', 'metric disimilarity:', ['%s: %.3e' % (m,d) for (m,d) in zip(metric,distances)] )
+                     
+        print('surveymetrics::ABC_dist_severalMetrices::', SurveyA.name, 'VS', SurveyB.name, ' metric disimilarity:', 'metric disimilarity:', ['%s: %.3e' % (m,d) for (m,d) in zip(metrics,distances)] )
             
         
         ''' This puts the survey to a bagged sutvey folde rand increases the counter. It might be interesting to know if this number is also the number of the runs.
@@ -258,14 +258,15 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics = ['numbers'],
                         with open('%s/count.txt' % (outpath), 'r') as f:
                             SURVEYCOUNT = int(f.readline())
                         print(SURVEYCOUNT) # Is implemented to write the correct survey output files for the ABC abbroach
-                        os.system("cp -rf %s/pickled/Survey.pickle %s/Survey%05i.pickle" % (SurveyB.outfolder, os.path.join(SurveyB.outfolder, '..', 'AllSurveys'), SURVEYCOUNT))
                         with open('%s/count.txt' % (outpath), 'w') as f:
                             f.write(str(SURVEYCOUNT+1))
+                        os.system("cp -rf %s/pickled/Survey.pickle %s/Survey%05i.pickle" % (SurveyB.outfolder, os.path.join(SurveyB.outfolder, '..', 'AllSurveys'), SURVEYCOUNT))  
                         n=10
                     except:
                         n += 1
                         time.sleep(0.5)
                         print('surveymetrics::ABC_dist_severalMetrices:: Could not write counter.')
+                        print("___ cp -rf %s/pickled/Survey.pickle %s/Survey_unknown.pickle" % (SurveyB.outfolder, os.path.join(SurveyB.outfolder, '..', 'AllSurveys')))
 
                 os.system("rm -rf %s/pickled/Survey.pickle" % (SurveyB.outfolder))
                     

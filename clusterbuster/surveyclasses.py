@@ -1273,7 +1273,6 @@ class Survey(object):
           if eff is None: eff = self.Rmodel.effList[0]
           GCls = [GCl.updateInformation(eff=eff, Filter=True) for GCl in self.GCls]
          
-          verbose = True
           results = [(ii,GCl)  for ii,GCl in enumerate(GCls) if len(GCl.filterRelics(eff=eff, **kwargs))>=minrel and  get_truth(GCl.z, ztype, zborder) and 
                      GCl.largestLAS() >  minimumLAS and GCl.flux() > GClflux and GCl.stoch_drop(self.dropseed)] 
           

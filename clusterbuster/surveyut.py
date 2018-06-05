@@ -110,7 +110,6 @@ def interpret_parset(parfile, repository='/parsets/', default='default.parset', 
             relative = False
              
     def_dict  = iom.parset2dict(repository + default, relative=relative) # relative=relative
-    print(repository + parfile) 
     new_dict  = iom.parset2dict(repository + parfile, relative=relative)
      
     
