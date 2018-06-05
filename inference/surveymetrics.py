@@ -254,18 +254,18 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics = ['numbers'],
                 while n < 10:  
                     try:
                         with open('%s/count.txt' % (outpath), 'r') as f:
-                            SURVEYCOUNT = int(f.readline())
-                        print(SURVEYCOUNT) # Is implemented to write the correct survey output files for the ABC abbroach
+                            SURVEYCOUNT = int(float(f.readline()))
+                        print('SURVEYCOUNT', SURVEYCOUNT) # Is implemented to write the correct survey output files for the ABC abbroach
                         with open('%s/count.txt' % (outpath), 'w') as f:
                             f.write(str(SURVEYCOUNT+1))
                         iom.check_mkdir(outpath+'surveys/') 
-                        os.system("cp -rf %s/pickled/Survey.pickle %s/Survey%05i.pickle" % (SurveyB.outfolder, os.path.join(SurveyB.outfolder, '..', 'AllSurveys'), SURVEYCOUNT))  
+                        os.system("cp -rf %s/pickled/Survey.pickle %s/surveys/Survey%05i.pickle" % (SurveyB.outfolder, outpath, SURVEYCOUNT))  
                         n=10
                     except:
                         n += 1
                         time.sleep(0.5)
                         print('surveymetrics::ABC_dist_severalMetrices:: Could not write counter.')
-                        print("___ cp -rf %s/pickled/Survey.pickle %s/Survey_unknown.pickle" % (SurveyB.outfolder, os.path.join(SurveyB.outfolder, '..', 'AllSurveys')))
+                        print("___ cp -rf %s/pickled/Survey.pickle %s/surveys/Survey_unknown.pickle" % (SurveyB.outfolder, outpath))
 
                 os.system("rm -rf %s/pickled/Survey.pickle" % (SurveyB.outfolder))
                     
