@@ -86,7 +86,7 @@ def updateClusters_missingRegions(ClList,AddList):
                 GCl.add_regions([region])
     return ClList
 
-def runsurvey(surveys, plot=True):
+def runsurvey(surveys, outfoldertop='/data/ClusterBuster-Output/', plot=True):
   
     ''' Extracts survey relics from an real world survey '''
     for survey in surveys:
@@ -99,7 +99,7 @@ def runsurvey(surveys, plot=True):
 
         smt      = iom.SmartTiming()
         Jy_SI    = 1e-26    # W/Hz/m^2
-        outfolder = '/data/ClusterBuster-Output/%s' % (survey)
+        outfolder = '%s%s' % (outfoldertop, survey)
         topfolder = os.getcwd() # '/home/jakobg/lib/ClusterBuster/Relics_Surveys/'
         iom.check_mkdir(outfolder)  # create folder if necesairy
 
