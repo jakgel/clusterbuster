@@ -89,11 +89,11 @@ class SmartTiming():
   def MergeSMT(self, smt):   #Merges to smt tasks ... very bulky however
 
     for jj,task in enumerate(smt.tasks): 
-	try: 
-	  self.tasks[ [x[0] for x in self.tasks].index(task)][1] += task[jj][1]
-	  self.tasks[ [x[0] for x in self.tasks].index(task)][2] += task[jj][2]
-	except:
-	  self.tasks.append( task )  
+        	try: 
+        	  self.tasks[ [x[0] for x in self.tasks].index(task)][1] += task[jj][1]
+        	  self.tasks[ [x[0] for x in self.tasks].index(task)][2] += task[jj][2]
+        	except:
+        	  self.tasks.append( task )  
 
 
   def MergeSMT_simple(self, smt, silent = True):   #This implies that the smt tasks are complete! It wont add timings of new tasks
