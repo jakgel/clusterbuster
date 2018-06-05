@@ -9,6 +9,7 @@ from __future__ import division, print_function
 
 import clusterbuster.dbclasses      as dbc
 import clusterbuster.surveyclasses  as cbclass
+import clusterbuster.iout.misc      as iom
 #import clusterbuster.surveyut       as suut
  
 import os
@@ -250,13 +251,14 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics = ['numbers'],
                 print('surveymetrics::ABC_dist_severalMetrices:: file_path, os.path.isfile(file_path)', file_path, os.path.isfile(file_path))
             if os.path.isfile(file_path):             
                 n = 0
-                while n < 10:
+                while n < 10:  
                     try:
                         with open('%s/count.txt' % (outpath), 'r') as f:
                             SURVEYCOUNT = int(f.readline())
                         print(SURVEYCOUNT) # Is implemented to write the correct survey output files for the ABC abbroach
                         with open('%s/count.txt' % (outpath), 'w') as f:
                             f.write(str(SURVEYCOUNT+1))
+                        iom.check_mkdir(outpath+'surveys/') 
                         os.system("cp -rf %s/pickled/Survey.pickle %s/Survey%05i.pickle" % (SurveyB.outfolder, os.path.join(SurveyB.outfolder, '..', 'AllSurveys'), SURVEYCOUNT))  
                         n=10
                     except:

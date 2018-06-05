@@ -51,7 +51,7 @@ def main_abcpmc_MUSIC2(conf, new_run=True, test=False):
         surmet.abcpmc_dist_severalMetrices(dataMUSIC2, data, delal=False) 
     
     # Prepares the file for counting
-    with open(conf['paths']['allsurveys'] + 'count.txt', 'w') as f:
+    with open(conf['paths']['abcpmc'] + 'count.txt', 'w') as f:
         f.write('0')
 
 

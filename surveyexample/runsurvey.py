@@ -486,6 +486,5 @@ if __name__ == "__main__":
     parser.add_argument('-surveys', dest='surveys', nargs='+', action='store', default=['NVSS'],  type=str, help='Survey names that are to be used')
     parser.add_argument('-outputfolder', dest='outputfolder'  , action='store', default='/data/ClusterBuster-Output/', type=str,help='filepath for data arrays to store')
     args = parser.parse_args()
-    
-    surveys   = ['NVSS'] #,'TGSS' 
+
     runsurvey(surveys=args.surveys, outfoldertop=args.outputfolder, plot=False)
