@@ -226,10 +226,10 @@ def read_para_list( ParaFile, log=False ) :
             if   typeL[i] == 'i' :
                dict[key] = int(value)
             elif typeL[i] == 'f' :
-	       try:
-                 dict[key] = float(value)
-               except:  
-                 dict[key] = 0
+                try:
+                    dict[key] = float(value)
+                except:  
+                    dict[key] = 0
             elif typeL[i] == 'b' :
                dict[key] = (value == 'True')
             else :
