@@ -290,7 +290,6 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
                         FWHM2sigma     =  1/2.354 
                         FWHM_FIRST     =  5.4
                         FWHM_conv      = np.sqrt(GCl.dinfo.beam[0]**2-FWHM_FIRST**2)
-                        print('!!__________!!', FWHM_conv, FWHM_conv/s_pixel_2[1]*FWHM2sigma)
                         gaussian_2D_kernel = Gaussian2DKernel(FWHM_conv/s_pixel_2[1]*FWHM2sigma)  
                         A_beam_old     =  1.133*((FWHM_FIRST/s_pixel_2[1])**2)  # FIRST-beam
                         A_beam         =  1.133*((GCl.dinfo.beam[0]/s_pixel_2[1])**2)
@@ -314,7 +313,7 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
 #                        hdu2 = fits.open(get_pkg_data_filename('galactic_center/gc_msx_e.fits'))[0]
 ###                      
                         for hdu in [hdu1,hdu2_conv]:
-                            print(hdu.header)
+#                            print(hdu.header)
                             try:
                                 hdu.data = hdu1.data[0,0,:,:]
                             except:
@@ -354,7 +353,7 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
                         print('_______________________________', array.shape, image.shape)  
                         array                          = array.squeeze() #could be removed
 
-                        fitsut.map2fits(array , GCl.dinfo, 'Images_%s/%s-%s_test3.fits' % ("FIRST", "FIRST", Cl_name))    
+                        fitsut.map2fits(array , GCl.dinfo, infolder + 'Images_%s/%s-%s_test3.fits' % ("FIRST", "FIRST", Cl_name))    
                         squeezed = array.squeeze() #could be removed
                         squeezed[np.isnan(squeezed)]      = 0.
                         print( 'fits_subtraction: np.sum(squeezed):', np.sum(squeezed), ', np.sum(array.squeeze()):', np.sum(array.squeeze()) )
@@ -373,7 +372,7 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
 
                 
                 print( '%30s source subtraction;  list: %5r; image: %5r'   % (Cl_name , use_list, use_im) )
-                GCl.maps_update(residuum  , 'Diffuse'    , '%s/Images_%s/diffuse/%s-%s.fits'            % (topfolder, survey, survey, Cl_name))
+                GCl.maps_update(residuum  , 'Diffuse'    , infolder + '%s/Images_%s/diffuse/%s-%s.fits'            % (topfolder, survey, survey, Cl_name))
                 if np.sum(model_conv) != 0 or extreme_res:      
                     GCl.maps_update(image     , 'Raw'       , infolder + '%s/Images_%s/raw/%s-%s_res.fits'         % (topfolder, survey, survey, Cl_name))
                     GCl.maps_update(model     , 'Modell'    , infolder + '%s/Images_%s/subtracted/%s-%s.fits'      % (topfolder, survey, survey, Cl_name))

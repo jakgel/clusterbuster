@@ -206,7 +206,7 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics = ['numbers'],
             distances = []
             SurveyA.FilterCluster(minrel=1)
             SurveyB.FilterCluster(minrel=1)
-            print ('SurveyB.filteredClusters', len(SurveyB.GCls), len(SurveyB.filteredClusters))
+            print ('SurveyB.GCls', len(SurveyB.GCls), '-->', SurveyB.filteredClusters', len(SurveyB.filteredClusters))
             for metric in metrics:
                 print('metric', metric)
                 

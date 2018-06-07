@@ -55,6 +55,7 @@ Alternatively clone/fork this directory from  github.
 - opencv-python >=?
 - PyPDF2 >=?
 - matplotlib > (needs matplotlib.mlab)
+- reproject (the NVSS subtraction part)
 
 Add our github path to your bashrc like
 >> export PYTHONPATH="/PATH/TO/clusterbuster:${PYTHONPATH}"

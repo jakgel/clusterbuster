@@ -296,7 +296,9 @@ def ContourToList(COOcnt, spixel, center, pixref, pixels=True):
   COOcnt = (COOcnt.replace(':',',')).split(',')
   COOcnt = np.asarray(COOcnt)
 
-  COOcnt  = np.reshape(COOcnt, (COOcnt.shape[0]/6, 6))
+  # There are RA and Dec with each three values (degree,arcmin,arcsec)
+  COOcnt  = np.reshape(COOcnt, (COOcnt.shape[0]//6, 6))
+
   
   if pixels:
      PixelCnt = np.zeros( (COOcnt.shape[0], 2), dtype=int)
