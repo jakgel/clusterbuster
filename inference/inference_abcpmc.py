@@ -213,16 +213,54 @@ def plot_abctraces(pools, surveypath=''):
     fig.savefig('%s/Thresholds.png' % (surveypath))
 
 
+    ''' Violin Plots '''
+    fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(9, 4))
+    
+    # generate some random test data
+    all_data = [pool.thetas[:,0]     for pool in pools]
+    mod_data = [np.concatenate((pool.thetas[:,0]+0.2,pool.thetas[:,0]),axis=0) for pool in pools]
+    # plot violin plot
+    background = axes.violinplot(mod_data,
+                       showmeans=False,
+                       showmedians=False, showextrema=False)
+    foreground = axes.violinplot(all_data,
+                       showmeans=False,
+                       showmedians=True)
+    
+    for pc in background['bodies']:
+        pc.set_facecolor('grey')
+#        pc.set_edgecolor('black')
+        pc.set_alpha(0.6)
         
+    for pc in foreground['bodies']:
+#        pc.set_facecolor('blue')
+#        pc.set_edgecolor('black')
+        pc.set_alpha(1)        
+    
+    print('!', mod_data)
+
+#    axes.set_title('violin plot')
+    
+    # adding horizontal grid lines
+    axes.yaxis.grid(True)
+    axes.set_xticks([y+1 for y in range(len(all_data))])
+    axes.set_xlabel('Iteration')
+    axes.set_ylabel('log( Efficiency $f_e$)')
+    
+    # add x-tick labels
+    plt.setp(axes, xticks=[y+1 for y in range(len(all_data))])
+    fig.savefig('%s/Violin.png' % (surveypath))
+    
     ''' Plot Parameters'''
-    for ii,_ in enumerate(pools):     
-        jg = sns.jointplot(pools[ii].thetas[:, 0], 
-                      pools[ii].thetas[:, 1], 
-                      kind="kde", 
-                     )
-        jg.ax_joint.set_xlabel('var1')
-        jg.ax_joint.set_ylabel('var2')
-        jg.savefig('%s/FirstThetas_%i.png' % (surveypath, ii))
+    for ii,_ in enumerate(pools):   
+        if thetas.shape[1] > 1:
+            jg = sns.jointplot(pools[ii].thetas[:, 0], 
+                          pools[ii].thetas[:, 1], 
+                          kind="kde", 
+                         )
+            jg.ax_joint.set_xlabel('var1')
+            jg.ax_joint.set_ylabel('var2')
+            jg.savefig('%s/FirstThetas_%i.png' % (surveypath, ii))
 
     return 0
 

@@ -54,11 +54,15 @@ def map2fits (array,dinfo,outfile):
     '''
     Maps numpy info and detinfo directly to outfile
     This function uses some of the ObjectClass.py data, so it should in principle become part it.
-    Detection info should be changed to mapinfo + detinfo (detection threshold etc.) '''
+    Detection info should be changed to mapinfo + detinfo (detection threshold etc.) 
+    
+    dinfo: ClusterBuster 
+    
+    '''
     numpy2fits(array,outfile,dinfo.spixel,center=dinfo.center,pcenter=dinfo.pcenter, nuobs=dinfo.nucen,beam=dinfo.beam,telescope=dinfo.telescope)
     
 
-def numpy2fits ( array,  outfile, spixel, center=[-1,-1], pcenter = [-1,-1], oname='', nuobs=1.4, beam=[45/3600,45/3600,0],telescope='UnknownRadioTelescope') : #, header=hdutemplateHead.header
+def numpy2fits ( array,  outfile, spixel, center=None, pcenter = None, oname='', nuobs=1.4, beam=[45/3600,45/3600,0],telescope='UnknownRadioTelescope') : #, header=hdutemplateHead.header
 
     ''' Creates an FITS file out of an 2D numpy map 
    
@@ -66,12 +70,12 @@ def numpy2fits ( array,  outfile, spixel, center=[-1,-1], pcenter = [-1,-1], ona
       
        spixel (float) in arcsecs
        The created images are up to my knowledge not readable by CASA
-       centre  = (Ra,Dec)
+       centre  = [Ra,Dec]
+       pcenter = [p1,p2]
        
        Possible improvement: directly supply it as a function of a map class
        
     '''
-  
 
     #print hduTemplateHead.header   
       
@@ -120,13 +124,13 @@ def numpy2fits ( array,  outfile, spixel, center=[-1,-1], pcenter = [-1,-1], ona
     hduHead['CDELT2']  =   1*float(spixel)/3600    #[deg]; if not float will set 3600  
     hduHead['HISTORY'] = ''
     
-    if center[0] != -1:
+    if center is not None:
       hduHead['CRVAL1']  =   float(center[0])          #RA --SIN                                                                                                                           
       hduHead['CRVAL2']  =   float(center[1])          #Dec--SIN          
       hduHead['OBSRA']   =   float(center[0])                                               
       hduHead['OBSDEC']  =   float(center[1])      
       
-    if pcenter[0] != -1:
+    if pcenter is not None:
       hduHead['CRPIX1']  =   float(pcenter[0]) 
       hduHead['CRPIX2']  =   float(pcenter[1])  
       

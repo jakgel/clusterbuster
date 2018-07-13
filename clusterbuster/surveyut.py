@@ -57,47 +57,45 @@ def AddFilesToSurvey(survey, savefolder, verbose = True, clusterwise=False):
     return survey
 
 
-def MergeFilesToSurvey_files(savefolder, surveyname, verbose = True, clusterwise=False):
-    
-    import clusterbuster.ObjectClasses as CBclass
+#def MergeFilesToSurvey(savefolder, surveyname, verbose = True, clusterwise=False):
+#
+#    import clusterbuster.surveyclasses as cbclass #crossimport
+#    
+#    minsize        = 1
+#    location       = savefolder+'/pickled/'
+#    print('MergeFilesToSurvey_files::', location)
+#    GCls           = []
+#    survey = cbclass.Survey([], surveyname, outfolder=savefolder)
+##    print '%sMonsterPickle*.pickle' % (location)             
+#    print(location)
+#    if verbose: print('%sMonsterPickle*.pickle' % (location))
+#    if clusterwise: 
+#        fn = 'GCl'
+#    else:
+#        fn = 'MonsterPickle'
+#    for filename in glob.glob('%s%s*.pickle' % (location,fn)):  #glob.glob('%srelics/*.pickle' % (location)):  ;  (relics, histo, Bmodel, eff, mockobs)
+##        print'!!!'
+#        if os.path.getsize(filename) > minsize:
+#             if verbose: print(filename)
+#             items = iom.unpickleObjectS(filename)
+#             for (Cluster, Rmodel) in items: #(relics, eff, mockobs) in items:
+#                 GCls.append(Cluster)
+#             os.remove(filename) 
+#
+#    GCls = sorted(GCls, key= iom.Object_natural_keys)
+#    survey.GCls =  GCls
+#     
+#    iom.pickleObject(survey, location, 'Survey')
+#    return 0
 
-    minsize        = 1
-    location       = savefolder+'/pickled/'
-    print('MergeFilesToSurvey_files::', location)
-    GCls           = []
-    survey = CBclass.Survey([], surveyname, outfolder=savefolder)
-#    print '%sMonsterPickle*.pickle' % (location)             
-    print(location)
-    if verbose: print('%sMonsterPickle*.pickle' % (location))
-    if clusterwise: 
-        fn = 'GCl'
-    else:
-        fn = 'MonsterPickle'
-    for filename in glob.glob('%s%s*.pickle' % (location,fn)):  #glob.glob('%srelics/*.pickle' % (location)):  ;  (relics, histo, Bmodel, eff, mockobs)
-#        print'!!!'
-        if os.path.getsize(filename) > minsize:
-             if verbose: print(filename)
-             items = iom.unpickleObjectS(filename)
-             for (Cluster, Rmodel) in items: #(relics, eff, mockobs) in items:
-                 GCls.append(Cluster)
-             os.remove(filename) 
-
-    GCls = sorted(GCls, key= iom.Object_natural_keys)
-    survey.GCls =  GCls
-     
-    iom.pickleObject(survey, location, 'Survey')
-    return 0
-
-
-MergeFilesToSurvey_files
 
 def TestPar(var):
   
-  return var in ['True', '1', 'TRUE', 'true']
+  return var in ['True', '1', 'TRUE', 'true', True]
 
 
 
-def interpret_parset(parfile, repository='/parsets/', default='default.parset', verbose=False, relative=None):
+def interpret_parset(parfile, repository='/parsets/', default='default.parset', verbose=False, relative=None, oldstyle=False):
 #This set loads a parset and replaxes one with the default one, alternatively you can give the default one and then modify the entries by another parset2dict
     from pathlib2 import Path
     import os
@@ -115,15 +113,24 @@ def interpret_parset(parfile, repository='/parsets/', default='default.parset', 
     
     comb_dict = def_dict.copy()
     comb_dict.update(new_dict)
-    # Now this parset is used to create some lists needed for this script
-#    B0_arr   =  iom.createlist(iom.str2list(comb_dict['B0']       ),comb_dict['B0_N']     , interpol= comb_dict['B0_type'])  
-#    nu_arr   =  iom.createlist(iom.str2list(comb_dict['nu']       ),comb_dict['nu_N']     , interpol= comb_dict['nu_type'])   
-#    eff_arr  =  iom.createlist(iom.str2list(comb_dict['eff_range']),comb_dict['eff_steps'], interpol= comb_dict['eff_type'])[::-1]  #invert array   
-    z_arr    =  [float(z) for z in   iom.str2list(comb_dict['z_range']) ]
     
     if verbose: 
         print(parfile, comb_dict)
-    return (comb_dict, z_arr) 
+        
+    
+    z_arr    =  [float(z) for z in   iom.str2list(comb_dict['z_range']) ]
+    if oldstyle:
+        # Now this parset is used to create some lists needed for this script
+        B0_arr   =  iom.createlist(iom.str2list(comb_dict['B0']       ),comb_dict['B0_N']     , interpol= comb_dict['B0_type'])  
+        nu_arr   =  iom.createlist(iom.str2list(comb_dict['nu']       ),comb_dict['nu_N']     , interpol= comb_dict['nu_type'])   
+        eff_arr  =  iom.createlist(iom.str2list(comb_dict['eff_range']),comb_dict['eff_steps'], interpol= comb_dict['eff_type'])[::-1]  #invert array   
+        returnargs = (comb_dict, B0_arr, nu_arr, eff_arr, z_arr) 
+    else:
+        returnargs = (comb_dict, z_arr) 
+
+
+
+    return returnargs 
      
 ''' former CW '''
 
@@ -259,7 +266,7 @@ def assign_snaps(snaplist_z, boundaries_z, VCM, snaps_Nclusters, sigma_z=0.2, us
          else:
              trials =  np.ones(N_clusters)
          
-         # do while there are clusters in the trial; expsected are natural number array
+         # do while there are clusters in the trial; exspected are natural number array
          while np.sum(trials) > 0:
              positions            = np.where(trials > 0)
              trials[positions]   -= 1

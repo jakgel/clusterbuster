@@ -72,7 +72,7 @@ astroabc
 
 
 ## Documentation
-Currently sparse within the files. You can get an overview of the idea by reading section 2 & 3 of [Nuza et al. 2017](http://adsabs.harvard.edu/abs/2017MNRAS.470..240N). The main repository includes. *surveyexample* shows how to get all relevant information from radio relics in the NVSS survey.  *surveysim* (once made accesible) includes the code to extract relevant information from the MUSIC-2 survey once you have additional files. *inference* lets you apply some more modern inference mechanism of physical models on the code.
+Currently sparse within the files. You can get an overview of the idea by reading section 2 & 3 of [Nuza et al. 2017](http://adsabs.harvard.edu/abs/2017MNRAS.470..240N). The main repository includes. *surveyreal* shows how to get all relevant information from radio relics in the NVSS survey.  *surveysim* (once made accesible) includes the code to extract relevant information from the MUSIC-2 survey once you have additional files. *inference* lets you apply some more modern inference mechanism of physical models on the code.
 
 
 

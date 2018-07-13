@@ -28,7 +28,12 @@ def PrepareRadioCube(snap, psiFile='Hoeft_radio/mach_psi_table.txt', machFile='H
     I strongly recommend to use interpolated files like Hoeft_radio/mach_psi_tablefine(10,3).txt & Hoeft_radio/q_mach_machr_tablefine(10,3).txt
     - finner interpolation steps will slow down the computation.'''
     
+    f         = 6.5                                               # Shock area fraction due to tab. 1 in  Hoeft+2008,  also consider M -> M *1.045 due to  Hoeft+2008
+    N_k       = 64.                                               # Sebastian Nuzas Smoothig Kernel for SHock detection (not equal the smoothing kernel for other stuff)
+    
+    
     smt = io.SmartTiming(rate=5e4); smt(task='PrepareRadioCube')
+
 
     if log: print('###==== Step 0a:  Prepare cluster data cubes ====###')
     #==== Load psiFile   for psi factor & machfile for mach-numbers conversion factors
@@ -55,10 +60,8 @@ def PrepareRadioCube(snap, psiFile='Hoeft_radio/mach_psi_table.txt', machFile='H
     s         = H_mach[results_y,4]         # Electron energy distribution spectral index as function of mach number    
      
      
-    # ... get an idea of the corresponding iluminated area 
-    f         = 6.5                                               # Shock area fraction due to tab. 1 in  Hoeft+2008,  also consider M -> M *1.045 due to  Hoeft+2008
+    # ... get an idea of the corresponding iluminated area  
     h         = snap.hsml[MF]*1e-3                                # com+h [kpc] --> com+h [Mpc]  Hydrodynamical smoothing length, i.e. Size of kernel, determined as a measure of density  IMPORTANT: The term h^-1*expansion factor (because of comoving frame) is added later in CreateRadioCube!
-    N_k       = 64.                                               # The exact number of particles in the smoothing kernel is yet not known by me --> ask e.g. Sebastian Nuza
     factor_A  = loadsnap.comH_to_phys( snap.head )                      # Smoothing kernel part B; 0.7 steems from h=0.7; 1/(1+z) is the expansion factor; second part of computing A_i   
     A_i       = f*h*h/N_k*factor_A**2                         # in [Mpc]^2 ... Inspired by equ 18 Hoeft+2008 (http://mnras.oxfordjournaloadsnap.org/content/391/4/1511.full.pdf)                            
     

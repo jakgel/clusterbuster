@@ -259,6 +259,7 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
 #                        warnings.warn("No source subtraction list specified for %s. Alternatively the format of the parameter file causes problems."  % (Cl_name))
 ##                        warnings.warn("No source subtraction list specified for %s. Alternatively the format of the parameter file causes problems."  % (Cl_name))
                         
+                
                 if 'fits' in subtract:
                     highres_image = infolder + 'Images_%s/%s-%s.fits' % ("FIRST", "FIRST", Cl_name)
                     if os.path.isfile(highres_image):

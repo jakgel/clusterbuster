@@ -245,7 +245,7 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
             ax1.hist(statistic, color='b', alpha=1/len(stats), bins='auto')  # arguments are passed to np.histogram
         for ftype in ['pdf','png']: #,'jpg'
             plt.savefig('%s/%s%.2f-sumsstats.%s' % (   nowfolder,survey.name, np.log10(eff), ftype))
-            plt.savefig('%s/%s%.2f-sums-stats.%s' % (buckedfolder,survey.name, np.log10(eff), ftype))
+            plt.savefig('%s/%s%.2f-sumsstats.%s' % (buckedfolder,survey.name, np.log10(eff), ftype))
             
         
         ''' Polar plot'''
@@ -302,8 +302,8 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
         baargs.update({'color':'w'})
 
 
-    filterargs = {}
     for GCl in survey.FilterCluster(**filterargs):
+    
         GCl = copy.deepcopy(GCl) # Because else changes will influence all galaxy clusters, you knwo class referencing in python, i.e.
 #        print(GCl.filterRelics(eff))
 #        print(filterargs)
@@ -367,6 +367,7 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
         else:
 #            vmid    = 3e-7
 #            exponent= 1.7 
+            print('plot_Clusters fixed scale might be brocken!')
             vmax    = survey.emi_max
             levels  = survey.cnt_levels
            
@@ -497,7 +498,7 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
             f.add_label(0.97, 0.90, '$z=%.2f$' % (GCl.z()),  relative=True, style='oblique', size='xx-large', horizontalalignment='right', **laargs) #-0.01*len(Cl_name)
         else:
             f.add_label(0.97, 0.95, '$z=%.2f$' % (GCl.z()),  relative=True, style='oblique', size='xx-large', horizontalalignment='right', **laargs) #-0.01*len(Cl_name)
-          
+            f.add_label(0.97, 0.90, '$z_\mathrm{snap}=%.2f$' % (GCl.mockobs.z_snap),  relative=True, style='oblique', size='xx-large', horizontalalignment='right', **laargs) #-0.01*len(Cl_name)
             
             
         if colorbar:

@@ -47,7 +47,7 @@ def Run_MockObs_XRay( gcl, savefolder, log=False, PCA=[], saveFITS = True, heade
     smt = iom.SmartTiming(rate=5e4) #, logf=outf+'smt.log'  #;  print '###==== Step2a:  Loading configuration files ====###'  
   
 
-    strSn = ('%ssnaps/SHOCKS_%05i/cluster.%05i.snap.%03i.shocks') % (gcl.mockobs.xrayfolder, gcl.mockobs.clid, gcl.mockobs.clid, gcl.mockobs.snap)   
+    strSn = ('%s/SHOCKS_%05i/cluster.%05i.snap.%03i.shocks') % (gcl.mockobs.xrayfolder, gcl.mockobs.clid, gcl.mockobs.clid, gcl.mockobs.snap)   
     if verbose: print('Loading snapshot:',strSn)
     snap    = LSconv.Loadsnap(strSn,headerc=gcl.mockobs.headerc)  
     

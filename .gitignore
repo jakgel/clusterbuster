@@ -15,3 +15,15 @@
 *build/lib*
 *multiut.py
 *xrayanalysis.py
+
+
+*surveyreal/Surveys*
+*surveyreal/Images-HighRes*
+*surveyreal/Images_TGSS*
+*surveyreal/GetDecentFITScutouts.py
+*surveyreal/farnsworth.py
+*surveyreal/runsurvey_modified.py
+
+*surveyreal/Images_NVSS/raw/*
+*surveyreal/Images_NVSS/diffuse/*
+*surveyreal/Images_NVSS/subtracted/*

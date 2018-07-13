@@ -40,7 +40,8 @@ def SPH_binning(snap, posrot, dinf, iL, immask=1, HSize_z=1000, nbins=100, weigh
 
     
 
-def Run_MockObs( bulked, GClrealisations, locations, steps = [1,2,3,4,5,6,7], CASAmock=False, XRay=False, saveFITS = False, writeClusters = False, log=False, tPi=2, iii=0, sideEffects=False):
+def Run_MockObs( bulked, GClrealisations, locations, steps = [1,2,3,4,5,6,7], CASAmock=False, XRay=False, saveFITS = False, 
+                writeClusters = False, savewodetect=False, log=False, tPi=2, iii=0, sideEffects=False):
     ''' Runs a mock observation
         sideEffects: put True if you want the input galaxy clsuter to be changed, False if you want only a copy to be influenced '''
     (snap, Rmodel, emptySurvey) = bulked    
@@ -252,7 +253,7 @@ def Run_MockObs( bulked, GClrealisations, locations, steps = [1,2,3,4,5,6,7], CA
 
     
     #        print(('... ... ...', eff, np.sum(snap.radi), np.sum(snap.radi[iL]), np.sum(H2))
-            if len(relics) > 0: 
+            if savewodetect or len(relics) > 0: 
                 
             
                 if eff == efflist[0]:
@@ -322,18 +323,19 @@ def Run_MockObs( bulked, GClrealisations, locations, steps = [1,2,3,4,5,6,7], CA
                     smt(task='WriteFits_[writes,sub]')
                     if log: print( '###==== Step 4:  Preparing FITS file & folders ====###' )
                     
-                    
-                    gcl.maps_update(H1                                            , 'Raw'      , '%s/maps/z%04.f/%s-%04i_native.fits'          % (savefolder, gcl.mockobs.z_snap*1000, gcl.name, Rmodel.id))
-                    gcl.maps_update(IM1                                           , 'Diffuse'  , '%s/maps/z%04.f/%s-%04i.fits'                 % (savefolder, gcl.mockobs.z_snap*1000, gcl.name, Rmodel.id))
-                    gcl.maps_update(Subtracted                                    , 'CompModell','%s/maps/z%04.f/%s-%04i_compact.fits'         % (savefolder, gcl.mockobs.z_snap*1000, gcl.name, Rmodel.id))
-                    gcl.maps_update(SubConv                                       , 'Subtrated', '%s/maps/z%04.f/%s-%04i_compactObserved.fits' % (savefolder, gcl.mockobs.z_snap*1000, gcl.name, Rmodel.id))
-                    gcl.maps_update(gcl.Mask_Map(Hmach,normalize=allflux,eff=eff) , 'Mach'     , '%s/maps/z%04.f/%s-%04i_mach.fits'            % (savefolder, gcl.mockobs.z_snap*1000, gcl.name, Rmodel.id))
-                    gcl.maps_update(gcl.Mask_Map(Hrho ,normalize=allflux,eff=eff) , 'Rho'      , '%s/maps/z%04.f/%s-%04i_rho.fits'             % (savefolder, gcl.mockobs.z_snap*1000, gcl.name, Rmodel.id))
-                    gcl.maps_update(gcl.Mask_Map(Htemp,normalize=allflux,eff=eff) , 'Temp'     , '%s/maps/z%04.f/%s-%04i_temp.fits'            % (savefolder, gcl.mockobs.z_snap*1000, gcl.name, Rmodel.id))
-                    gcl.maps_update(gcl.Mask_Map(Hmag ,normalize=allflux,eff=eff) , 'B'        , '%s/maps/z%04.f/%s-%04i_B.fits'               % (savefolder, gcl.mockobs.z_snap*1000, gcl.name, Rmodel.id))
-                    gcl.maps_update(gcl.Mask_Map(Hpre,normalize=allflux,eff=eff)  , 'PreRatio' , '%s/maps/z%04.f/%s-%04i_prerat.fits'          % (savefolder, gcl.mockobs.z_snap*1000, gcl.name, Rmodel.id))
-                    gcl.maps_update(DoG_rel                                       , 'DoG_rel'  , '%s/maps/z%04.f/%s-%04i_DoG_rel.fits'         % (savefolder, gcl.mockobs.z_snap*1000, gcl.name, Rmodel.id))
-                    gcl.maps_update(DoG_mask                                      , 'DoG_mask' , '%s/maps/z%04.f/%s-%04i_DoG_mask.fits'        % (savefolder, gcl.mockobs.z_snap*1000, gcl.name, Rmodel.id))
+                    parlist = (savefolder, gcl.mockobs.z_snap*1000, gcl.name, Rmodel.id)
+                    gcl.maps_update(H1                                            , 'Raw'      , '%s/maps/z%04.f/%s-%04i_native.fits'          % parlist)
+                    gcl.maps_update(IM1                                           , 'Diffuse'  , '%s/maps/z%04.f/%s-%04i.fits'                 % parlist)
+                    gcl.maps_update(Subtracted                                    , 'CompModell','%s/maps/z%04.f/%s-%04i_compact.fits'         % parlist)
+                    gcl.maps_update(SubConv                                       , 'Subtrated', '%s/maps/z%04.f/%s-%04i_compactObserved.fits' % parlist)
+                    if(len(relics) > 0):
+                        gcl.maps_update(gcl.Mask_Map(Hmach,normalize=allflux,eff=eff) , 'Mach'     , '%s/maps/z%04.f/%s-%04i_mach.fits'            % parlist)
+                        gcl.maps_update(gcl.Mask_Map(Hrho ,normalize=allflux,eff=eff) , 'Rho'      , '%s/maps/z%04.f/%s-%04i_rho.fits'             % parlist)
+                        gcl.maps_update(gcl.Mask_Map(Htemp,normalize=allflux,eff=eff) , 'Temp'     , '%s/maps/z%04.f/%s-%04i_temp.fits'            % parlist)
+                        gcl.maps_update(gcl.Mask_Map(Hmag ,normalize=allflux,eff=eff) , 'B'        , '%s/maps/z%04.f/%s-%04i_B.fits'               % parlist)
+                        gcl.maps_update(gcl.Mask_Map(Hpre,normalize=allflux,eff=eff)  , 'PreRatio' , '%s/maps/z%04.f/%s-%04i_prerat.fits'          % parlist)
+                    gcl.maps_update(DoG_rel                                       , 'DoG_rel'  , '%s/maps/z%04.f/%s-%04i_DoG_rel.fits'         % parlist)
+                    gcl.maps_update(DoG_mask                                      , 'DoG_mask' , '%s/maps/z%04.f/%s-%04i_DoG_mask.fits'        % parlist)
 
 
                 ''' PhD feature --> plot the DoF images in a subplot

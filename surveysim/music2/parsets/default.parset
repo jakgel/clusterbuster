@@ -2,28 +2,27 @@
 Nfree     =   12            # Number of cores left free for any specific task
 default   =   True          # Choose 'True' if you want to create the mockobs library, 'False' if you just want to compute the radiocubes and measure their total flux brightenes
 redSnap   =   False         # Only kicks in if you do a non-default run. Do you want to use the results to compute reduced snapshots, with an subset of particles?
+debug     =   False         # Will make the subroutines readable for the interpreter
 
 # Specify model parameters A:  B-field models
-B0        =   [5e-2,5e1]    # muG for a particle density of 1e-4/cm^3
-B0_N      =   3             # Number of intervall steps
-B0_type   =   log           # Type of interpolation
-nu        =   [0.2,0.8]     # Exponent for the magnetic field scalling
-nu_N      =   3             # Number of intervall steps    
-nu_type   =   lin           # Type of interpolation
-compress  =   0.85          # Exponent for effective increase of B with respect to the compresion ratio. Take 2/3 if adiabatic, 1 if emission is very sensitive to parallel field component
-
-# Specify model parameters B:  Efficency parameters
-eff_range      =  [5e-5,5e-3]  # Xi_e as energy fraction of suprathermal electrons, around 10^(-4...-2)
-eff_steps      =  6
-eff_type       =  log
+eff       =   2e-5          # Xi_e as energy fraction of suprathermal electrons, around 10^(-4...-2)
+B0        =   3.00          # muG for a particle density of 1e-4/cm^3 
+kappa     =   0.50          # The compression factor
+compress  =   0.85          # 0.85 ... Exponent for effective increase of B with respect to the compresion ratio. Take 2/3 if adiabatic, 1 if emission is very sensitive to parallel field component, -1 if Nuza2016+ model, ... 0.85
+premodel  =   False
 
 # Additional physics
  add_seeds     =  []  # AGN, RangeToCenter
  mod_eff       =  []  # modifies Mach based efficency
 
 # Specify used survey A: clusters 
-surv_compl      = 1                                                           # If < 10 seen as coverage, If > 10 seen as number of clusters (roundet to int)
-z_range         = [0.05,0.9]                                                  # Gives the lower and higher boundary for z of the cosmic slice
+surv_compl      = 1                         # If < 10 seen as coverage, If > 10 seen as number of clusters (roundet to int)
+z_range         = [0.05,0.9]                # Gives the lower and higher boundary for z of the cosmic slice
+rotation        = True                      # Tells you if clusters are rabndomly rotated
+sigma_z         =  0.08                     # Tells you how much you smear your snapshots out
+N_shells        =  150                      # How many shells do you want to consider?  delta_z  Tells you the thickness of the z-onionshells
+empicut         = True                      # empirically remoces galaxy clsuters below a certain mass threshold
+
 # Because of Z_range and eff_cover a filter should be generated to choose objects out of the list
 
 # Specify used survey B: observational parameters
@@ -46,19 +45,20 @@ FITS Out       = True       # Save fits files?
 pickleClusters = True       # Pickle Clusters?
 Mach           = False      # Add MachNumberImage        ?
 Dens           = False      # Add DensNumberImage        ?
-snapfolder     = /radioarchive/MergerTrees/Clusters/          #folder where the clustersnapshots are stored
+snapfolder     = /radioarchive/MergerTrees/Clusters/snaps/    #folder where the clustersnapshots are stored
 xrayfolder     = /radioarchive/MergerTrees/Clusters/          #folder where the full X-ray data is stored
 headerC        = Mpc                                          #Unit of the central header coordinates
 smarttime_sub  = 1800     # '' for default
 outf           = /data/MUSIC-2/Output/  # outfile, Is going to get tweaked
+savewodetect   = False
 
 #MiscFolders
 miscdata       = /home/jakobg/lib/ClusterBuster/surveysim/music2/
 DSAtable       = Hoeft_radio/q_mach_machr_tablefine(10,3).txt
 PSItable       = Hoeft_radio/mach_psi_tablefine(10,3).txt
-missFile       = ClusterList/AllMUSIC-missing.dat
+missFile       = ClusterCSV/AllMUSIC-missing.dat
 
-snaplistz    = [4.000,2.333,1.500,1.000,0.818,0.667,0.538,0.429,0.333,0.240,0.176,0.111,0.053,0.000]
+snaplistz    = None #Not implemented, If you want too choose specific snapshots enter this, else put None and use all snapshots in the csv. Ordering: Decreasing redshift like [4.000,1.500,0.000]
 snapidlist   = [1,2,3,4,5,6,7,8,9,10,11,12,13,14]
 
 # Restart

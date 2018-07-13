@@ -47,140 +47,301 @@ def get_truth(inp, relate, cut):
     return ops[relate](inp, cut)
 
 
-class DetInfo:
-    ''' This class is used to define the observational parameters of an created map, albeit one survey/ each galaxy cluster could have regions with differing detaction informations
-    '''
-    def __init__(self, name='', beam=[1,1,0], spixel=1, rms=0, limit=0, nucen=1.4, center=None, pcenter=None, survey = 'NVSS', telescope='VLA-D'):
-
-        self.FWHM2sigma =1/2.354 
-        self.name    = name     # name/id of the survey , e.g. NVSS, MSSS, TGSS
-    #    self.survey  = survey  # survey  as a string, e.g. NVSS, MSSS, TGSS --> outdated and now in the survey class
-        self.beam    = beam     # beam size FWHM [major [arcsec], minor[arcsec], theta]
+def replaceNone(variable, default):
     
-        self.spixel  = spixel   # pixel size in arcsec
-        self.rms     = rms      # rms noise in Jy/beam
-        self.limit   = limit    # detlimit  in Jy/beam 
-        self.nucen   = nucen    # observed frequency in GHz
-     
-        self.center    = center
-        self.pcenter   = pcenter
-        self.telescope = telescope
+    if variable is None:
+        return default
+    else:
+        return variable
+
+
+
+class Survey(object):  
+    """
+    Simple class for representing a  survey for radio relics in galaxyclusrers galaxy clusters
+    It provides functions and methodologies to run ...
+    To initialize it needs a  list of galaxy clusters to be assigned.
+    ... might add astropy functionalities --> including using astropy quantities (quantity + unt)
+    ... might write it for python 3.X
+    """
+    
+    def __init__(self, GCls, survey, cnt_levels=[0], synonyms=[], Rmodel=None, Histo=None, emi_max=False, m_cnt=2, scatterkwargs={}, histokwargs={}, 
+                 saveFITS=True, savewodetect=False, dinfo=None, mainhist=None, surshort='surshort', logfolder='', outfolder = None):
+        """
+        parameters
+        """
+        self.name      = survey
+        self.name_short= surshort
+        self.GCls      = GCls      # A list of galaxy clusters
+        self.DetInfo   = DetInfo   # A specified DetInfo as proxy for an homogeneous survey; Detinfo include a beam, and a noiseMAP --> properties should be taken from the neirest entry
+        self.dinfo     = dinfo
+        self.mainhist  = mainhist  # Histogramm of all binned objects/ without any initialization, works as an proxy
+        ''' In this case Histo would become a simulation'''
         
-        self.update_Abeam()
+        
+        
+        
+        self.filteredClusters = None
+        
+        '''This should be handled in the case of a mock survey'''
+        '''So there should be a nock survey and a real survey, both as childs from a generall survey'''
+        self.Rmodel    =  replaceNone(Rmodel, RModel([],simu=False))   # A Bfield model
+        
+        # Total measures, you can also write an function for that
 
-    def update_Abeam(self):
-        self.beam_pix= [self.beam[0]/self.spixel,self.beam[1]/self.spixel,self.beam[2]]                       # beam size [major [pix], minor[pix], theta]
-        self.Abeam   = [1.133*self.beam_pix[0]*self.beam_pix[1], 1.133*self.beam[0]*self.beam[1]/3600] 
-
-    def convolve_map(self, npmap):
-        '''Convolves a map and converts the  to numpy quantities.
-        The sum of the array is not preserved, because of the way the map represent flux per beam'''                      
-        return self.Abeam[0]*ndi.gaussian_filter(npmap, (self.FWHM2sigma*self.beam_pix[0],self.FWHM2sigma*self.beam_pix[1]))  ## gaussian convolution              
+        self.P_pro     = 0        # Pro ratio
+        self.P_anti    = 0        # Pro ratio
+        self.F_pro     = 0        # Pro ratio
+        self.F_anti    = 0        # Pro ratio
+        
+        # Output related properties
+        if outfolder is None: outfolder =  '/data/ClusterBuster-Output/%s' % (survey) 
+        self.outfolder  = outfolder
+        self.logfolder  = logfolder
+        self.saveFITS   = saveFITS
+        self.savewodetect=savewodetect
+        self.synonyms   = synonyms
+        
+        # plot Emission I: Contours & colorscale
+        self.cnt_levels    = cnt_levels
+        self.emi_max       = emi_max      # Maximal scale of emission
+        self.m_cnt         = 2            # Multiplier for contour levels
+        
+        # plot Relics & Clusters: Scatterplots & Histogramm
+        self.scatter_backgr   = False
+        self.scatterkwargs    = scatterkwargs #  A list of kwargs for the scatter plots
+        self.histokwargs      = histokwargs   #  A list of kwargs for the histogramm plots
+        
+        # Plot olar
+        self.expScale   = 0.75
+        self.expA       = 1.
+        self.dropseed   = None
+        
+    def set_binning(self, Histo=None)  :
+          
+          if Histo is None: Histo = self.histo
+          for GCl in self.GCls:
+              GCl.histo = Histo
+        
+    def polar(self, eff=None, aligned=True, normalize=True, minrel=1,  positive=False,  mirrored=False, mode='flux', zborder = 0 ,ztype = '>', **kwargs):
+          
+          ''' 
+          Input: needs to histogram of the survey to be set, radial axis: 2 N, polar axis: 4 M
+          
+          
+          Returns the weighted polar Histogramm of the survey, currently in Output class 
+          
+          set normalize=True: if you want to get the cumulative signal divided by the number of relic hosting clusters
+         
+          Output an Tuple of 4 outputs:
+              halfHist_new (np.array) : halfHist for analysis issues, shape stays same
+              radial & tickz          : (radial,[-h for h in reversed(Histo.ticks[1])]+[h for h in Histo.ticks[1]]), 
+              halfHist_plot           : halfHist for plotting purposses, shape may change depending on the output format
+              sigstats  (float)       :  total accumulated signal
+              mesh                    :  total accumulated signal along
+          
+          
+          BUG: For a very low angular bin size the estimate of the projected flux ratio of pro and anti axis changes!
+          '''
+          
+          '''DEVELOPMENT'''
+          ndist       = 35    #-->deprecated! but a better umber (nicer looking then the raw grid)
+          distmax     = 3500  # very important, should somehow part of the histogramm class
+          # This is a design desicion ... in the standart case, the histogramm should ourient itself on the histogram variable of the Survey class
+          mesh        = np.zeros_like( self.mainhist.hist.T )   #np.zeros((npolar,ndist))
+          '''DEVELOPMENT END'''
+          
+          mainhist = np.zeros_like( self.mainhist.hist.T )
+          sigstats = []
+          
+          if eff is None: eff = self.Rmodel.effList[0]
+          if self.filteredClusters is None: self.FilterCluster(minrel=minrel,eff=eff,zborder=zborder, ztype='>')
+          for ii,GCl in enumerate(self.filteredClusters):
+              GCl.histo = self.mainhist
+              GCl.updateInformation(eff=eff, Filter=True)    
+              if GCl.histo is not None and np.sum(GCl.histo.hist) > 0:
+    
+                  Histo = GCl.histo
+                  shiftHist  = np.roll(Histo.hist.T, -int(aligned*(GCl.relic_pro_index)), axis=1)  # This was a bug:/ AreaHist**(self.expA)    
+                  ''' The scale is very important, it would be good to normalize the flux we do this by implementing the expScale parameter.
+                  This is flexible enough to give different weights to bright/faitn relics. Another question for statistical analysis is, if
+                  the average  or an integrated value is more interesting.
+                  '''               
+                  if   mode == 'flux':
+                      scale     = 1. 
+                  elif mode =='power':
+                      scale    = 1. * GCl.flux2power_woRedening()    
+                   
+                       
+                  signal    = np.divide (shiftHist*scale, (np.sum(shiftHist)*scale)**self.expScale) 
+                  mainhist += signal
+                  Clusterbin           = int(GCl.R200()/distmax *ndist)
+                  mesh[:,Clusterbin]  += np.sum(signal,axis=1) 
+                  sigstats.append(np.sum(signal)) 
                 
-               
-    def __str__(self):
-        # return("The cluster %12s at dec=%6.2f and rec = %6.2f has an z of %5.3f" % (self.name, self.dec, self.rec, self.z))
-        return 'Nothing specified in def__str__(self) for <detinfo>'
-
-
-
-class BFieldModel:
-    """
-    Simple class for representing the parametrisation of the magnetic field
-  
-    """             
-
-    def __init__(self, B0=0, kappa=0, compress=0.85, B_para='dens'):
+          if len(sigstats) > 0:
+              if normalize: mainhist  = mainhist/  max(len(sigstats),0)   #np.sum(sigstats)  #
+              halfHist = np.add(mainhist[:,0:int(shiftHist.shape[1]*1/2)], np.fliplr(mainhist[:,int(shiftHist.shape[1]*1/2):]) )
+              
+              
+              ''' Transformation for plotting: Only works if histo was already set'''
+              if mirrored:
+                  halfHist_plot = np.add(np.fliplr(mainhist[:,0:int(shiftHist.shape[1]*1/2)]), mainhist[:,int(shiftHist.shape[1]*1/2):] )                  
+              else:
+                  halfHist_plot = np.copy(halfHist)
+                  
+              # We compute a weighting array to weight to bins at larger radii, which are larger down
+              inner  = Histo.bins[1][0:-1]
+              outer  = Histo.bins[1][1::]
+              angle  = Histo.ticks[0]
+              angles, innerZ = np.meshgrid(angle, inner, sparse=True)
+              angles, outerZ = np.meshgrid(angle, outer, sparse=True)
+              AreaHist  = 2*np.pi*(2*np.pi)/len(angle)*(outerZ**2-innerZ**2)     
+              halfHist_plot  /= AreaHist**(self.expA)    #self.expA
     
-        # Bott variables used in the formula
-        # B = (B0/muG) * (rho/1e-4) ** kappa
-        self.B0          = B0        # B0
-        self.kappa       = kappa     # kappa
-        self.compress    = compress  # factor of magnetic field enhancement in case of compression. 0..1
-        self.B_para      = B_para       # 'dens' or 'press'. Governes to what the B-field parameter is referring to
-    
-    
-    def __str__(self):
-        return 'B-field model: B0=%6.3e muG, kappa=%6.3f' % (self.B0, self.kappa)
-      
-
-
-class RModel(BFieldModel):
-  """
-  Class that inherits from 'BFieldModel'  and adds parameters to descripe the model parameters for DSA
-  Also has the parameters for a population of preexisting electrons and further, misc parameters.
-  """ 
-  def __init__(self, id, effList = [1], simu=True, pre=False, **kwargs):
+              ''' radially binned '''
+              part1 = np.sum(halfHist[:,int(halfHist.shape[1]/2):int(halfHist.shape[1]+1)], axis=1)[::-1]
+              part2 = np.sum(halfHist[:,0:int(halfHist.shape[1]/2+1)], axis=1)
+              if positive:
+                  radial        = np.sum( (part1, part2), axis=0 )  # I would like to have np.flip
+                  rtickz         = [h for h in Histo.ticks[1]]
+              else:
+                  radial        = np.concatenate( (part1, part2) , axis=0 )  # I would like to have np.flip
+                  rtickz         = [-h for h in reversed(Histo.ticks[1])]+[h for h in Histo.ticks[1]]
+                                                   
+              return halfHist, (radial,rtickz), halfHist_plot, sigstats, mesh
+          else:
+              return None, (None,None), None, None, None
         
-      BFieldModel.__init__(self, **kwargs)
-      
-      ''' Metaparameter '''
-      self.pre       = pre
-      self.effList   = effList
-      self.simu      = simu
-      self.id        = id
+    def set_dropseed(self,dropseed=None):
+        if dropseed is not None:
+            self.dropseed = dropseed
+        else:
+            self.dropseed = np.random.RandomState()
+                
 
-      
-
-class PreModel_Hoeft(RModel):
-  """
-  Class that inherits from 'RModel'  and adds parameters to descripe a population of preexisting electrons and further, misc parameters
-  """ 
-  def __init__(self, id, **kwargs ):
+    def FilterCluster(self, minrel=1, eff=None, zborder=0, ztype='>', minimumLAS=0, GClflux=0, index=None, getindex=False, verbose=False,  **kwargs):
+          ''' Gives all the cluster with the relics that fullfill given criteria '''
+          
+          if index is not None:
+              if index == 'All':
+                  return self.GCls
+              else:
+                  return [ self.GCls[i] for i in index]  
+              
+          ''' This part is implemented to give consistent results in plotting and metric etc. for a given dropseed '''
+          if self.dropseed is not None:
+              state    = self.dropseed.get_state()
+              self.dropseed.set_state( (state[0],state[1],0,state[3],state[4]) )
+            
+          if eff is None: eff = self.Rmodel.effList[0]
+          GCls = [GCl.updateInformation(eff=eff, Filter=True) for GCl in self.GCls]
+         
+          results = [(ii,GCl)  for ii,GCl in enumerate(GCls) if len(GCl.filterRelics(eff=eff, **kwargs))>=minrel and  get_truth(GCl.z, ztype, zborder) and 
+                     GCl.largestLAS() >=  minimumLAS and GCl.flux() >= GClflux and GCl.stoch_drop(self.dropseed)] 
+          
+           
+          ''' and get_truth(GCl.z, ztype, zborder) and 
+                     GCl.largestLAS() >  minimumLAS and GCl.flux() > GClflux and GCl.stoch_drop(self.dropseed) '''
+                  
+                    
+          ''' Should also give an result, if no cluster fullfills the criterion '''          
+          if len(results) > 0:
+              indices,self.filteredClusters = map(list,zip(*results))
+          else:
+              indices,self.filteredClusters = [],[]
         
-      ''' Model of preexisting electrons, see internal .pdf description'''
-      RModel.__init__(self, id, pre=True, **kwargs)
-      self.t0      = 0.5   # Minimal time since reacceleration
-      self.t1      = 5     # Maximal time since reacceleration
-      self.n0      = 1e-6  # Number density of accretion shocks
-      self.n1      = 1e-2  # Number density of 'core'
-      self.ratio   = 0.05 # Initial normalisation PRE and thermal at shockfront
+            
+          if verbose: print('____ # FilterCluster:',len(indices))
+          
+          if  getindex:
+              return indices 
+          else:
+              return self.filteredClusters
 
-class PreModel_Gelszinnis(RModel):
-  """
-  Class that inherits from 'RModel'  and adds parameters to descripe a population of preexisting electrons and further, misc parameters
-  """ 
-  def __init__(self, id, p0=1e-4, p_sigma=1, sigmoid_0=1e-4, sigmoid_width=1, **kwargs ):
+
+    def fetch_totalRegions(self):
+          
+         return [GCl.relicRegions for GCl in self.GCls]
+         
+    def fetch_totalRelics(self, eff=None, **kwargs):
+          if eff is None: eff = self.Rmodel.effList[0]
+          
+          relicList = []
+          for GCl in self.filteredClusters:
+              relicList += GCl.filterRelics(eff=eff, **kwargs)
+         
+          return relicList
+         
+         
+    def fetch_totalHisto(self):
+          
+         return sum([GCl.hist for GCl in self.GCls], 0)
+     
+    def fetchpandas(survey, plotmeasures, surname=True, vkwargs_FilterCluster={}, kwargs_FilterObjects={}):
+        ''' Return a panda array generated from the survey catalogue 
         
-      ''' Model of preexisting electrons, see internal .pdf description'''
-      RModel.__init__(self, id, pre=True, **kwargs)
-      self.p0            = p0            # p_rat
-      self.p_sigma       = p_sigma       # scatter sigmoid in lognormal coordinates
-      self.sigmoid_0     = sigmoid_0     # density  (particles/cm-3)value for which the sigmoid value becomes 0
-      self.sigmoid_width = sigmoid_width # order of magnitude over which this plasma content changes
-      self.PREexpo       = 0.09          # The exponent for the eff(Mach) modification, latter this should be replaced by the average gamma of the PREs
+        survey: A ClusterBusterSurvey
         
-class MockObs:   #could also be an decendant if DetInfo
+        
+        Examples for plotmeasures: 
+            
+        plotmeasures = [             
+                        lambda x: x.alpha,
+                        lambda x: dbc.measurand( x.Dproj_pix()/x.GCl.R200(), 'Dproj',label='$Dproj_rel$',  un = None )
+                        ]
+        simulated
+        simulated
+        
+        '''  
+    
+        logs = [True for measure in plotmeasures] # a stub, you should be able to specify this
+    
+        ''' This part is outdated and shuld be removed once the eficiency is removed '''
+        eff = survey.Rmodel.effList[0]
+        if survey.Rmodel.simu: 
+            feff = eff
+        else:
+            feff = 1.
+        ''' REMOVE END '''
+    
+        List_full = []
+        datalist  = []
+    
+        ''' This very ugly steps just creates a List of (relic,GCL) from the survey
+        As in the future galaxy clusters will gain be a property of relcis again this step will be shorter  and more readable'''
+        
+        for GCl in survey.FilterCluster():
+                GCl.updateInformation(eff=feff)
+                List_full.append(  [ (GCl,relic)  for relic in GCl.filterRelics(eff=feff)]  )
+                
+        List_full  = [item for sublist in List_full for item in sublist]
+            
+        for GCl,relic in List_full:
+    
+            relic.asign_cluster(GCl)
+            datavalues = []
+            for measure in plotmeasures:
+                data     = measure(relic).value
+                datavalues.append(data)
+            
+            datalist.append(datavalues)
+            
+    
+    #                      + [GCl.M200.labels(log=False),dbc.measurand(0,'$D_\mathrm{proj}$',un='$R_{200}$').labels(log=False)]
+    
+        ''' Create a pandas dataframe '''
+        columns =[measure(relic).labels(log=log) for measure,log in zip(plotmeasures,logs)] #\
+        pdframe =  pd.DataFrame(np.log10(datalist), columns=columns)
+        if surname:
+            pdframe['Survey'] = survey.name
+    
 
-  """
-  Simple class for representing some parameters of the mock observation
-  """             
-
-  
-  def __init__(self, ii, theta=0, phi=0, psi=0, proj='', snap=-1, z_snap=0, clid=-1, hsize=6000, binmax=1000, headerc='Mpc', snapfolder='', xrayfolder=''):
-    """
-    decription
-    """
-    self.id      = int(ii)
-    self.theta   = theta
-    self.psi     = psi
-    self.phi     = phi
-    
-    self.proj     = proj
-    
-    self.hsize   = hsize  # in kpc, gives the Diameter of the Cutout
-    self.binmax  = binmax # in pixel
-    
-    self.z_snap  = z_snap
-    self.snap    = int(snap)
-    self.clid    = int(clid)
-    
-    self.snapfolder = snapfolder # Folder for the original snapshots
-    self.xrayfolder = xrayfolder  # Folder for the original snapshots   
-    self.headerc    = headerc
-    
-  def __str__(self):
-    return 'MockObs class object with id: %i has  Snap %i & ClID %i, angles=(%6.3f,%6.3f,%6.3f) in radiants' % (self.id, self.snap, self.clid, self.theta, self.psi, self.phi)
+        if len(pdframe)<3:
+            print('Only %i elements in the pdframe, will skip this one' % (len(pdframe)))
+            return 
+        else:
+            return pdframe
 
 
 # Define a new object: relic
@@ -197,7 +358,9 @@ class Galaxycluster(object):
       ... In add information: Roundish relics should e kept, with the notion that their are roundish
     """             
 
-    def __init__(self, name, RA, Dec, z, M200=0, M500=0, M100=0, Mvir = 0, Lx=0, Lx_lit=0, flux_ps=0, flux_lit=0, flux_vol=0, flux_R=0,  Prest100=0, relics = [], regions=[], halo=False, compacts=[], dinfo=DetInfo(), ClassFlag = False, mockobs= MockObs(0), Image=np.zeros((2,2)), status = None, Histo=None, reference=None, mapdic=dict(), xname=[]):
+    def __init__(self, name, RA, Dec, z, M200=0, M500=0, M100=0, Mvir = 0, Lx=0, Lx_lit=0, flux_ps=0, flux_lit=0, flux_vol=0, flux_R=0,  
+                 Prest100=0, relics = [], regions=[], halo=False, compacts=[], dinfo=None, ClassFlag = False, mockobs= None, 
+                                      Image=np.zeros((2,2)), status = None, Histo=None, reference=None, mapdic=dict(), xname=[]):
       
         """
         parameters
@@ -234,15 +397,16 @@ class Galaxycluster(object):
 
         ''' A generall or map specific reference '''
         self.reference  = reference 
+        
 
         ''' Maps specific properties ... in the future this could be a list of map-classes '''            
         #=== Classes attached to it
         self.status     = status   # A list of possible atatuses
         self.regions    = regions  # a list of the region used to seperate relics  # One to many; regions=RelicRegion('', [], rtype=1)
         self.relics     = relics  # a list of relics One to many  
-        self.dinfo      = dinfo   # detection information --> One per radio map!  ... One to one ? 
+        self.dinfo      = replaceNone(dinfo, DetInfo())   # detection information --> One per radio map!  ... One to one ? 
         self.histo      = Histo    # Histogramm of all binned objects, anyhow a future function could provide this right out of the image(s)
-        self.mockobs    = mockobs # mockobs   information --> One per radio map! One to one ?
+        self.mockobs    = replaceNone(mockobs,MockObs()) # mockobs   information --> One per radio map! One to one ?
         self.compacts   = compacts # A list of (compact) sources that should be / were substacted
         
                                                
@@ -314,8 +478,11 @@ class Galaxycluster(object):
     # The lambda function does make the file unpickelable
     #  self.Filter = lambda x: (x.flux > self.minflux and (x.iner_rat/(x.LAS/(x.dinfo.beam[0]/60.))) < self.maxcomp)  
 
-    def filterRelics(self, Filter=True, maxcomp=None, eff=1, regard=[1,2,3]): # Debug Filter=True
-        ''' Returns the list of relics,filtered due to certain conditions '''
+    def filterRelics(self, Filter=True, maxcomp=None, eff=None, regard=[1,2,3]): # Debug Filter=True
+        ''' Returns the list of relics,filtered due to certain conditions 
+        eff is not used anymore and only here for compability regions
+        ''' 
+
         if Filter:
             minflux = self.dinfo.rms * 4 * 1000 #microjansky to millijansky
             if maxcomp is None:
@@ -324,7 +491,7 @@ class Galaxycluster(object):
             maxcomp= 1e9
             minflux= -1
             
-        return [ relic for relic in self.relics if ((relic.flux() > minflux) and (relic.shape_advanced().value < maxcomp) and (relic.eff == eff) and (relic.region.rtype.classi in regard))]
+        return [ relic for relic in self.relics if ((relic.flux() > minflux) and (relic.shape_advanced().value < maxcomp)  and (relic.region.rtype.classi in regard))]
 
     def add_regions(self, regions, **filterargs):
        
@@ -495,7 +662,7 @@ class Galaxycluster(object):
     
     
     
-    def relics_polarDistribution(self, **kwargs):
+    def relics_polarDistribution(self, histo=None, **kwargs):
 
         ''' This function identifies to axis of preferred radio emission in the galaxy cluster
             In the first step the dividing line that minimizes/maximizes an regression criterium.
@@ -506,22 +673,24 @@ class Galaxycluster(object):
 
         eps = 1.e-15 #15  # 1  Femto Jy as offset ... hopefully this doesn't change the results
 
-        if self.histo is not None:
-            collabsed  = np.sum(self.histo.hist, axis=(1))   # Collabses along the distance axis
+        if histo is None:
+            histo = self.histo
+        if histo is not None:
+            collabsed  = np.sum(histo.hist, axis=(1))   # Collabses along the distance axis
             N = collabsed.shape[0]
 
             
             # This is some simple form of regression!
-            fitarray_pro  = [np.sum(  np.multiply(np.power(collabsed, 0.25), np.abs(np.cos(self.histo.ticks[0]-shift)) ) )  for shift in self.histo.ticks[0]]
+            fitarray_pro  = [np.sum(  np.multiply(np.power(collabsed, 0.25), np.abs(np.cos(histo.ticks[0]-shift)) ) )  for shift in histo.ticks[0]]
             fitarray_anti = fitarray_pro
             
             # Some values that would fit nicely into the cluster class
             # The value fitted would give the counterclockwise angle. This is why I subtract the from 2pi
             self.relic_pro_index  = np.argmax(fitarray_pro)
-            self.relic_pro_angle  = self.histo.ticks[0][self.relic_pro_index]      # [0:2pi]
+            self.relic_pro_angle  = histo.ticks[0][self.relic_pro_index]      # [0:2pi]
             
             self.relic_anti_index = np.argmin(fitarray_anti)
-            self.relic_anti_angle = self.histo.ticks[0][self.relic_anti_index]   # [0:2pi]
+            self.relic_anti_angle = histo.ticks[0][self.relic_anti_index]   # [0:2pi]
             
     
             self.pro1  = np.sum( maut.polar_from_to( collabsed, [int(self.relic_pro_index-1./4.*N), int(self.relic_pro_index  + 1./4.*N)] )) + eps
@@ -535,14 +704,14 @@ class Galaxycluster(object):
             if self.pro2 / self.pro1 > 1:
      
                 self.relic_pro_index  = int((self.relic_pro_index + len(fitarray_pro)/2 ) %  len(fitarray_pro))
-                self.relic_pro_angle  = self.histo.ticks[0][self.relic_pro_index]      # [0:2pi]
-                self.pro1 , self.pro2  = self.pro2 , self.pro1
+                self.relic_pro_angle  = histo.ticks[0][self.relic_pro_index]      # [0:2pi]
+                self.pro1, self.pro2  = self.pro2 , self.pro1
     
                 
             if self.anti2 / self.anti1 > 1:
                 
                 self.relic_anti_index = int((self.relic_anti_index + len(fitarray_pro)/2 ) %  len(fitarray_pro))
-                self.relic_anti_angle = self.histo.ticks[0][self.relic_anti_index]   # [0:2pi]
+                self.relic_anti_angle = histo.ticks[0][self.relic_anti_index]   # [0:2pi]
                 self.anti1 , self.anti2  = self.anti2 , self.anti1
                 
         else:
@@ -711,6 +880,146 @@ class Galaxycluster_simulation(Galaxycluster):
     return 'galaxycluster: Nothing specified in def__str__(self)'
 
    
+    
+
+
+
+class DetInfo:
+    ''' This class is used to define the observational parameters of an created map, albeit one survey/ each galaxy cluster could have regions with differing detaction informations
+    '''
+    def __init__(self, name='', beam=[1,1,0], spixel=1, rms=0, limit=0, nucen=1.4, center=None, pcenter=[0,0], survey = 'NVSS', telescope='VLA-D'):
+
+        self.FWHM2sigma =1/2.354 
+        self.name    = name     # name/id of the survey , e.g. NVSS, MSSS, TGSS
+    #    self.survey  = survey  # survey  as a string, e.g. NVSS, MSSS, TGSS --> outdated and now in the survey class
+        self.beam    = beam     # beam size FWHM [major [arcsec], minor[arcsec], theta]
+    
+        self.spixel  = spixel   # pixel size in arcsec
+        self.rms     = rms      # rms noise in Jy/beam
+        self.limit   = limit    # detlimit  in Jy/beam 
+        self.nucen   = nucen    # observed frequency in GHz
+     
+        self.center    = center
+        self.pcenter   = pcenter
+        self.telescope = telescope
+        
+        self.update_Abeam()
+
+    def update_Abeam(self):
+        self.beam_pix= [self.beam[0]/self.spixel,self.beam[1]/self.spixel,self.beam[2]]                       # beam size [major [pix], minor[pix], theta]
+        self.Abeam   = [1.133*self.beam_pix[0]*self.beam_pix[1], 1.133*self.beam[0]*self.beam[1]/3600] 
+
+    def convolve_map(self, npmap):
+        '''Convolves a map and converts the  to numpy quantities.
+        The sum of the array is not preserved, because of the way the map represent flux per beam'''                      
+        return self.Abeam[0]*ndi.gaussian_filter(npmap, (self.FWHM2sigma*self.beam_pix[0],self.FWHM2sigma*self.beam_pix[1]))  ## gaussian convolution              
+                
+               
+    def __str__(self):
+        # return("The cluster %12s at dec=%6.2f and rec = %6.2f has an z of %5.3f" % (self.name, self.dec, self.rec, self.z))
+        return 'Nothing specified in def__str__(self) for <detinfo>'
+
+
+
+class BFieldModel:
+    """
+    Simple class for representing the parametrisation of the magnetic field
+  
+    """             
+
+    def __init__(self, B0=0, kappa=0, compress=0.85, B_para='dens'):
+    
+        # Bott variables used in the formula
+        # B = (B0/muG) * (rho/1e-4) ** kappa
+        self.B0          = B0        # B0
+        self.kappa       = kappa     # kappa
+        self.compress    = compress  # factor of magnetic field enhancement in case of compression. 0..1
+        self.B_para      = B_para       # 'dens' or 'press'. Governes to what the B-field parameter is referring to
+    
+    
+    def __str__(self):
+        return 'B-field model: B0=%6.3e muG, kappa=%6.3f' % (self.B0, self.kappa)
+      
+
+
+class RModel(BFieldModel):
+  """
+  Class that inherits from 'BFieldModel'  and adds parameters to descripe the model parameters for DSA
+  Also has the parameters for a population of preexisting electrons and further, misc parameters.
+  """ 
+  def __init__(self, id, effList = [1], simu=True, pre=False, **kwargs):
+        
+      BFieldModel.__init__(self, **kwargs)
+      
+      ''' Metaparameter '''
+      self.pre       = pre
+      self.effList   = effList
+      self.simu      = simu
+      self.id        = id
+
+      
+
+class PreModel_Hoeft(RModel):
+  """
+  Class that inherits from 'RModel'  and adds parameters to descripe a population of preexisting electrons and further, misc parameters
+  """ 
+  def __init__(self, id, **kwargs ):
+        
+      ''' Model of preexisting electrons, see internal .pdf description'''
+      RModel.__init__(self, id, pre=True, **kwargs)
+      self.t0      = 0.5   # Minimal time since reacceleration
+      self.t1      = 5     # Maximal time since reacceleration
+      self.n0      = 1e-6  # Number density of accretion shocks
+      self.n1      = 1e-2  # Number density of 'core'
+      self.ratio   = 0.05 # Initial normalisation PRE and thermal at shockfront
+
+class PreModel_Gelszinnis(RModel):
+  """
+  Class that inherits from 'RModel'  and adds parameters to descripe a population of preexisting electrons and further, misc parameters
+  """ 
+  def __init__(self, id, p0=1e-4, p_sigma=1, sigmoid_0=1e-4, sigmoid_width=1, **kwargs ):
+        
+      ''' Model of preexisting electrons, see internal .pdf description'''
+      RModel.__init__(self, id, pre=True, **kwargs)
+      self.p0            = p0            # p_rat
+      self.p_sigma       = p_sigma       # scatter sigmoid in lognormal coordinates
+      self.sigmoid_0     = sigmoid_0     # density  (particles/cm-3)value for which the sigmoid value becomes 0
+      self.sigmoid_width = sigmoid_width # order of magnitude over which this plasma content changes
+      self.PREexpo       = 0.09          # The exponent for the eff(Mach) modification, latter this should be replaced by the average gamma of the PREs
+        
+class MockObs:   #could also be an decendant if DetInfo
+
+  """
+  Simple class for representing some parameters of the mock observation
+  """             
+
+  
+  def __init__(self, ii, theta=0, phi=0, psi=0, proj='', snap=-1, z_snap=0, clid=-1, hsize=6000, binmax=1000, headerc='Mpc', snapfolder='', xrayfolder=''):
+    """
+    decription
+    """
+    self.id      = int(ii)
+    self.theta   = theta
+    self.psi     = psi
+    self.phi     = phi
+    
+    self.proj     = proj
+    
+    self.hsize   = hsize  # in kpc, gives the Diameter of the Cutout
+    self.binmax  = binmax # in pixel
+    
+    self.z_snap  = z_snap
+    self.snap    = int(snap)
+    self.clid    = int(clid)
+    
+    self.snapfolder = snapfolder # Folder for the original snapshots
+    self.xrayfolder = xrayfolder  # Folder for the original snapshots   
+    self.headerc    = headerc
+    
+  def __str__(self):
+    return 'MockObs class object with id: %i has  Snap %i & ClID %i, angles=(%6.3f,%6.3f,%6.3f) in radiants' % (self.id, self.snap, self.clid, self.theta, self.psi, self.phi)
+
+
    
 class DetRegion(object):
     
@@ -1105,280 +1414,4 @@ class Relic:
         # return("The cluster %12s at dec=%6.2f and rec = %6.2f has an z of %5.3f" % (self.name, self.dec, self.rec, self.z))
         return 'relic.name: %s' % (self.name)
         #return("The cluster %12s at dec=%11s and ra = %9s has an z of %5.3f" % (self.name, self.dec, self.ra, self.z))
-
-
-class Survey(object):  
-    """
-    Simple class for representing a  survey for radio relics in galaxyclusrers galaxy clusters
-    It provides functions and methodologies to run ...
-    To initialize it needs a  list of galaxy clusters to be assigned.
-    ... might add astropy functionalities --> including using astropy quantities (quantity + unt)
-    ... might write it for python 3.X
-    """
-    
-    def __init__(self, GCls, survey, cnt_levels=[0], synonyms=[], Rmodel=RModel([],simu=False), Histo=None, emi_max=False, m_cnt=2, scatterkwargs={}, histokwargs={}, saveFITS=True, dinfo=None, mainhist=None, surshort='surshort', logfolder='', outfolder = None):
-        """
-        parameters
-        """
-        self.name      = survey
-        self.name_short= surshort
-        self.GCls      = GCls      # A list of galaxy clusters
-        self.DetInfo   = DetInfo   # A specified DetInfo as proxy for an homogeneous survey; Detinfo include a beam, and a noiseMAP --> properties should be taken from the neirest entry
-        self.dinfo     = dinfo
-        self.mainhist  = mainhist  # Histogramm of all binned objects/ without any initialization, works as an proxy
-        ''' In this case Histo would become a simulation'''
-        
-        self.filteredClusters = None
-        
-        
-        '''This should be handled in the case of a mock survey'''
-        '''So there should be a nock survey and a real survey, both as childs from a generall survey'''
-        self.Rmodel    =  Rmodel   # A Bfield model
-        
-        # Total measures, you can also write an function for that
-
-        self.P_pro     = 0        # Pro ratio
-        self.P_anti    = 0        # Pro ratio
-        self.F_pro     = 0        # Pro ratio
-        self.F_anti    = 0        # Pro ratio
-        
-        # Output related properties
-        if outfolder is None: outfolder =  '/data/ClusterBuster-Output/%s' % (survey) 
-        self.outfolder  = outfolder
-        self.logfolder  = logfolder
-        self.saveFITS   = saveFITS
-        self.synonyms   = synonyms
-        
-        # plot Emission I: Contours & colorscale
-        self.cnt_levels    = cnt_levels
-        self.emi_max       = emi_max      # Maximal scale of emission
-        self.m_cnt         = 2            # Multiplier for contour levels
-        
-        # plot Relics & Clusters: Scatterplots & Histogramm
-        self.scatter_backgr   = False
-        self.scatterkwargs    = scatterkwargs #  A list of kwargs for the scatter plots
-        self.histokwargs      = histokwargs   #  A list of kwargs for the histogramm plots
-        
-        # Plot olar
-        self.expScale   = 0.75
-        self.expA       = 1.
-        self.dropseed   = None
-        
-    def set_binning(self, Histo=None)  :
-          
-          if Histo is None: Histo = self.histo
-          for GCl in self.GCls:
-              GCl.histo = Histo
-        
-    def polar(self, eff=None, aligned=True, normalize=True, minrel=1,  mirrored=False, mode='flux', zborder = 0 ,ztype = '>', **kwargs):
-          
-          ''' 
-          Input: needs to histogram of the survey to be set, radial axis: 2 N, polar axis: 4 M
-          
-          
-          Returns the weighted polar Histogramm of the survey, currently in Output class 
-          
-          set normalize=True: if you want to get the cumulative signal divided by the number of relic hosting clusters
-         
-          Output an Tuple of 4 outputs:
-              halfHist_new (np.array) : halfHist for analysis issues, shape stays same
-              radial & tickz          : (radial,[-h for h in reversed(Histo.ticks[1])]+[h for h in Histo.ticks[1]]), 
-              halfHist_plot           : halfHist for plotting purposses, shape may change depending on the output format
-              sigstats  (float)       :  total accumulated signal
-          
-          
-          BUG: For a very low angular bin size the estimate of the projected flux ratio of pro and anti axis changes!
-          '''
-          
-          '''DEVELOPMENT'''
-          npolar      = 46    #-->deprecated! but a better umber (nicer looking then the raw grid)
-          ndist       = 35    #-->deprecated! but a better umber (nicer looking then the raw grid)
-          distmax     = 3500  # very important, should somehow part of the histogramm class
-          # This is a design desicion ... in the standart case, the histogramm should ourient itself on the histogram variable of the Survey class
-          mesh        = np.zeros_like( self.mainhist.hist.T )   #np.zeros((npolar,ndist))
-          '''DEVELOPMENT END'''
-          
-          mainhist = np.zeros_like( self.mainhist.hist.T )
-          sigstats = []
-          
-          if eff is None: eff = self.Rmodel.effList[0]
-          if self.filteredClusters is None: self.FilterCluster(minrel=minrel,eff=eff,zborder=zborder, ztype='>')
-          for ii,GCl in enumerate(self.filteredClusters):
-              GCl.histo = self.mainhist
-              GCl.updateInformation(eff=eff, Filter=True)    
-              if GCl.histo is not None and np.sum(GCl.histo.hist) > 0:
-    
-                  Histo = GCl.histo
-                  shiftHist  = np.roll(Histo.hist.T, -int(aligned*(GCl.relic_pro_index)), axis=1)  # This was a bug:/ AreaHist**(self.expA)    
-                  ''' The scale is very important, it would be good to normalize the flux we do this by implementing the expScale parameter.
-                  This is flexible enough to give different weights to bright/faitn relics. Another question for statistical analysis is, if
-                  the average  or an integrated value is more interesting.
-                  '''               
-                  if   mode == 'flux':
-                      scale     = 1. 
-                  elif mode =='power':
-                      scale    = 1. * GCl.flux2power_woRedening()    
-                   
-                       
-                  signal    = np.divide (shiftHist*scale, (np.sum(shiftHist)*scale)**self.expScale) 
-                  mainhist += signal
-                  Clusterbin           = int(GCl.R200()/distmax *ndist)
-                  mesh[:,Clusterbin]  += np.sum(signal,axis=1) 
-                  sigstats.append(np.sum(signal)) 
-                
-          if len(sigstats) > 0:
-              if normalize: mainhist  = mainhist/  max(len(sigstats),0)   #np.sum(sigstats)  #
-              halfHist = np.add(mainhist[:,0:int(shiftHist.shape[1]*1/2)], np.fliplr(mainhist[:,int(shiftHist.shape[1]*1/2):]) )
-              
-              
-              ''' Transformation for plotting: Only works if histo was already set'''
-              if mirrored:
-                  halfHist_plot = np.add(np.fliplr(mainhist[:,0:int(shiftHist.shape[1]*1/2)]), mainhist[:,int(shiftHist.shape[1]*1/2):] )                  
-              else:
-                  halfHist_plot = np.copy(halfHist)
-                  
-              # We compute a weighting array to weight to bins at larger radii, which are larger down
-              inner  = Histo.bins[1][0:-1]
-              outer  = Histo.bins[1][1::]
-              angle  = Histo.ticks[0]
-              angles, innerZ = np.meshgrid(angle, inner, sparse=True)
-              angles, outerZ = np.meshgrid(angle, outer, sparse=True)
-              AreaHist  = 2*np.pi*(2*np.pi)/len(angle)*(outerZ**2-innerZ**2)     
-              halfHist_plot  /= AreaHist**(self.expA)    #self.expA
-    
-              ''' radially binned '''
-              radial        = np.concatenate( ( np.sum(halfHist[:,int(halfHist.shape[1]/2):int(halfHist.shape[1]+1)], axis=1)[::-1], np.sum(halfHist[:,0:int(halfHist.shape[1]/2+1)], axis=1)) , axis=0 )  # I would like to have np.flip
-              return halfHist, (radial,[-h for h in reversed(Histo.ticks[1])]+[h for h in Histo.ticks[1]]), halfHist_plot, sigstats, mesh
-          else:
-              return None, (None,None), None, None, None
-        
-    def set_dropseed(self,dropseed=None):
-        if dropseed is not None:
-            self.dropseed = dropseed
-        else:
-            self.dropseed = np.random.RandomState()
-                
-
-    def FilterCluster(self, minrel=1, eff=None, zborder=0, ztype='>', minimumLAS=0, GClflux=0, index=None, getindex=False, verbose=False,  **kwargs):
-          ''' Gives all the cluster with the relics that fullfill given criteria '''
-          
-          if index is not None:
-              if index == 'All':
-                  return self.GCls
-              else:
-                  return [ self.GCls[i] for i in index]  
-              
-          ''' This part is implemented to give consistent results in plotting and metric etc. for a given dropseed '''
-          if self.dropseed is not None:
-              state    = self.dropseed.get_state()
-              self.dropseed.set_state( (state[0],state[1],0,state[3],state[4]) )
-            
-          if eff is None: eff = self.Rmodel.effList[0]
-          GCls = [GCl.updateInformation(eff=eff, Filter=True) for GCl in self.GCls]
-         
-          results = [(ii,GCl)  for ii,GCl in enumerate(GCls) if len(GCl.filterRelics(eff=eff, **kwargs))>=minrel and  get_truth(GCl.z, ztype, zborder) and 
-                     GCl.largestLAS() >  minimumLAS and GCl.flux() > GClflux and GCl.stoch_drop(self.dropseed)] 
-          
-           
-          ''' and get_truth(GCl.z, ztype, zborder) and 
-                     GCl.largestLAS() >  minimumLAS and GCl.flux() > GClflux and GCl.stoch_drop(self.dropseed) '''
-                  
-                    
-          ''' Should also give an result, if no cluster fullfills the criterion '''          
-          if len(results) > 0:
-              indices,self.filteredClusters = map(list,zip(*results))
-          else:
-              indices,self.filteredClusters = [],[]
-        
-            
-          if verbose: print('____ # FilterCluster:',len(indices))
-          
-          if  getindex:
-              return indices 
-          else:
-              return self.filteredClusters
-
-
-    def fetch_totalRegions(self):
-          
-         return [GCl.relicRegions for GCl in self.GCls]
-         
-    def fetch_totalRelics(self, eff=None, **kwargs):
-          if eff is None: eff = self.Rmodel.effList[0]
-          
-          relicList = []
-          for GCl in self.filteredClusters:
-              relicList += GCl.filterRelics(eff=eff, **kwargs)
-         
-          return relicList
-         
-         
-    def fetch_totalHisto(self):
-          
-         return sum([GCl.hist for GCl in self.GCls], 0)
-     
-    def fetchpandas(survey, plotmeasures, surname=True, vkwargs_FilterCluster={}, kwargs_FilterObjects={}):
-        ''' Return a panda array generated from the survey catalogue 
-        
-        survey: A ClusterBusterSurvey
-        
-        
-        Examples for plotmeasures: 
-            
-        plotmeasures = [             
-                        lambda x: x.alpha,
-                        lambda x: dbc.measurand( x.Dproj_pix()/x.GCl.R200(), 'Dproj',label='$Dproj_rel$',  un = None )
-                        ]
-        simulated
-        simulated
-        
-        '''  
-    
-        logs = [True for measure in plotmeasures] # a stub, you should be able to specify this
-    
-        ''' This part is outdated and shuld be removed once the eficiency is removed '''
-        eff = survey.Rmodel.effList[0]
-        if survey.Rmodel.simu: 
-            feff = eff
-        else:
-            feff = 1.
-        ''' REMOVE END '''
-    
-        List_full = []
-        datalist  = []
-    
-        ''' This very ugly steps just creates a List of (relic,GCL) from the survey
-        As in the future galaxy clusters will gain be a property of relcis again this step will be shorter  and more readable'''
-        
-        for GCl in survey.FilterCluster():
-                GCl.updateInformation(eff=feff)
-                List_full.append(  [ (GCl,relic)  for relic in GCl.filterRelics(eff=feff)]  )
-                
-        List_full  = [item for sublist in List_full for item in sublist]
-            
-        for GCl,relic in List_full:
-    
-            relic.asign_cluster(GCl)
-            datavalues = []
-            for measure in plotmeasures:
-                data     = measure(relic).value
-                datavalues.append(data)
-            
-            datalist.append(datavalues)
-            
-    
-    #                      + [GCl.M200.labels(log=False),dbc.measurand(0,'$D_\mathrm{proj}$',un='$R_{200}$').labels(log=False)]
-    
-        ''' Create a pandas dataframe '''
-        columns =[measure(relic).labels(log=log) for measure,log in zip(plotmeasures,logs)] #\
-        pdframe =  pd.DataFrame(np.log10(datalist), columns=columns)
-        if surname:
-            pdframe['Survey'] = survey.name
-    
-
-        if len(pdframe)<3:
-            print('Only %i elements in the pdframe, will skip this one' % (len(pdframe)))
-            return 
-        else:
-            return pdframe
         
