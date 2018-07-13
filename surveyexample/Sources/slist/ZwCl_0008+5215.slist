@@ -1,5 +1,0 @@
-    s            dir               |   f flux   | s fluxunit  |  s   freq   |  s  shape    |  f  majoraxis  | f minoraxis  |  s axisunit  | f theta  |   s comment
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-   J2000 00h11m20.80s +52d31m45.0s  |   280     |      mJy    |    1400MHz  |   Gaussian     |      1.2     |      0.81     |    arccmin   |   50    |   Fig 3,5 van Weeren 2011
-   J2000 00h11m12.50s +52d32m40.2s  |   44      |      mJy    |    1400MHz  |   Gaussian     |      0.85    |      0.85     |    arccmin   |   0     |   Fig 3,5 van Weeren 2011
-   J2000 00h11m22.60s +52d28m24.0s  |   44      |      mJy    |    1400MHz  |   Gaussian     |      1.4     |      0.75     |    arccmin   |   60    |   Fig 3,5 van Weeren 2011

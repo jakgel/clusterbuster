@@ -1,4 +1,0 @@
-    s            dir                |   f flux    | s fluxunit  |  s   freq   |  s  shape    |  f  majoraxis  | f minoraxis  |  s axisunit  | f theta  |  s comment
-#--------------------------------- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-   J2000  11d49m22.3s +22h23m33s |       8.2   |      mJy    |    1400MHz  |     Point    |      0.1       |      0.1     |    arccmin   |       0  |    source G (8.2+-0.5) in Bonefaede 2012
-   J2000  11d49m42.6s +22h20m41s |       1.5   |      mJy    |    1400MHz  |     Point    |      0.1       |      0.1     |    arccmin   |       0  |    source A (1.5+-0.1) in Bonefaede 2012

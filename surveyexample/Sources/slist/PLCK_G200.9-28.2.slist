@@ -1,4 +1,0 @@
-    s            dir               |   f flux   | s fluxunit  |  s   freq   |  s  shape    |  f  majoraxis  | f minoraxis  |  s axisunit  | f theta  |  s comment
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-   J2000 4h50m23.36s -03d02m33.6s  |      1.5   |      mJy    |    1400MHz  |     Point    |      0.1       |      0.1     |    arccmin   |   0     |  Source A in Tab 3 https://arxiv.org/pdf/1708.01718.pdf
-   J2000 4h50m16.41s -03d01m54.6s  |     1.5    |      mJy    |    1400MHz  |     Point    |      0.1       |      0.1     |    arccmin   |   0     | Source B in Tab 3 https://arxiv.org/pdf/1708.01718.pdf

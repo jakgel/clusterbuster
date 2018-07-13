@@ -1,5 +1,0 @@
-    s            dir               |   f flux   | s fluxunit  |  s   freq   |  s  shape    |  f  majoraxis  | f minoraxis  |  s axisunit  | f theta  |  s comment
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-   J2000 06h03m44.0s 42d11m45.0s   |     0.77   |      mJy    |    1400MHz  |     Point    |                |              |              |          | Fig 5 in http://arxiv.org/pdf/1209.2196v2.pdf with alpha -0.5
-   J2000 06h03m45.6s 42d13m45.0s   |     0.61   |      mJy    |    1400MHz  |     Point    |                |              |              |          | Fig 5 in http://arxiv.org/pdf/1209.2196v2.pdf with alpha -0.5
-   J2000 06h03m51.0s 42d13m35.0s   |     0.61   |      mJy    |    1400MHz  |     Point    |                |              |              |          | Fig 5 in http://arxiv.org/pdf/1209.2196v2.pdf with alpha -0.5

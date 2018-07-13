@@ -1,7 +1,0 @@
-    s            dir                 |   f flux   | s fluxunit  |  s   freq   |  s  shape    |  f  majoraxis  | f minoraxis  |  s axisunit  | f theta  |  s comment
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-   J2000 4h59m12.96s +8d47m53.00s   |  58       |      mJy    |    1400MHz  |  Gaussian  |      1.05     |     0.75      |    arccmin   |    48     |  Source A,  Tab. 3, R. J. van Weeren et a. 2011, flux given as 10.9
-   J2000 4h59m12.20s +8d48m06.28s   |  20       |      mJy    |    1400MHz  |  Gaussian  |      0.90     |     0.65      |    arccmin   |   168     |  Source A,  Tab. 3, R. J. van Weeren et a. 2011, flux given as 10.9
-   J2000 4h59m05.98s +8d49m59.40s   |   3.9     |      mJy    |    1400MHz  |  Point     |      0.2     |      0.1      |    arccmin   |    30      |  Source B,  Tab. 3, R. J. van Weeren et a. 2011, flux given as  5.7
-   J2000 4h59m08.88s +8d48m58.81s   |   1.1     |      mJy    |    1400MHz  |  Point     |      0.2     |      0.1      |    arccmin   |    30      |  Source C,  Tab. 3, R. J. van Weeren et a. 2011, flux given as  2.9
-   

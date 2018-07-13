@@ -1,3 +1,0 @@
-    s            dir                |   f flux    | s fluxunit  |  s   freq   |  s  shape    |  f  majoraxis  | f minoraxis  |  s axisunit  | f theta  |  s comment
-#--------------------------------- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-   J2000 1d02m41.6s -21d52m52s |      31.0   |      mJy    |    1400MHz  |     Point    |      0.1       |      0.1     |    arccmin   |          |    unsure flux value  , just estimated

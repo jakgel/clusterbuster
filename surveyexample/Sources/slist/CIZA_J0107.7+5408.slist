@@ -1,6 +1,0 @@
-    s            dir                |   f flux    | s fluxunit  |  s   freq   |  s  shape    |  f  majoraxis  | f minoraxis  |  s axisunit  | f theta  |  s comment
-#--------------------------------- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-   J2000 1d07m49.0s +54d06m57s |      1.5   |      mJy    |    1400MHz  |     Point    |      0.1       |      0.1     |    arccmin   |          |    unsure flux value  , just estimated
-   J2000 1d07m47.6s +54d06m57s |      3.0   |      mJy    |    1400MHz  |     Point    |      0.1       |      0.1     |    arccmin   |          |    unsure flux value  , just estimated
-   J2000 1d07m38.5s +54d05m04s |      0.8   |      mJy    |    1400MHz  |     Point    |      0.1       |      0.1     |    arccmin   |          |    unsure flux value  , just estimated
-   J2000 1d07m51.8s +54d09m00s |      1.0   |      mJy    |    1400MHz  |     Point    |      0.1       |      0.1     |    arccmin   |          |    unsure flux value  , just estimated

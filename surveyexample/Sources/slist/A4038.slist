@@ -1,4 +1,0 @@
-    s            dir               |   f flux   | s fluxunit  |  s   freq   |  s  shape    |  f  majoraxis  | f minoraxis  |  s axisunit  | f theta  |  s comment
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-   J2000 23h47m45.0s -28d08m25.0s  |     23.0   |      mJy    |    1400MHz  |     Point    |      0.1       |      0.1     |    arccmin   |          |  4038_11 in  Kale and Dwarakanath 2011 44.s
-   J2000 23h47m43.0s -28d07m35.0s  |      2.3   |      mJy    |    1400MHz  |     Point    |                |              |              |          |  4038_10 in  Kale and Dwarakanath 2011

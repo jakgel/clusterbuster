@@ -1,5 +1,0 @@
-# Region file format: DS9 version 4.1
-global color=green dashlist=8 3 width=1 font="helvetica 10 normal roman" select=1 highlite=1 dash=0 fixed=0 edit=1 move=1 delete=1 include=1 source=1
-fk5
-polygon(1:02:44.893,-21:51:29.53,1:02:40.543,-21:51:08.45,1:02:35.593,-21:51:29.53,1:02:35.592,-21:53:39.00,1:02:39.942,-21:53:49.62,1:02:44.894,-21:53:39.00,1:02:47.461,-21:52:38.44) # text={, 0, alpha False}
-circle(1:02:39.000,-21:57:01.00,672.127")
