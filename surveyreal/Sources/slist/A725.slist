@@ -1,0 +1,3 @@
+    s            dir               |   f flux   | s fluxunit  |  s   freq   |  s  shape    |  f  majoraxis  | f minoraxis  |  s axisunit  | f theta  |   s comment
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+   J2000 9h03m12.66s 62d35m55s  |  180     |      mJy    |    1400MHz  |   Point       |               |               |    arccmin   |   0      |   NVSS catalog PS estimate, spectral index quite flat 60 mJy at tgss frequencies

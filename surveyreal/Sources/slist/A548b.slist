@@ -1,0 +1,6 @@
+    s            dir               |   f flux   | s fluxunit  |  s   freq   |  s  shape    |  f  majoraxis  | f minoraxis  |  s axisunit  | f theta  |   s comment
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+   J2000 5h45m21.8s -25d47m28.0s  |     58.0   |      mJy    |    1400MHz  |    Point  |      0.1       |      0.1     |    arccmin   |       |  flux value estimated from NVSS
+
+   
+   

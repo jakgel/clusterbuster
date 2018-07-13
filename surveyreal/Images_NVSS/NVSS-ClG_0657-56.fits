@@ -1,0 +1,100 @@
+<!-- begin script including /export/web/common/nrao-header.html -->
+<!-- start of nrao-header.html -->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+    <link REL="icon" HREF="/common/favicon.ico">
+    <link rel="stylesheet" href="/common/nraostyle.css" media="screen">
+    <!-- end of nrao-header.html -->
+<!-- end script including /export/web/common/nrao-header.html -->
+<title>NRAO NVSS Search Results.</title>
+  <!-- Start of nrao-nav1.html -->
+  </head>
+  <body>
+    <div id="main">
+      <div id="topbar">
+	<div id="logo">
+	  <a href="http://www.nrao.edu/">
+	    <img align="left" src="/icons/nrao_logo_pms_51.png" alt="NRAO"
+		 border="0" width="39" height="51">
+	  </a>
+	  National Radio<br>Astronomy Observatory
+	</div>
+	<div id="search">
+	  <form name="gs" method="get" action="http://search.nrao.edu/search" style="display: inline;">
+	    <input type="text" name="q" size="15" maxlength="255"  />
+	    <input type="submit" name="btn" value="Search NRAO" />
+	  </form>
+	</div>
+	<div id="subnavArea">
+	  <!-- End of nrao-nav1.html -->
+&nbsp;<a class="navig" href="http://www.nrao.edu/">NRAO Home</a> &gt;
+<a class="navig" href="http://science.nrao.edu/">Science</a> &gt;
+<a class="navig" href="http://www.cv.nrao.edu/nvss/">NVSS</a> &gt;
+<a class="navig" href="http://www.cv.nrao.edu/nvss/postage.shtml">Postage Stamp</a> &gt;
+Error
+          <!-- Start of nrao-nav2nomenu.html -->
+        </div>
+      </div>
+    </div>	
+    <hr style="height:1px;">
+    <table width="100%" cellpadding="5" cellspacing="0" border="0">
+      <tr>
+	<td bgcolor="#ffffff" valign="top" id="contentArea">
+      
+<h2>There was a problem</h2>
+
+Sorry, no NVSS field found for those coordinates<!-- Start of nrao-trailer.html -->
+<div id="footerUtilities">
+  <a href="https://staff.nrao.edu/">Staff</a> |
+  <a href="http://www.nrao.edu/cgi-bin/contact">Contact Us</a> |
+<!--
+  <a href="https://careers.nrao.edu/">Careers</a> |
+-->
+  <a href="http://www.nrao.edu/admin/hr/careers.shtml">Careers</a> |
+
+  <a href="http://www.nrao.edu/navbar/directories.shtml">Directories</a> |
+  <a href="http://www.nrao.edu/navbar/sitemap.shtml">Site Map</a> |
+  <a href="http://www.nrao.edu/index.php/Help">Help</a> |
+  <a href="http://www.nrao.edu/policy/">Policies</a> |
+  <a href="http://www.nrao.edu/policy/diversity.shtml">Diversity</a> |
+  <a href="http://search.nrao.edu/">Search</a>
+</div>
+<div id="footer">
+ <a href="http://www.nrao.edu">
+  <img src="/common/logoNRAO.jpg" alt="NRAO"
+   width="41" height="41" vspace="5" border="0" align="middle"
+   style="float:left;" />
+ </a>
+ <a href="http://www.nsf.gov/">
+  <img src="/common/logoNSF.jpg" alt="NSF"
+   width="57" height="57" hspace="10" border="0" align="middle"
+   style="float:left;" />
+ </a> 
+ <a href="http://www.aui.edu/">
+  <img src="/common/logoAUI.gif" alt="AUI"
+   width="74" height="49" vspace="1" border="0" align="middle"
+   style="float:left; margin-right:20px;" />
+ </a> 
+ <p style="padding-top:10px;">
+  Copyright &#169; 2009 Associated Universities, Inc.<br>
+  The National Radio Astronomy Observatory is a facility of the National
+  Science Foundation operated under cooperative agreement by Associated
+  Universities, Inc.
+ </p>  
+</div>
+<!-- End of nrao-trailer.html -->
+<em>Facility created by <a href="/~pmurphy/">Pat Murphy</a><br>
+based on work by <a href="/~bcotton/">Bill Cotton</a> and <a href="/~jcondon/">Jim Condon</a></em>
+<!-- Start of nrao-end.html -->
+
+
+		</td>
+	</tr>
+</table>
+
+</body>
+</html>
+
+<!-- End of nrao-end.html -->

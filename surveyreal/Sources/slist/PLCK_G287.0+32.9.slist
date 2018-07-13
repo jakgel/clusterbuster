@@ -1,0 +1,4 @@
+    s            dir               |   f flux   | s fluxunit  |  s   freq   |  s  shape    |  f  majoraxis  | f minoraxis  |  s axisunit  | f theta  |  s comment
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+   J2000 11h50m57.5s -28d02m00.0s    |      7.0   |      mJy    |    1400MHz  |     Point    |      0.1       |      0.1     |    arccmin   |          |  G in http://www.mergingclustercollaboration.org/plck-g2870329.html
+   J2000 11h50m52.45s -28d02m04.22s  |      2.3   |      mJy    |    1400MHz  |     Point    |                |              |              |          |  F in http://www.mergingclustercollaboration.org/plck-g2870329.html

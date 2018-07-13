@@ -1,0 +1,4 @@
+    s            dir               |   f flux   | s fluxunit  |  s   freq   |  s  shape    |  f  majoraxis  | f minoraxis  |  s axisunit  | f theta  |  s comment
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+   J2000 08h42m04.5s -17d34m10.0s  |      5.6   |      mJy    |    1400MHz  |     Point    |                |              |              |          | Fig 3 in http://iopscience.iop.org/article/10.1088/0004-637X/769/2/101/pdf x  4
+   J2000 08h42m04.1s -17d34m20.0s  |      4.0   |      mJy    |    1400MHz  |     Point    |                |              |              |          | Fig 3 in http://iopscience.iop.org/article/10.1088/0004-637X/769/2/101/pdf x  4
