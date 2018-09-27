@@ -1,0 +1,4 @@
+,clID,snapID,redshift,M200,originalpath,Comment
+,,,,,,
+1,1,128,0,1778279410039050,/data/ShockTest/SHOCKS_00001/cluster.00001.snap.128,standard.shocks
+2,2,128,0,1778279410039050,/data/ShockTest/SHOCKS_00001/cluster.00002.snap.128,Cluster 1! modifiedP_wmonotonic.shocks

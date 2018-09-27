@@ -1,7 +1,7 @@
 # Computing Run parameter:
 Nfree     =   8             # Number of cores left free for any specific task
 default   =   False          # Choose 'True' if you want to create the mockobs library, 'False' if you just want to compute the radiocubes and measure their total flux brightenes
-debug     =   True
+debug     =   False
 
 # Specify model parameters A:  B-field models
 eff       =   2e-5          # Xi_e as energy fraction of suprathermal electrons, around 10^(-4...-2)
@@ -42,9 +42,8 @@ binmax         = 800        #  maximal image size in pixel [can modify S_pixel!]
 FITSout        = True       # Save fits files?
 pickleClusters = True       # Pickle Clusters?
 Mach           = True       # Add MachNumberImage        ?
-snapfolder     = /data2/Three/       #folder where the clustersnapshots are stored
-folderpossing  = ddd                        #Cluster1, SHOCKS_00001
-xrayfolder     = /data/Three/       #folder where the full X-ray data is stored
+snapfolder     = /data2/ShockTest/       #folder where the clustersnapshots are stored
+xrayfolder     = /data/ShockTest/       #folder where the full X-ray data is stored
 headerC        = kpc                        #Unit of the central header coordinates
 Output         = [spearman,angles,relicpixels] # list of tasks
 smarttime_sub  = 1800     # '' for default
@@ -52,7 +51,7 @@ outf           = /data/ClusterBuster-Output/ # outfile, Is going to get tweaked
 savewodetect   = True
 
 #MiscFolders
-missFile       = ClusterCSV/Three-missing.dat
+missFile       = clusterCSV/ShockTest-missing.dat
 snaplistz      = None 
 snapidlist     = None
 

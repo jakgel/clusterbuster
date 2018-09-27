@@ -280,7 +280,7 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
     return 0
         
 def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=False, DS9regions=False, diamF=2.6, 
-                  colorbar=False, beam=True, shapes=True, recenter=True, infolabel = False, sectors=False, 
+                  colorbar=False, beam=True, shapes=False, recenter=True, infolabel = False, sectors=False,
                   xray=False, highres=False, show_rot=False, vectors = False, label_sheme='balanced', 
                   maxdist=1700, filterargs = {'zborder':0, 'ztype':'>', 'minimumLAS':4, 'GClflux':20, 'index':None}):
      
@@ -401,7 +401,7 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
             print(levels, survey.cnt_levels)
             f.show_contour(GCl.mapdic['Diffuse'], linewidth=0.15, overlap = True, levels=levels, colors='green',filled=False)
         else:
-             if 'MUSIC' in survey.name or 'Threehundret' in survey.name: #MUSIC-2
+             if 'MUSIC' in survey.name or 'Threehundret' or 'ShockTest' in survey.name: #MUSIC-2
                 vmin_xr    = 2.5
                 vmax_xr    = 9.7 #6.2
                 vmid_xr    = -1.5

@@ -123,10 +123,10 @@ def varname(var):
   return a_as_str #[ k for k,v in locals().iteritems() if v is var][0]
 
   
-def pool_wait( queues, limit, affix='', tmax = 1e3):
+def pool_wait(queues, limit, affix='', tmax = 1e3):
     tsleep = 0      
     waitT  = 0.3
-    
+
     while sum([q.qsize() for q in queues]) > limit and tsleep < tmax:  #stage 3 neclected
   
         if tsleep == 0:
@@ -139,7 +139,7 @@ def pool_wait( queues, limit, affix='', tmax = 1e3):
              print(message) 
         time.sleep(waitT) 
         tsleep += waitT 
-        print('pool_wait:', sum([q.qsize() for q in queues]), tsleep)
+        #print('pool_wait:', sum([q.qsize() for q in queues]), tsleep)
     print('pool_wait:', sum([q.qsize() for q in queues])) 
         
     if tsleep > 0:  print("[%s] Slept for %.1f seconds. We don't want to shedule our memory to dead, do we?" % (affix, tsleep)   )
@@ -460,7 +460,8 @@ def DoRun( inputs, smt, verbose=False):
 
     for realisations in realisations_list:
             gcl = realisations[0]
-            if verbose: print('Recognized ID %5i, snap %3i, #%i in cluster file' % (gcl.mockobs.clid, gcl.mockobs.snap, gcl.mockobs.id) )
+            if verbose:
+                print('Recognized ID %5i, snap %3i, #%i in cluster file' % (gcl.mockobs.clid, gcl.mockobs.snap, gcl.mockobs.id) )
 
             smt(task='LoadSnaps')   
             """ We load the radio cubes """
@@ -468,16 +469,16 @@ def DoRun( inputs, smt, verbose=False):
             """ SMELLY: This causes some issues, as there are two different 'load' versions for one and the same task """
             if  suut.TestPar(pase['useMiniCube']):   # original snapshot
                  strSn   = strSn.replace('cluster.', 'clusterSUBSET.') 
-            if verbose: print('Loading snapshot:',strSn)
-            snap    = loadsnap.Loadsnap(strSn,headerc=pase['headerC'])                 
-
-                
+            if verbose:
+                print('Loading snapshot:', strSn)
+            snap = loadsnap.Loadsnap(strSn,headerc=pase['headerC'])
 
             smt(task='PrepareRadioCubes')   
-            PreSnap    = radiomodel.PrepareRadioCube(snap, psiFile=pase['miscdata']+pase['PSItable'], machFile=pase['miscdata']+pase['DSAtable'])  
-            PreSnap    = [( radiomodel.PiggyBagSnap(PreSnap[0], extended = True), PreSnap[1] )]
+            PreSnap = radiomodel.PrepareRadioCube(snap, psiFile=pase['miscdata']+pase['PSItable'], machFile=pase['miscdata']+pase['DSAtable'])
+            PreSnap = [ (radiomodel.PiggyBagSnap(PreSnap[0], extended = True), PreSnap[1]) ]
             # Make PreSnap slimmer through deleting things which aren't needed? This could make the communikation much faster
-            if verbose: print(' ___ Particles in snap ___ :', PreSnap[0].radi.shape)  # DEBUGGING
+            if verbose:
+                print(' ___ Particles in snap ___ :', PreSnap[0].radi.shape)  # DEBUGGING
 
             """ now we'll assign two functions to the pool for them to run - 
                 one to handle stage 1, one to handle stage 2 """ 
@@ -511,7 +512,7 @@ def DoRun( inputs, smt, verbose=False):
     return False, smt
   
     
-def SheduleTasks( inputs, smt, ABC=False, verbose=False):
+def SheduleTasks(inputs, smt, ABC=False, verbose=False):
 
     (pase, survey, Rmodel) = inputs
     #===
@@ -540,8 +541,8 @@ def SheduleTasks( inputs, smt, ABC=False, verbose=False):
     
     # lastly, create our pool of workers - this spawns the processes, 
     # but they don't start actually doing anything yet
-    pool1 = mupro.Pool(Nworker, maxtasksperchild=100 ) # maxtasksperchild=1000 --> http://stackoverflow.com/questions/21485319/high-memory-usage-using-python-multiprocessing
-#    pool2 = mupro.Pool(1      , maxtasksperchild=50  ) # NWokrer = 1 is effectively like locking
+    pool1 = mupro.Pool(Nworker, maxtasksperchild=100) # maxtasksperchild=1000 --> http://stackoverflow.com/questions/21485319/high-memory-usage-using-python-multiprocessing
+#    pool2 = mupro.Pool(1, maxtasksperchild=50) # NWokrer = 1 is effectively like locking
     
     #=== Reload data
     Taskcube =   np.load(survey.logfolder + '/TaskCube.npy')
@@ -564,8 +565,6 @@ def SheduleTasks( inputs, smt, ABC=False, verbose=False):
     # now that the processes are running and waiting for their queues
     # let's give them some work to do by iterating
     # over our data and putting them into the queues
-
-    gcl                = survey.GCls[0] 
     survey_bones       = copy.deepcopy(survey)
     survey_bones.GCls  = []
     realisations       = [] # rotated realisations of one and the same cluster
@@ -659,7 +658,8 @@ def SheduleTasks( inputs, smt, ABC=False, verbose=False):
     
         """ Output 1: Triggers output queue when a new cube is loaded 
             Fix of https://bugs.python.org/issue23582 applied to avoid loss of outputs"""
-        if verbose: print('    We came so far in the stage I', stage1_out, 'stage1_out.qsize()', stage1_out.qsize(), 'Len stage1_list:', len(stage1_list))       
+        if verbose:
+            print('    We came so far in the stage I', stage1_out, 'stage1_out.qsize()', stage1_out.qsize(), 'Len stage1_list:', len(stage1_list))
         pool_wait( [stage1_queue], int(1.5 * Nworker), affix='Wait_unjoined') # Wait until there is no computation left for stage1
 #            if stage1_out.empty():
 #                print('Stage I no results...')
@@ -710,7 +710,7 @@ def SheduleTasks( inputs, smt, ABC=False, verbose=False):
     for ii in [None] * Nworker:
          """ We make sure that every worker is killed """
          stage1_queue.put(POISON_PILL)
-    pool_wait( [stage1_queue, stage2_queue], 0, affix='Wait_joined', tmax=6e3)    
+    pool_wait( [stage1_queue, stage2_queue], Nworker, affix='Wait_joined', tmax=6e3)
     import time
     time.sleep(16)
     if stage1_out.empty():
@@ -1306,7 +1306,7 @@ def copy_ClusterOuts(snapfolder = '/data/ClusterBuster-Output/', copyfolder = '/
     return 0
 
 
-#if __name__ == "__main__":
+if __name__ == "__main__":
 #    create_ClusterLibrary(snaps=range(0,15), copyfolder=None)
 #    create_ClusterLibrary(snaps=range(3,18),snapfolder='/radioarchive/MergerTrees/WithCoolSfrAgn/snaps/', Clfile='clusterCSV/MUSIC2-AGN', copyfolder=None)
 
@@ -1366,7 +1366,8 @@ def copy_ClusterOuts(snapfolder = '/data/ClusterBuster-Output/', copyfolder = '/
 #    survey = main('Threehundrets.parset', Clfile = 'clusterCSV/Threehundrets', verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset
 #    suut.AddFilesToSurvey(survey, savefolder=survey.outfolder, verbose=False,clusterwise=True)
 
-    survey = main('Threehundrets_prep.parset', Clfile = 'clusterCSV/Three', verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset
-    survey = main('Threehundrets.parset', Clfile = 'clusterCSV/Three', verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset
-    suut.AddFilesToSurvey(survey, savefolder=survey.outfolder, verbose=False,clusterwise=True)
+#    survey = main('ShockTest_prep.parset', Clfile = 'clusterCSV/ShockTest', verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset
+    survey = main('ShockTest.parset', Clfile = 'clusterCSV/ShockTest', verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset
+    time.sleep(10)
+    suut.AddFilesToSurvey(survey, savefolder=survey.outfolder, verbose=False, clusterwise=True)
 

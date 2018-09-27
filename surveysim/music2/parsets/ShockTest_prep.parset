@@ -3,7 +3,6 @@ Nfree     =   8             # Number of cores left free for any specific task
 default   =   False         # Choose 'True' if you want to create the mockobs library, 'False' if you just want to compute the radiocubes and measure their total flux brightenes
 redSnap   =   True          # Only kicks in if you do a non-default run. Do you want to use the results to compute reduced snapshots, with an subset of particles?
 
-
 # Specify used survey A: clusters 
 surv_compl      = 0.85                                            # If < 1 seen as coverage, If > 1 seen as number of clusters (roundet to int)
 z_range         = [0.00,0.7]                                      # Gives the lower and higher boundary for z of the cosmic slice
@@ -11,13 +10,13 @@ z_range         = [0.00,0.7]                                      # Gives the lo
   
 # Specify output
 pickleClusters = True       # Pickle Clusters?
-snapfolder     = /data/Three/     #folder where the clustersnapshots are stored
-xrayfolder     = /data/Three/     #folder where the full X-ray data is stored
-outf           = /data2/Three/     # outfile, Is going to get tweaked
+snapfolder     = /data/ShockTest/     #folder where the clustersnapshots are stored
+xrayfolder     = /data/ShockTest/     #folder where the full X-ray data is stored
+outf           = /data2/ShockTest/     # outfile, Is going to get tweaked
 smarttime_sub  = 1800                     # '' for default
 
 #MiscFolders
-missFile       = ClusterCSV/Three-missing.dat
+missFile       = clusterCSV/ShockTest-missing.dat
   
 #Non default radio cubes
 redSnap        = True

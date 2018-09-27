@@ -17,7 +17,7 @@ outf           = /data2/Threehundrets/     # outfile, Is going to get tweaked
 smarttime_sub  = 1800                     # '' for default
 
 #MiscFolders
-missFile       = ClusterCSV/Threehundrets-missing.dat
+missFile       = clusterCSV/Threehundrets-missing.dat
   
 #Non default radio cubes
 redSnap        = True

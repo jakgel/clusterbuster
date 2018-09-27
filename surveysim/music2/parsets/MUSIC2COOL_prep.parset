@@ -23,7 +23,7 @@ headerC        = kpc                                          #Unit of the centr
 outf           = /data2/WithCoolSfrAgn/                       #folder where to output will be stored
 
 #MiscFolders
-missFile       = ClusterList/AllMUSIC-AGN-missing.dat
+missFile       = clusterCSV/AllMUSIC-AGN-missing.dat
 snaplistz      = [8.068,3.972,3.470,2.986,2.497,2.321,1.490,0.997,0.817,0.661,0.537,0.428,0.332,0.247,0.173,0.108,0.050,0.000]         
 snapidlist     = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]
  
