@@ -22,30 +22,30 @@ import time
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA as sklearnPCA
     
-def abcpmc_dist_severalMetrices( SurveyA, SurveyB, metrics=['number'], outpath = '', delal=True, stochdrop=True):
-  ''' abcpmc differs from astroABC in that sense that the model data is called before the data in the metric arguement,
+def abcpmc_dist_severalMetrices( SurveyA, SurveyB, metrics=['number'], outpath='', delal=True, stochdrop=True):
+  """ abcpmc differs from astroABC in that sense that the model data is called before the data in the metric arguement,
       so it is metric(model,data) instead of metric(data,model)
       
   So this is just a wrapper    
-  '''
+  """
   return ABC_dist_severalMetrices( SurveyB, SurveyA, metrics=metrics, outpath = outpath, delal=delal, stochdrop=stochdrop)
 
-def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics = ['numbers'],
-                             outpath = '', delal=True, verbose=False, stochdrop=True):
-    ''' 
+def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics=['numbers'],
+                             outpath='', delal=True, verbose=False, stochdrop=True):
+    """ 
     Returns the distance within the MUSIC-2/NVSS metric
     you have: data,model
     
     SurveyA: realworld
     SurveyB: model
     
-    '''
+    """
     print('ABC_dist_severalMetrices',metrics)
 
     if verbose: print(SurveyA.name, SurveyB.name)
     
 
-    ''' The efficiency is outdated and should be replaced asap '''
+    #TODO:  The efficiency is outdated and should be replaced asap
     for eff in SurveyB.Rmodel.effList:
 
         if stochdrop: SurveyB.set_dropseed()
@@ -58,7 +58,7 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics = ['numbers'],
             SurveyB.FilterCluster(minrel=1)
             print ('SurveyB.GCls', len(SurveyB.GCls), '-->', 'SurveyB.filteredClusters', len(SurveyB.filteredClusters))
             for metric in metrics:
-                print('metric', metric)
+#                print('metric', metric)
                 
                 if metric == 'number':
                     distance  = ABC_summaryStatistics_numbers([SurveyA,SurveyB])
@@ -71,11 +71,11 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics = ['numbers'],
                 
                 distances.append(distance)
                      
-        print('surveymetrics::ABC_dist_severalMetrices::', SurveyA.name, 'VS', SurveyB.name, ' metric disimilarity:', 'metric disimilarity:', ['%s: %.3e' % (m,d) for (m,d) in zip(metrics,distances)] )
+        print('surveymetrics::ABC_dist_severalMetrices::', SurveyA.name, 'VS', SurveyB.name, 'metric disimilarity:', ['%s: %.3e' % (m,d) for (m,d) in zip(metrics,distances)] )
             
         
-        ''' This puts the survey to a bagged sutvey folde rand increases the counter. It might be interesting to know if this number is also the number of the runs.
-        '''
+        """ This puts the survey to a bagged sutvey folde rand increases the counter. It might be interesting to know if this number is also the number of the runs.
+        """
         if delal:
 
             file_path = "%s/pickled/Survey.pickle" % (SurveyB.outfolder)        
@@ -104,7 +104,7 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics = ['numbers'],
                     
                 
             
-            ''' We increment the current logfile number by one ... just to show how much we have progressed '''
+            """ We increment the current logfile number by one ... just to show how much we have progressed """
             with open("%s/logfile.txt" % (outpath), "a") as f:
                 Rm  = SurveyB.Rmodel
                 eff = SurveyB.Rmodel.effList[0]
@@ -112,20 +112,22 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics = ['numbers'],
                 line = ''
                 for dist in distances:
                     line += "%8.5e " % (dist)
-                line += '%+.4e %+.4e %+.4e' % (eff, Rm.B0, Rm.kappa)
+                line += '%7i %+.4e %+.4e %+.4e' % (SURVEYCOUNT, eff, Rm.B0, Rm.kappa)
       
                 if isinstance(Rm, cbclass.PreModel_Hoeft):
-                    line += ' %+.4e +.4e %+.4e %+.4e %+.4e\n' % (Rm.kappa, Rm.t0, Rm.t1, Rm.n0, Rm.n1)
+                    line += ' %+.4e +.4e %+.4e %+.4e %+.4e' % (Rm.kappa, Rm.t0, Rm.t1, Rm.n0, Rm.n1)
                 if isinstance(Rm, cbclass.PreModel_Gelszinnis):
-                    line += ' %+.4e %+.4e %+.4e %+.4e\n' % (Rm.p0, Rm.p_sigma, Rm.sigmoid_0, Rm.sigmoid_width)
+                    line += ' %+.4e %+.4e %+.4e %+.4e' % (Rm.p0, Rm.p_sigma, Rm.sigmoid_0, Rm.sigmoid_width)
+                line += '\n'
+
                 f.write(line)
     
     return distances
 
 
-'''=============== Baustelle: Imlement in Metric & Run Survey'''
+"""=============== Baustelle: Imlement in Metric & Run Survey"""
 def Clusters_discovery_prop(survey, discovery_prop=None, maxcomp=None, verbose=False):
-    ''' Return a weighted relic number count within all clusters
+    """ Return a weighted relic number count within all clusters
     input: either  a Clusterbuster Class Surveys
            or      a GalaxyClusterLists including relics
            and the efficiency at which to count the relics
@@ -134,14 +136,14 @@ def Clusters_discovery_prop(survey, discovery_prop=None, maxcomp=None, verbose=F
     Returns
     ------
     distance: float
-    '''
+    """
     
 #    import scipy.stats.mstats as mstats
     if isinstance(survey, cbclass.Survey):
-        ''' Assume to work with surveys '''
+        """ Assume to work with surveys """
         relics = survey.fetch_totalRelics(maxcomp=maxcomp)
     else:
-        ''' Asume to work with lists of galaxy clusters '''
+        """ Asume to work with lists of galaxy clusters """
         relics = [gcl.filterRelics(maxcomp=maxcomp)          for gcl in survey]
 
     weightedsum = len(relics)
@@ -149,17 +151,17 @@ def Clusters_discovery_prop(survey, discovery_prop=None, maxcomp=None, verbose=F
         print('surveymetrics::Clusters_discovery_prop()::Survey:', survey.name, weightedsum)
 
     return weightedsum
-'''==============='''
+"""==============="""
 
 
 def ABC_summaryStatistics_polarHisto(Surveys, eff):
-    ''' Compares the 'average relic' of survey B (simulation) with survey A (real world survey)
+    """ Compares the 'average relic' of survey B (simulation) with survey A (real world survey)
     input: either  2 Clusterbuster Class Surveys
            or      2 Polary binned Histogramms of the same dimensions
            
            
     This method will fail if the first survey class doesn't have any relics!
-    '''
+    """
     [SurveyA,SurveyB] = Surveys
 
     # Filtering by redshift
@@ -182,19 +184,19 @@ def ABC_summaryStatistics_polarHisto(Surveys, eff):
     
 
 def ABC_summaryStatistics_2DKS(Surveys, eff, parA=lambda x: x.M200, parB = lambda y: y.P_rest):
-    ''' Compares survey B (simulation) with survey A (real world survey)
+    """ Compares survey B (simulation) with survey A (real world survey)
     input: either  2 Clusterbuster Class Surveys
-    '''
+    """
     
     [A, B] = Surveys
     
 #    import scipy.stats.mstats as mstats
     if isinstance(A, cbclass.Survey) and isinstance(B, cbclass.Survey):
-        ''' Assume to work with surveys '''
+        """ Assume to work with surveys """
         cl_A = [gcl.updateInformation()        for gcl in A.GCls]
         cl_B = [gcl.updateInformation(eff=eff) for gcl in B.filteredClusters]
     else:
-        ''' Asume to work with lists of galaxy clusters '''
+        """ Asume to work with lists of galaxy clusters """
         cl_A = [gcl.updateInformation()        for gcl in A]
         cl_A = [gcl.updateInformation(eff=eff) for gcl in B]
         
@@ -205,7 +207,7 @@ def ABC_summaryStatistics_2DKS(Surveys, eff, parA=lambda x: x.M200, parB = lambd
     y2  = np.asarray([parB(gcl).value for gcl in cl_B])   
     
     
-    '''Two-dimensional Kolmogorov-Smirnov test on two samples. 
+    """Two-dimensional Kolmogorov-Smirnov test on two samples. 
     Parameters
     ----------
     x1, y1 : ndarray, shape (n1, )
@@ -221,7 +223,7 @@ def ABC_summaryStatistics_2DKS(Surveys, eff, parA=lambda x: x.M200, parB = lambd
         Two-tailed p-value.
     D : float, optional
         KS statistic. Returned if keyword `extra` is True.
-    '''
+    """
 
     if x1.shape[0] > 2 and x2.shape[0] > 2:
         access, stats = KSmaster.ndtest.ks2d2s(x1, y1, x2, y2, nboot=None, extra=True)
@@ -232,7 +234,7 @@ def ABC_summaryStatistics_2DKS(Surveys, eff, parA=lambda x: x.M200, parB = lambd
     return np.log10(1/access)
 
 def ABC_summaryStatistics_numbers(Surveys, maxcomp=None, verbose = False):
-    ''' Compares survey B (simulation) with survey A (real world survey)
+    """ Compares survey B (simulation) with survey A (real world survey)
     input: either  2 Clusterbuster Class Surveys
            or      2 GalaxyClusterLists including relics
            and the efficiency at which to compare the galaxy clusters
@@ -242,7 +244,7 @@ def ABC_summaryStatistics_numbers(Surveys, maxcomp=None, verbose = False):
         All radio relics
     ------
     distance: float
-    '''
+    """
     [A, B] = Surveys
 
     sum_A = Clusters_discovery_prop(A, maxcomp=maxcomp)
@@ -260,17 +262,17 @@ def ABC_summaryStatistics_numbers(Surveys, maxcomp=None, verbose = False):
 
 
 def ABC_summaryStatistics_logMach(Surveys):
-    ''' Compares survey B (simulation) with survey A (real world survey)
+    """ Compares survey B (simulation) with survey A (real world survey)
         Derives the Histogram of the log(Mach) number and returns the differnce of the medians
-    '''
+    """
     [A, B] = Surveys
 
     if isinstance(A, cbclass.Survey):
-        ''' Assume to work with surveys '''
+        """ Assume to work with surveys """
         relicsA = A.fetch_totalRelics()
         relicsB = B.fetch_totalRelics()
     else:
-        ''' Asume to work with lists of galaxy clusters '''
+        """ Asume to work with lists of galaxy clusters """
         relicsA = [gcl.filterRelics() for gcl in A]
         relicsB = [gcl.filterRelics() for gcl in B]      
     
@@ -286,7 +288,7 @@ def ABC_summaryStatistics_logMach(Surveys):
 
 
 def ABC_summaryStatistics_PCA(Surveys):
-    ''' Heavily inspired by https://plot.ly/ipython-notebooks/principal-component-analysis/ '''
+    """ Heavily inspired by https://plot.ly/ipython-notebooks/principal-component-analysis/ """
     [A, B] = Surveys
     
     newdist      =  lambda x:  dbc.measurand( x.Dproj_pix()/x.GCl.R200(), 'Dproj',label='$D_\mathrm{proj,rel}$',  un = '$R_{200}$' )
@@ -308,7 +310,7 @@ def ABC_summaryStatistics_PCA(Surveys):
     sklearn_pca = sklearnPCA(n_components=2)
     Y_sklearn = sklearn_pca.fit_transform(X1_std)
     
-    ''' This gives you an proxy for the average summed square error in the 2-D dimensional reduction via pca '''
+    """ This gives you an proxy for the average summed square error in the 2-D dimensional reduction via pca """
     distance = np.sum(Y_sklearn**2)/len(Y_sklearn[0])
     return distance
             

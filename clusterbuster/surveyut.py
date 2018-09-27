@@ -260,7 +260,6 @@ def assign_snaps(snaplist_z, boundaries_z, VCM, snaps_Nclusters, sigma_z=0.2, us
     
     # Now do a poisson trial for each cluster in each snapshot
     for kk, (weight, N_clusters) in enumerate(zip(weighting,snaps_Nclusters)):
-        
          if not fake:
              trials =  np.random.poisson(weight,N_clusters)
          else:

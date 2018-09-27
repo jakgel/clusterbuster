@@ -12,10 +12,10 @@
 # File dependencies: 
 # pase.par
 
-'''
+"""
 Until the 18 Apr 2017 there is no version of abcpmc that allows for np.random seeds within multiprocessing processes! 
 The alternative astroABC that can handle this. One simple workaround is to set the np.seed(...) within the function that has to be called.
-'''
+"""
 
 from __future__ import division,print_function
 
@@ -26,11 +26,11 @@ import os
 import copy
 import traceback
 
-''' In the local folder ... '''
+""" In the local folder ... """
 import surveysim.music2.mockobs    as mockobs
 import surveysim.music2.loadsnap   as loadsnap
 import surveysim.music2.radiomodel as radiomodel   
-''' ==='''
+""" ==="""
 
 import multiprocessing as mupro
 import numpy           as np
@@ -51,13 +51,13 @@ from   random import uniform
 #==== 
 par = argparse.ArgumentParser()
 par.add_argument('--par',                 default='MUSIC2COOL_NVSS',  help='parset file to run' )
-''' "--par 'MUSIC_NVSS01.parset" '''
+""" "--par 'MUSIC_NVSS01.parset" """
 
 args, unknown = par.parse_known_args()
 
 
 #==== Internal parameters, also those which specifiy the parallel run
-''' This is the experimental use of global variable sto speed up multiprocessing in case of a single survey '''
+""" This is the experimental use of global variable sto speed up multiprocessing in case of a single survey """
 
 global_snaps  = (None for none in range(24))
 
@@ -74,7 +74,7 @@ def LoadSnap_multiprocessing(pase,realisations,Rmodel,getstring=False,verbose=Fa
            
     gcl = realisations[0]
 
-    ''' We load the radio cubes '''
+    """ We load the radio cubes """
 
     strSn      = (pase['snapfolder'] + 'SHOCKS_%05i/cluster.%05i.snap.%03i.shocks') % (gcl.mockobs.clid, gcl.mockobs.clid, gcl.mockobs.snap)   
 
@@ -102,7 +102,7 @@ def LoadSnap_multiprocessing(pase,realisations,Rmodel,getstring=False,verbose=Fa
                                     
                                     
     
-    '''psi and machfiles could become sharred (or global) arrays, but as they are quite small < 1MB, the impact on performance should be snmall'''
+    """psi and machfiles could become sharred (or global) arrays, but as they are quite small < 1MB, the impact on performance should be snmall"""
     PreSnap    = radiomodel.PrepareRadioCube(snap, psiFile=pase['miscdata']+pase['PSItable'], machFile=pase['miscdata']+pase['DSAtable'])  
     PreSnap    = ( radiomodel.PiggyBagSnap(PreSnap[0]), PreSnap[1] )
 
@@ -162,11 +162,11 @@ def RadioAndMock_loaded(val, verbose=True):
     if len(snapMF) > 1:
         (radiosnap_pre,subsmt)  = radiomodel.CreateRadioCube(snapMF[1], Rmodel, realisations[0].mockobs.z_snap, nuobs=pase['nu_obs'], logging=False)[0:2]   
         smt.MergeSMT_simple(subsmt, silent=True)
-    ''' This weird interresult comes from
+    """ This weird interresult comes from
         output.put( outp + (Rmodel,)) #Rmodel is added to the tuple
         (radiocube, subsmt, Rmodel) = stage1_out.get()
         stage1_list.append( ( radiocube, Rmodel, survey) )
-    '''
+    """
     radiocube =  [radiosnap,Rmodel,survey] #Rmodel is added to the tuple
     ##=== Stage II - DoMockObs
     if verbose: print('Start compiling MockObservations for further models of cluster #%5i and amigos with in total %i realisations with %i efficiencies each.' % (realisations[0].mockobs.clid , len(realisations), len(Rmodel.effList)))  
@@ -176,11 +176,11 @@ def RadioAndMock_loaded(val, verbose=True):
     # This result of this computation is  independent of rotation and because of this was put here
     
     for kk,realisation in enumerate(realisations): # update information on the total radio power (at the rest frame frequency) in the simulational volume
-        ''' This is wrong and has to be fixed in the future!!!! 
+        """ This is wrong and has to be fixed in the future!!!! 
         Currently, we make this code really SMELLY and hard to understand
-        '''
+        """
              
-        ''' also possible: realisations[kk].Rvir       = radiocube[0].head['Rvir']'''
+        """ also possible: realisations[kk].Rvir       = radiocube[0].head['Rvir']"""
         if realisations[kk].M200.value == 0:
             try:
                 realisations[kk].M200.value       = radiocube[0].head['M200'] 
@@ -194,13 +194,13 @@ def RadioAndMock_loaded(val, verbose=True):
             print('Beware, This is slow and should not be paralised!!!! This part is not implemented')
 #            radiocubeUse = [(radiomodel.PiggyBagSnap_cut(snap, radiocube[0], float(pase['cutradio'])),Rmodel,survey)]   
             
-        ''' Here we add the radio emission due to pre-existing electrons '''
+        """ Here we add the radio emission due to pre-existing electrons """
         if len(snapMF) > 1: 
             randfactor             = 10**np.random.normal(0, Rmodel.p_sigma, 1) 
             realisation.PreNorm    = randfactor*Rmodel.p0
             radiocubeUse.radi     += realisations.PreNorm * radiosnap_pre.radi
             
-        ''' Here we compute the volume weighted radio emission '''   
+        """ Here we compute the volume weighted radio emission """   
         radiosum      = np.sum(radiocube[0].radi)    
         borders       = 2*realisations[0].R200*radiocube[0].head ['hubble']/radiocube[0].head ['aexpan']
         whereR200     = np.where( np.sqrt(np.power(radiocube[0].pos[:,0],2) + np.power(radiocube[0].pos[:,1],2) + np.power(radiocube[0].pos[:,2],2) ) < borders/2 )
@@ -234,17 +234,17 @@ def RadioAndMock(val, verbose=True):
         (radiosnap   ,subsmt)  = radiomodel.CreateRadioCube(snapMF, Rmodel, realisations[0].mockobs.z_snap, nuobs=pase['nu_obs'])[0:2]   
         smt.MergeSMT_simple(subsmt, silent=True) 
         
-#    ''' In case of pre-existing electrons '''
+#    """ In case of pre-existing electrons """
 #    if len(PreSnap) > 1:
 #        snapMF = (PreSnap[1], PreSnap[2])
 #        (radiosnap_pre,subsmt)  = radiomodel.CreateRadioCube(snapMF, Rmodel, realisations[0].mockobs.z_snap, nuobs=pase['nu_obs'])[0:2]   
 #        smt.MergeSMT_simple(subsmt, silent=True)
     
-    ''' This weird interresult comes from
+    """ This weird interresult comes from
         output.put( outp + (Rmodel,)) #Rmodel is added to the tuple
         (radiocube, subsmt, Rmodel) = stage1_out.get()
         stage1_list.append( ( radiocube, Rmodel, survey) )
-    '''
+    """
     radiocube =  (radiosnap,Rmodel,survey) #Rmodel is added to the tuple
 
 
@@ -255,9 +255,9 @@ def RadioAndMock(val, verbose=True):
     smt(task='Shed_DoMockObs') 
     # This result of this computation is  independent of rotation and because of this was put here
     for kk,real in enumerate(realisations): # update information on the total radio power (at the rest frame frequency) in the simulational volume
-             ''' This is wrong and has to be fixed in the future!!!! '''
+             """ This is wrong and has to be fixed in the future!!!! """
              
-             ''' also possible: realisations[kk].Rvir       = radiocube[0].head['Rvir']'''
+             """ also possible: realisations[kk].Rvir       = radiocube[0].head['Rvir']"""
              if realisations[kk].M200.value == 0:
                  try:
                      realisations[kk].M200.value       = radiocube[0].head['M200'] 
@@ -265,7 +265,7 @@ def RadioAndMock(val, verbose=True):
                      realisations[kk].Mvir.value       = radiocube[0].head['Mvir']
                  realisations[kk].updateInformation(massproxis=True)
              
-    ''' Here we compute the volume weighted radio emission '''         
+    """ Here we compute the volume weighted radio emission """         
     radiosum      = np.sum(radiocube[0].radi)    
     borders       = 2*realisations[0].R200*radiocube[0].head ['hubble']/radiocube[0].head ['aexpan']
     whereR200     = np.where( np.sqrt(np.power(radiocube[0].pos[:,0],2) + np.power(radiocube[0].pos[:,1],2) + np.power(radiocube[0].pos[:,2],2) ) < borders/2 )
@@ -288,10 +288,10 @@ def RadioAndMock(val, verbose=True):
 #            print '____ 4 ____' + strftime("%Y-%m-%d %H:%M:%S", gmtime())  # DEBUGGING       
     smt.MergeSMT_simple(subsmt, silent=True)
     
-#    '''DEBUGGING'''
+#    """DEBUGGING"""
 #    for gcl in GClrealisations_used:
 #        print('...DEBUGGING',gcl.mockobs.snap, len(gcl.relics))
-#    '''DEBUGGING END'''
+#    """DEBUGGING END"""
 
     return ((GClrealisations_used,  Rmodel), smt)  
 
@@ -318,7 +318,7 @@ def RadioCuts(val, compradio=False):
         realisations[0].updateInformation()
         snap.head['M200']             = realisations[0].M200.value 
                      
-        ''' Here we compute the volume weighted radio emission '''         
+        """ Here we compute the volume weighted radio emission """         
         radiosum      = np.sum(snap.radi)    
         borders       = 2*realisations[0].R200*snap.head ['hubble']/snap.head ['aexpan']
         whereR200     = np.where( np.sqrt(np.power(snap.pos[:,0],2) + np.power(snap.pos[:,1],2) + np.power(snap.pos[:,2],2) ) < borders/2 )
@@ -350,7 +350,7 @@ def RadioCuts(val, compradio=False):
 
 
 def mupro_RadioAndMock( in_queue, output ):
-    ''' Does computation of the radio cube and mockobs at once, only the output is put into another function '''
+    """ Does computation of the radio cube and mockobs at once, only the output is put into another function """
     
     
     smt = iom.SmartTiming(); 
@@ -365,9 +365,9 @@ def mupro_RadioAndMock( in_queue, output ):
             (outp, subsmt) = RadioAndMock(val)
             smt.MergeSMT_simple(subsmt, silent=True)
             
-            '''Workaround for process lost '''
+            """Workaround for process lost """
             output.put( (None, smt) )
-            ''' originaly: output.put( (outp, smt) ) '''
+            """ originaly: output.put( (outp, smt) ) """
         except Exception as e:
             tb = traceback.format_exc()
             with open('/data/TestLog.txt',"a") as f:
@@ -381,7 +381,7 @@ def mupro_RadioAndMock( in_queue, output ):
 
 
 def mupro_RadioCuts( in_queue, output  ):
-    ''' Does computation of the radio_cube, only the output is put into another function '''
+    """ Does computation of the radio_cube, only the output is put into another function """
     
     smt = iom.SmartTiming(); 
 #    from time import gmtime, strftime  
@@ -436,7 +436,7 @@ def mupro_Output( in_queue, out_queue ):
   
     
 def DoRun( inputs, smt, verbose=False):
-    ''' Please mind that this procedure determines early if the number of detected relics becomes to large!'''  
+    """ Please mind that this procedure determines early if the number of detected relics becomes to large!"""  
     (pase, survey) = inputs
     #===
     gcl          = survey.GCls[0] 
@@ -463,9 +463,9 @@ def DoRun( inputs, smt, verbose=False):
             if verbose: print('Recognized ID %5i, snap %3i, #%i in cluster file' % (gcl.mockobs.clid, gcl.mockobs.snap, gcl.mockobs.id) )
 
             smt(task='LoadSnaps')   
-            ''' We load the radio cubes '''
+            """ We load the radio cubes """
             strSn      = (pase['snapfolder'] + 'SHOCKS_%05i/cluster.%05i.snap.%03i.shocks') % (gcl.mockobs.clid, gcl.mockobs.clid, gcl.mockobs.snap)   
-            ''' SMELLY: This causes some issues, as there are two different 'load' versions for one and the same task '''
+            """ SMELLY: This causes some issues, as there are two different 'load' versions for one and the same task """
             if  suut.TestPar(pase['useMiniCube']):   # original snapshot
                  strSn   = strSn.replace('cluster.', 'clusterSUBSET.') 
             if verbose: print('Loading snapshot:',strSn)
@@ -479,29 +479,29 @@ def DoRun( inputs, smt, verbose=False):
             # Make PreSnap slimmer through deleting things which aren't needed? This could make the communikation much faster
             if verbose: print(' ___ Particles in snap ___ :', PreSnap[0].radi.shape)  # DEBUGGING
 
-            ''' now we'll assign two functions to the pool for them to run - 
-                one to handle stage 1, one to handle stage 2 ''' 
+            """ now we'll assign two functions to the pool for them to run - 
+                one to handle stage 1, one to handle stage 2 """ 
             inargs                     = (PreSnap, pase, realisations, survey)  #(radiocube, B0, kappa, z, strSn, interpolate)  # , int(TestPar(pase['default']))
             stage1_outSmall, smt_small = RadioAndMock_loaded( inargs, verbose=verbose )
             smt.MergeSMT_simple(smt_small)
 
             mupro_Output_NicePickleClusters( [stage1_outSmall], survey.outfolder )
-            ''' pickles a bunch of single galaxy clusters, they are latter joined into a survey '''
-            ''' It should also pickle the corresponding fits images (in case of a detection) '''
+            """ pickles a bunch of single galaxy clusters, they are latter joined into a survey """
+            """ It should also pickle the corresponding fits images (in case of a detection) """
             del realisations[:]  # Clear rotations of clusters, so that append, can work for a new try, ...  
           
-            ''' Block BEGIN: If you choose a very loosy model then you might end up with way more relic clusters then exspected. 
+            """ Block BEGIN: If you choose a very loosy model then you might end up with way more relic clusters then exspected. 
                 I presume that those both slows down the process and leads to working memory issues.
                 To prevent this I stop the computation if the weighted relic count is way higher than the expected relic count.
                 In this case I should the procedure let fail, i.e. give it the minimum score in the metric ...(lso in the metric test)
-            '''
+            """
             countW = int(gcl.stoch_drop(survey.dropseed))
             count += countW
             if count > countmax:
                 print('Because the (weighted) number of relics already now is larger than %i the function DoRun() is terminated.'  % (countmax))
                 return False, smt         
     
-            '''  Block END '''         
+            """  Block END """         
                            
     if verbose: print("#=== Proccesses completed. Please check for the data output.'")
     if verbose: smt(forced=True)
@@ -546,7 +546,7 @@ def SheduleTasks( inputs, smt, ABC=False, verbose=False):
     #=== Reload data
     Taskcube =   np.load(survey.logfolder + '/TaskCube.npy')
     
-    ''' execute Taskcube
+    """ execute Taskcube
        list for Radio_models  --> needs to be stored
        list for Clusters      --> needs to be computed every time? No, one can also load it
        !!! from here on load data cube and distribute it over cores, if all clusters of one model are loaded, then proceede
@@ -559,7 +559,7 @@ def SheduleTasks( inputs, smt, ABC=False, verbose=False):
        !!! Create subfolders for the  output 
        !!! image fits are saved for just for one efficency
        !!! Pickle the cluster objects (seperated in per snapshot) at the end
-    '''
+    """
     
     # now that the processes are running and waiting for their queues
     # let's give them some work to do by iterating
@@ -576,7 +576,7 @@ def SheduleTasks( inputs, smt, ABC=False, verbose=False):
 #    survey.GCls = [hgcl for hgcl in survey.GCls if hgcl.name == 'MUSIC200190-000014-000015']
 #    print('_',[hgcl for hgcl in survey.GCls if hgcl.name == 'MUSIC200190-000014-000015'])
 
-    '''DEVELOPMENT'''
+    """DEVELOPMENT"""
     realisations      = []
     realisations_list = []
     survey.GCls = sorted(survey.GCls, key= iom.Object_natural_keys)
@@ -593,7 +593,7 @@ def SheduleTasks( inputs, smt, ABC=False, verbose=False):
     for realisations in realisations_list:
         #if verbose: print('Recognized ID %5i, snap %3i, #%i in cluster file' % (gcl.mockobs.clid, gcl.mockobs.snap, gcl.mockobs.id) )
     
-        ''' Outdated
+        """ Outdated
         countRC    = 0
         scippedRC  = 0
         if np.sum(Taskcube[ClID_ii-1,:]) == Taskcube.shape[1]:
@@ -601,21 +601,21 @@ def SheduleTasks( inputs, smt, ABC=False, verbose=False):
             scippedRC    += scip
             scippedTotal += scip
             continue
-        '''
+        """
          
         
-        '''Outdated
+        """Outdated
         iom.check_mkdir(survey.outfolder + '/tmp/' )
         PreSnapfile = survey.outfolder + '/tmp/' +  '%05i.snap.%03i.shocks' % (gcl.mockobs.clid, gcl.mockobs.snap)
         tmplist.append(PreSnapfile)
         iom.pickleObject_old( PreSnap, PreSnapfile )   
-        '''
+        """
         
-        ''' DEVELOPMENT, outdated
+        """ DEVELOPMENT, outdated
         global FILEMA
         FILEMA.add(PreSnapfile,PreSnap)
 #            FILEMA[PreSnapfile]
-        DEVELOPMENT '''
+        DEVELOPMENT """
    
         
         #===  Initialize the set of magnetic models for one snapshot
@@ -634,8 +634,8 @@ def SheduleTasks( inputs, smt, ABC=False, verbose=False):
         realisations_use = copy.deepcopy(realisations)
         
 
-        ''' now we'll assign two functions to the pool for them to run - 
-            one to handle stage 1, one to handle stage 2 '''
+        """ now we'll assign two functions to the pool for them to run - 
+            one to handle stage 1, one to handle stage 2 """
         
         if suut.TestPar(pase['redSnap']):
             inargs  = (pase, realisations_use, survey_bones)  #(radiocube, B0, kappa, z, strSn, interpolate)  # , int(TestPar(pase['default']))
@@ -657,8 +657,8 @@ def SheduleTasks( inputs, smt, ABC=False, verbose=False):
 
 
     
-        ''' Output 1: Triggers output queue when a new cube is loaded 
-            Fix of https://bugs.python.org/issue23582 applied to avoid loss of outputs'''
+        """ Output 1: Triggers output queue when a new cube is loaded 
+            Fix of https://bugs.python.org/issue23582 applied to avoid loss of outputs"""
         if verbose: print('    We came so far in the stage I', stage1_out, 'stage1_out.qsize()', stage1_out.qsize(), 'Len stage1_list:', len(stage1_list))       
         pool_wait( [stage1_queue], int(1.5 * Nworker), affix='Wait_unjoined') # Wait until there is no computation left for stage1
 #            if stage1_out.empty():
@@ -672,9 +672,9 @@ def SheduleTasks( inputs, smt, ABC=False, verbose=False):
             try:                                                                 
                 result = stage1_out.get_nowait() 
                 smt.MergeSMT_simple(result[1])
-                ''' Workaround '''
+                """ Workaround """
                 stage1_list.append( result[0] )
-                ''' formerly: stage1_list.append( result[0] ) '''                        
+                """ formerly: stage1_list.append( result[0] ) """                        
             except:               #Empty                                         
                 pass 
  
@@ -685,7 +685,7 @@ def SheduleTasks( inputs, smt, ABC=False, verbose=False):
         #        pass
             
         del stage1_list[:]  
-        '''Workaround: removal of code, uncommented output queue:
+        """Workaround: removal of code, uncommented output queue:
         inargs = copy.deepcopy(stage1_list), survey.outfolder, suut.TestPar(pase['FITSout']), suut.TestPar(pase['pickleClusters'])
         
         if len(stage1_list) > 0:
@@ -700,15 +700,15 @@ def SheduleTasks( inputs, smt, ABC=False, verbose=False):
         while not stage2_out.empty():
            result =  stage2_out.get()
            smt.MergeSMT_simple(result)         
-        '''  
+        """  
            
-        ''' Output 1 end '''
+        """ Output 1 end """
    
     smt('Wait_joined')    
 
-    #''' Output 2: Last chance for output '''
+    #""" Output 2: Last chance for output """
     for ii in [None] * Nworker:
-         ''' We make sure that every worker is killed '''
+         """ We make sure that every worker is killed """
          stage1_queue.put(POISON_PILL)
     pool_wait( [stage1_queue, stage2_queue], 0, affix='Wait_joined', tmax=6e3)    
     import time
@@ -720,7 +720,7 @@ def SheduleTasks( inputs, smt, ABC=False, verbose=False):
         smt.MergeSMT_simple(result[1])
         stage1_list.append( result[0] )
         
-    '''Workaround: removal of code, uncommented output queue:    
+    """Workaround: removal of code, uncommented output queue:    
     inargs = copy.deepcopy(stage1_list), survey.outfolder, suut.TestPar(pase['FITSout']), suut.TestPar(pase['pickleClusters'])
     if len(stage1_list) > 0:
         for stage in stage1_list:
@@ -732,17 +732,17 @@ def SheduleTasks( inputs, smt, ABC=False, verbose=False):
     
     
     pool_wait( [stage2_queue], 0, affix='Wait_joined', tmax=6e3)        
-    '''    
+    """    
     
-    '''Save the final logfile '''
+    """Save the final logfile """
     while not stage2_out.empty():
         result    = stage2_out.get()
         smt.MergeSMT_simple(result)     
      
     np.save(survey.logfolder + '/TaskCube', Taskcube)     
     iom.pickleObject(smt     , survey.outfolder + '/', 'smt')   
-    ''' pickles a bunch of single galaxy clusters, they are latter joined into a survey '''
-    ''' It should also pickle the corresponding fits images (in case of a detection) '''
+    """ pickles a bunch of single galaxy clusters, they are latter joined into a survey """
+    """ It should also pickle the corresponding fits images (in case of a detection) """
     
     print("#=== Proccesses completed. Please check for the data output.'")
     smt(forced=True)
@@ -758,10 +758,10 @@ def SheduleTasks( inputs, smt, ABC=False, verbose=False):
 
 
 
-'''Originaly main() and SheduleTasks() where designed as independent functions because I want to prevent the buffer to overflow.
-   Now I use these two functions as the one that controls the ABC (main) and the one that does the computation (shedule task)'''
-def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None, Clfile = 'ClusterCSV/AllMUSIC-AGN',  processTasks = True):
-    '''
+"""Originaly main() and SheduleTasks() where designed as independent functions because I want to prevent the buffer to overflow.
+   Now I use these two functions as the one that controls the ABC (main) and the one that does the computation (shedule task)"""
+def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None, Clfile = 'clusterCSV/MUSIC2-AGN',  processTasks = True):
+    """
     input: parameter file:
            ABC  : None or a list of parameters (what a pity that a dictionary is not possible with the current abcpmc or ABCpmc module)
     
@@ -775,16 +775,15 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
                 
     If pase['default'] is False then a run will be made with one shell and one single cluster realisation per snapshot
                 
-    For abcpmc MUSIC-2 vanilla use AllMUSIC-AGN for ClusterCSV and MUSIC2_NVSS02_SSD.parset for parset
-               MUSIC-2cooling  use AllMUSIC-AGN for ClusterCSV and MUSIC2COOL_NVSS.parset         for parset
-    '''
-    
+    For abcpmc MUSIC-2 vanilla use MUSIC2-AGN for clusterCSV and MUSIC2_NVSS02_SSD.parset for parset
+               MUSIC-2cooling  use MUSIC2-AGN for clusterCSV and MUSIC2COOL_NVSS.parset         for parset
+    """
     RModelID   = os.getpid() #get process id  
        
     seed = random.randrange(4294967295)
     np.random.seed(seed=seed) 
     
-    '''also possible : np.random.seed(seed=None) 
+    """also possible : np.random.seed(seed=None) 
     ... this here is only to save the seed, which is not needed, because all the random stuff can be reconstructed from the cluster statistics
     
     
@@ -794,20 +793,17 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
     import random
     random.randrange(sys.maxsize)
     
-    '''
+    """
     
-    
-    
-    ''' Except from pase these information are outdated!!!! '''
-    
-    #===  Read parset; then extract fundamental parameters ... Parset OBLIGATORY has be saved as  'parsets/*.parset'
-    if workdir is None: workdir=os.path.dirname(__file__)
-    
-    pase, Z = suut.interpret_parset(parfile, repository=workdir+'/parsets/')
-    
-    
+    """ Except from pase these information are outdated!!!! """
+
 
     
+    #===  Read parset; then extract fundamental parameters ... Parset OBLIGATORY has be saved as  'parsets/*.parset'
+    if workdir is None: workdir=os.path.dirname(__file__)+'/'
+    pase, Z = suut.interpret_parset(parfile, repository=workdir+'/parsets/')
+    # TODO: workdir should be the same as pase['miscdir'] yet the issue is that it is unknown before miscdir is known.
+
     if survey is None:
         surveyN     =  parfile.replace('.parset','')
         savefolder  =  pase['outf'] +surveyN             
@@ -826,6 +822,7 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
     
     restarted    = -1
 
+
        
     #=== Create folder if needed
     iom.check_mkdir(savefolder)
@@ -837,114 +834,81 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
     #=== Create detection information
     dinfo          = cbclass.DetInfo(beam=[float(pase['S_beam']),float(pase['S_beam']),0], spixel=float(pase['S_pixel']), rms=float(pase['RMSnoise'])*1e-6, limit=float(pase['RMSnoise'])*float(pase['Detthresh'])*1e-6)
 
-
-
     if survey is None:
-        '''Create all galaxy clusters:
-            All this stuff is just to decide which clusters to use. Somebody should put this in the SurveyUtils!'''
+        """Create all galaxy clusters:
+            All this stuff is just to decide which clusters to use. Better placement: in SurveyUtils"""
     
-        ''' Read the cluster lists from MUSIC-2 for all snapshots '''
+        """ Read the cluster lists from MUSIC-2 for all snapshots """
         # first create all : load all possible files, read header, save list!
         # ID SNAP z M200  
-        ''' A simple estimate of the number of cluster ids '''
-        all_clusters = pd.read_csv('%s_allclusters.csv' % (Clfile))
-        all_clusters.info()
+        """ A simple estimate of the number of cluster ids """
+        all_clusters = pd.read_csv('%s%s_allclusters.csv' % (pase['miscdata'], Clfile))
+        if verbose:
+            all_clusters.info()
         zsnap_list  = pd.Series(all_clusters['redshift'].unique())
         snapidlist = pd.Series(all_clusters['snapID'].unique())      
         clusterIDs = list(all_clusters['clID'].unique())   
         NclusterIDs = [ len(all_clusters[all_clusters['redshift'] == z]) for z in zsnap_list ]
-#        print(zsnap_list)
-#        print(snapidlist)
-#        print(clusterIDs, NclusterIDs)
-#        return 0
 
         misslist     = np.loadtxt(pase['miscdata']+pase['missFile'])
-        ''' e.g. cluster 10# was not (re)simulated, in neither of the MUSIC-2 simulations (also 7 has some issues?)'''
-    
-        all_lines   = []
+        """ e.g. cluster 10# was not (re)simulated, in neither of the MUSIC-2 simulations (also 7 has some issues?)"""
+
         GClList     = []
         
         if pase['snaplistz'] != 'None':
             
-            snaplistz    = [float(z) for z in   iom.str2list(pase['snaplistz']) ]
-            snapidlist   = [float(z) for z in   iom.str2list(pase['snapidlist'].replace(' ','')) ]
+            snaplistz  = [float(z) for z in iom.str2list(pase['snaplistz'])]
+            snapidlist = [float(z) for z in iom.str2list(pase['snapidlist'].replace(' ',''))]
        
-            zsnap_list  = (snaplistz[::-1])[0:11]   # 0:17 List of available sn [0:11]
+            zsnap_list = (snaplistz[::-1])[0:11]   # 0:17 List of available sn [0:11]
             snapidlist = (snapidlist[::-1])[0:11]  # 0:17 [0:11]
-        # Both values needs to be decreasing
-            ''' You need a line file, for each snapshot to map to redshift '''
-            for z in zsnap_list:
-                try:
-                    with open('%s%s_z%03i.dat' % (pase['miscdata'], Clfile, z*100)) as f: 
-                        lines = f.readlines()
-                        lines   = [ (t.replace('\n','')).split() for t in lines ]
-                        all_lines.append(lines)
-                except:
-                    message = '%s%s_z%03i.dat could not be loaded.' % (pase['miscdata'], Clfile, z*100)
-        #            warnings.warn(message)
-                    print(message)
-                    all_lines.append([])
-                    
-                        
-            NclusterIDs =  [ len(ll)   for ll in  all_lines ]   
-            if verbose: print( '[ len(lines)   for lines in  all_lines ]', NclusterIDs )
-        
-        
-#        print(zsnap_list)
-#        print(snapidlist)
-            
+
+            NclusterIDs =  [len(all_clusters['clID'].unique().tolist())]*len(snaplistz)
+            if verbose: print( '[ len(lines)   for lines in  all_lines ]', NclusterIDs)
+
         use_list    = [True] * len(zsnap_list)  # Also put some False, you don't really want to use the z=4.0 snapshots!
         Vsimu       = (1.0/(myu.H0/100.))**3    # Gpc**3 comoving volume
 
-        ''' Iterate trough each shell of your z-onion and attribute clsuters to them
-        # with z-range and percentage of covered sky, we have z=0.1
-        '''
+        """ Iterate trough each shell of your z-onion and attribute clsuters to them
+            with z-range and percentage of covered sky, we have z=0.1
+        """
         if (not suut.TestPar(pase['default'])): 
-            N_shells=1
+            N_shells = 1
         else:
             N_shells = float(pase['N_shells'])
-        shells_z, delta_z = np.linspace(Z[0],Z[1], num=N_shells+1, retstep=True)
-        DCMRs             = [cosmocalc(z, H0=myu.H0, WM=Omega_M, WV=Omega_vac)['VCM']*1e3 for z in shells_z]    #Array if comoving distance  sampled onto z-array
-        count             = 0
-        
-        missing=False
 
-        for  (zlow,zhigh,VCMlow,VCMhigh) in zip(shells_z[0:-1],shells_z[1:], DCMRs[0:-1],DCMRs[1:]): 
-            ''' Iterate through each shell of the observed volume 
+
+        shells_z, delta_z = np.linspace(Z[0],Z[1], num=N_shells+1, retstep=True)
+        DCMRs = [cosmocalc(z, H0=myu.H0, WM=Omega_M, WV=Omega_vac)['VCM']*1e3 for z in shells_z]    #Array if comoving distance  sampled onto z-array
+        count = 0
+
+        missing = False
+        for (zlow,zhigh,VCMlow,VCMhigh) in zip(shells_z[0:-1], shells_z[1:], DCMRs[0:-1], DCMRs[1:]):
+
+            """ Iterate through each shell of the observed volume 
                 and assign clusters
-            '''
-    
+            """
+
             boundaries_z = (zlow,zhigh)
             VCM          = (VCMlow, VCMhigh)
             z_central = np.mean(boundaries_z) 
             if not suut.TestPar(pase['default']): z_central = 0.051
-            choosen =  suut.assign_snaps(zsnap_list, boundaries_z, VCM[1]-VCM[0], NclusterIDs, sigma_z = float(pase['sigma_z']), 
+            choosen = suut.assign_snaps(zsnap_list, boundaries_z, VCM[1]-VCM[0], NclusterIDs, sigma_z = float(pase['sigma_z']),
                                          skycoverage=float(pase['surv_compl']), Vsimu=Vsimu, use_list=use_list, 
                                          fake=(not suut.TestPar(pase['default'])), logmode=None)
-            if verbose: print('len(choosen)',  len(choosen)  )
-        
+            if verbose: print('len(choosen)', len(choosen))
             for (snap, kk) in choosen:
-    
-                ''' === Outdated BEGIN ===
-                # open the lines with the corresponding clusters    
-                l = all_lines[snap][kk]          
-                ids  = int(l[0])
-                M200 = float(l[3]) 
-                === Outdated END === '''
-                
                 l    = all_clusters[(all_clusters["clID"] == clusterIDs[kk]) & (all_clusters["snapID"] == snapidlist[snap])]
-                # It would be good if you could directly access the element like in an ordered lsit, as this would dramaticly speed up the process
+                # It would be good if you could directly access the element like in an ordered list, as this would dramaticly speed up the process
                 #.iloc()
-#                l    = all_clusters.loc['M200', 'M200'] 
                 ids  = int(l["clID"])
                 M200 = float(l["M200"])
                 
-                ''' DEBUGGING !!! '''
-                z_central = np.sqrt(float(l["redshift"])**2 + 0.051**2)
-                if z_central > 1.71:
-                    continue
-                ''' DEBUGGING END!!! '''
-                
+                """ DEBUGGING !!! """
+#                z_central = np.sqrt(float(l["redshift"])**2 + 0.051**2)
+#                if z_central > 1.71:
+#                    continue
+                """ DEBUGGING END!!! """
                 # Decide on the projection of the cluster
                 # it would be great if a randowm initializer beetween 0 and 1 could have been saved, 
                 if suut.TestPar(pase['rotation']):
@@ -962,7 +926,7 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
                     continue
 
    
-                ''' Skips missing snapshots '''
+                """ Skips missing snapshots """
                 for miss in misslist:
                     if ((miss[0] == ids) and (miss[1] == snapidlist[snap])):
                         missing=True
@@ -974,7 +938,9 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
                 
                 count += 1
                 if verbose: print(count, M200)
-            
+
+
+                # Create additional class objects and the galaxyCluster_simulation
                 dinfo     = cbclass.DetInfo(beam=[float(pase['S_beam']),float(pase['S_beam']),0], spixel=float(pase['S_pixel']), 
                                                   rms=float(pase['RMSnoise'])*1e-6, limit=float(pase['RMSnoise'])*float(pase['Detthresh'])*1e-6,
                                                   nucen=float(pase['nu_obs']), center=(0,0), survey = 'UVcoverage')
@@ -988,16 +954,15 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
         
         
         if verbose: print('Length of GClList:', len(GClList) )
-        ''' Stuff ends '''
-        
-        ''' New approach: Create a list of modes for the radio emission (Rmodels)
-        '''
+
+        """ New approach: Create a list of modes for the radio emission (Rmodels)
+        """
         now = datetime.datetime.now()
         writestring = 'y%i m%02i d%02i %02i:%02i:%02i ' % (now.year, now.month, now.day, now.hour, now.minute, now.second)
  
         if ABC is None:
-            '''ISSUE: The issue with the currenly used abc routines is that yyou have to give them arrays. Which is why the corresponding model associated has to be defined at this layer.
-               Giving the procedure a function which would create this array would allow all of this to be defined in the top layer of abc '''
+            """ISSUE: The issue with the currenly used abc routines is that yyou have to give them arrays. Which is why the corresponding model associated has to be defined at this layer.
+               Giving the procedure a function which would create this array would allow all of this to be defined in the top layer of abc """
              
             RModel = cbclass.RModel(RModelID, effList=[float(pase['eff'])], B0=float(pase['B0']), kappa=float(pase['kappa']), compress=float(pase['compress'])) 
                      
@@ -1005,12 +970,12 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
                     RModel.effList   = RModel.effList[0]
                      
         elif len(ABC) == 1:        
-                ''' Vary only efficiency '''                     
+                """ Vary only efficiency """                     
                 (lgeff)  = ABC
                 RModel = cbclass.RModel(RModelID, effList=[10**lgeff], B0=1, kappa=0.5, compress=float(pase['compress']))
                 writestring += "%7i" % (RModelID)  + ' %+.4e %+.4e %+.4e %+.3f\n' % (RModel.effList[0], RModel.B0, RModel.kappa, RModel.compress)                
         elif len(ABC) == 3:  
-                ''' Varies the standart model '''                           
+                """ Varies the standart model """                           
                 (lgeff, lgB0, kappa)  = ABC
                 RModel = cbclass.RModel(RModelID, effList=[10**lgeff], B0=10**lgB0, kappa=kappa, compress=float(pase['compress']))
                 writestring += "%7i" % (RModelID)  + ' %+.4e %+.4e %+.4e %+.3f\n' % (RModel.effList[0], RModel.B0, RModel.kappa, RModel.compress)                 
@@ -1033,11 +998,11 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
 
 
         
-        ''' WARNING: BAD code! This is a racing condition! Not nice at all, but at least very inprobable to be triggered. Better would be a try, except control-structure !!! '''
+        """ WARNING: BAD code! This is a racing condition! Not nice at all, but at least very inprobable to be triggered. Better would be a try, except control-structure !!! """
         with open("%s%s.txt" % (logfolder, '/ProcessLog'), "a") as f:
                 f.write(writestring)  
         
-        ''' Create survey '''
+        """ Create survey """
         outfolder = '%s_%05i/' % (logfolder,RModelID)
         survey    = cbclass.Survey(GClList,survey='%s' % (parfile.replace('.parset','')), emi_max=float(pase['RMSnoise'])*1e-3*200, 
                                    cnt_levels=[float(pase['RMSnoise'])*2**i for i in [1,2,3,4,5,6,7,8,9,10]],saveFITS=(ABC is None),savewodetect=suut.TestPar(pase['savewodetect']),
@@ -1046,15 +1011,15 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
 #        iom.pickleObject(survey, survey.outfolder, 'surveyClass')     
 
     else:
-        ''' If you directly loaded a survey, just use its internal Rmodel '''
+        """ If you directly loaded a survey, just use its internal Rmodel """
         RModel = survey.Rmodel
 
     if verbose: print('Outfolder:',survey.outfolder)  
 
-    '''=== Create a Task Cube, modify it & save it 
+    """=== Create a Task Cube, modify it & save it 
     The function of this Taskcube formerly was to keep track of all the computations that were already done in my multiproccecing version of ClusterBuster 
     Now it is outdated and isn't maintained anymore. After a BUG I didn't want to fix I decommisened this functionality
-    '''
+    """
     
     Taskcube = np.zeros( ( len(survey.GCls) , len([RModel]) )  ) 
     # A cube of all possible entries , efficiency is always fully computed and thus not in the Taskcube
@@ -1070,7 +1035,7 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
             else:
                Taskcube[GCl_ii, RModelID] = 1    
     np.save(logfolder + '/TaskCube', Taskcube)  # also to be pickled/saved: Levels Cluster&TaskID --> B0, kappa, (z) -->  eff0
-    ''''''
+    """"""
            
     if verbose: print('#== Begin Processing task' )
 
@@ -1088,19 +1053,19 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
     return survey  #(pase['outf'], '%s_%05i' % (surveyN,RModelID) )
 
 
-def create_ClusterLibrary(snapfolder='/radioarchive/MergerTrees/Clusters/', Clfile = 'ClusterCSV/AllMUSIC', copyfolder = '/data2/MUSIC-2/',     
-                          clusters =range(1,283), snaps    =range(3,18)):
-    ''' This is an aunciiliary function that should be run once to create a file that lets you map R200 and M200 to each snapshot.
+def create_ClusterLibrary(snapfolder='/radioarchive/MergerTrees/Clusters/snaps/', Clfile = 'clusterCSV/MUSIC2', copyfolder = '/data2/MUSIC-2/',
+                          clusters =range(1,283), snaps    =range(3,18), add=''):
+    """ This is an aunciiliary function that should be run once to create a file that lets you map R200 and M200 to each snapshot.
         This is done, because in the current implementation of the ClusterBuster_pythonClass.py the galaxycluster computing these quantities is quite costly
         The cost is that the taken R200 and M200 differ from the real values at zobs != zsnap,
         
-        BUG and SMELL: THIS routine however is not used anymore (?), as the Radiocuts computes its own M200 values, before it compresseses the snapshots!'''
+        BUG and SMELL: THIS routine however is not used anymore (?), as the Radiocuts computes its own M200 values, before it compresseses the snapshots!"""
     
     from shutil import copyfile
     import os.path
 
                 
-    ''' UTILITY FOR THESIS           
+    """ UTILITY FOR THESIS           
     for snapID in [0,1,2,3,4,5,6]:            
         for clid in clusters:
                 folderSn = '%s%s/SHOCKS_%05i/' % (snapfolder, '', clid)
@@ -1110,7 +1075,7 @@ def create_ClusterLibrary(snapfolder='/radioarchive/MergerTrees/Clusters/', Clfi
                    # print('rm %s'  % (strSn))
                     os.system('rm %s'  % (strSn))           
     return 0
-    UTILITY FOR THESIS END '''     
+    UTILITY FOR THESIS END """     
            
 
 
@@ -1121,8 +1086,8 @@ def create_ClusterLibrary(snapfolder='/radioarchive/MergerTrees/Clusters/', Clfi
     for snapID in snaps:
         Outlist = []
         for clid in clusters:
-            for adds in ['']:
-                strSn = '%s%s/SHOCKS_%05i/cluster.%05i.snap.%03i.shocks' % (snapfolder, adds, clid, clid, snapID)
+            for adds in [add]:
+                strSn = '%s/SHOCKS_%05i/cluster.%05i.snap.%03i.shocks' % (snapfolder, clid, clid, snapID)
                 if os.path.isfile(strSn):
                     numberOfRows += 1
                     
@@ -1133,9 +1098,9 @@ def create_ClusterLibrary(snapfolder='/radioarchive/MergerTrees/Clusters/', Clfi
     for snapID in snaps:
         Outlist = []
         for clid in clusters:
-            for adds in ['']:
-                ''' formerly this was ['','Additional2'] because different snapshots were stored in different folders '''
-                strSn = '%s%s/SHOCKS_%05i/cluster.%05i.snap.%03i.shocks' % (snapfolder, adds, clid, clid, snapID)
+            for adds in [add]:
+                """ formerly this was ['','Additional2'] because different snapshots were stored in different folders """
+                strSn = '%s/SHOCKS_%05i/cluster.%05i.snap.%03i.shocks' % (snapfolder, clid, clid, snapID)
                 print (strSn)
                 if os.path.isfile(strSn):
                     snap  = loadsnap.Loadsnap(strSn)    
@@ -1150,8 +1115,8 @@ def create_ClusterLibrary(snapfolder='/radioarchive/MergerTrees/Clusters/', Clfi
                     
                     
                     if copyfolder is not None:
-                        folderSn = '%s%s/SHOCKS_%05i/' % (snapfolder, adds, clid)
-                        folderDe = '%s%s/SHOCKS_%05i/' % (copyfolder, adds, clid) 
+                        folderSn = '%s/SHOCKS_%05i/' % (snapfolder, clid)
+                        folderDe = '%s/SHOCKS_%05i/' % (copyfolder, clid)
                         strSn    = folderSn + 'clusterSUBSET.%05i.snap.%03i.shocks.pickle' % (clid, snapID)
                         print(strSn)
                         strDe    = folderDe + 'clusterSUBSET.%05i.snap.%03i.shocks.pickle' % (clid, snapID)
@@ -1191,10 +1156,10 @@ def create_ClusterLibrary(snapfolder='/radioarchive/MergerTrees/Clusters/', Clfi
     return 0
     
 
-def main_ABC(params, parfile='MUSIC2_NVSS02_SSD.parset',  workdir='/home/jakobg/lib/ClusterBuster/Analysis_MUSIC2/', Clfile = 'ClusterCSV/AllMUSIC'):
-    ''' ' parfile='MUSIC2_NVSS02_SSD_small.parset' '''
+def main_ABC(params, parfile='MUSIC2_NVSS02_SSD.parset',  workdir='/home/jakobg/lib/ClusterBuster/Analysis_MUSIC2/', Clfile = 'clusterCSV/MUSIC2'):
+    """ ' parfile='MUSIC2_NVSS02_SSD_small.parset' """
     
-    '''DEBUGGING
+    """DEBUGGING
     import clusterbuster.ClusterBuster_pythonClass as CBclass
 
     # theta=0, phi=0, psi=0, proj='', snap=-1, z_snap=0, clid=-1, hsize=6000, binmax=1000):
@@ -1202,11 +1167,11 @@ def main_ABC(params, parfile='MUSIC2_NVSS02_SSD.parset',  workdir='/home/jakobg/
     Rmodel=cbclass.RModel([],simu=True)
 
 
-    mockobs1 = cbclass.MockObs(0,snap=17,clid=1, snapfolder  = '/radioarchive/MergerTrees/WithCoolSfrAgn/', headerc='kpc')      #
+    mockobs1 = cbclass.MockObs(0,snap=17,clid=1, snapfolder  = '/radioarchive/MergerTrees/WithCoolSfrAgn/snaps/', headerc='kpc')      #
     GCl1     = cbclass.Galaxycluster_simulation('withCool_lowdens', 0, M200=1.41e15,  z=0.01, mockobs=mockobs1,dinfo=dinfo)
     GCl1.updateInformation(eff=1) #DEBUGGING, in future versions this wont be necesairy
 
-    mockobs2 = cbclass.MockObs(0,snap=14,clid=1, snapfolder  = '/radioarchive/MergerTrees/Clusters/', headerc='Mpc')      #
+    mockobs2 = cbclass.MockObs(0,snap=14,clid=1, snapfolder  = '/radioarchive/MergerTrees/Clusters/snaps/', headerc='Mpc')      #
     GCl2     = cbclass.Galaxycluster_simulation('vanilla_lowdens', 0, M200=1.41e15,  z=0.01, mockobs=mockobs2,dinfo=dinfo)
     GCl2.updateInformation(eff=1) #DEBUGGING, in future versions this wont be necesairy
 
@@ -1214,34 +1179,34 @@ def main_ABC(params, parfile='MUSIC2_NVSS02_SSD.parset',  workdir='/home/jakobg/
     survey = cbclass.Survey([GCl2,GCl1], 'SampleClusters', cnt_levels=[0], synonyms=[], Rmodel=Rmodel, emi_max=1e-2, m_cnt=2, 
              saveFITS=True, dinfo=None, mainhist=None)
 #    return survey
-    DEBUGGING END'''
+    DEBUGGING END"""
 
     survey = main(parfile, ABC=params, Clfile = Clfile)
 
 
-    ''' MUSIC-2 '''
+    """ MUSIC-2 """
 #    print('runsurvey::main_ABC()::', survey.outfolder,survey.name) #DEBUGGING
     survey.dinfo = survey.GCls[0].dinfo              
     survey.scatterkwargs = {"alpha":0.15,"fmt":"^","markersize":7}   
-    survey.histkwargs = {"alpha":0.15}     
+    survey.histkwargs = {"alpha":0.15}
     survey = suut.AddFilesToSurvey(survey, savefolder=survey.outfolder, verbose=False,clusterwise=False) 
     return survey 
 
 
 def ReloadSurvey(survey=None,parfrom='MUSIC2COOL_NVSS_SSD.parset', parto='MUSIC2_NVSS02_SSD.parset', index=2, index_new=3,  reform=True):
-    ''' Reloads and runs a single survey and the selected clusters again - after running it saves it into another directory
+    """ Reloads and runs a single survey and the selected clusters again - after running it saves it into another directory
         This is usefull to test other survey configurations
         
         reform: Allows to reform the snapshot parameter format of the galaxy cluster. This is done to allow a direct comparison between 
          the runs with and without cooling
-    '''
+    """
     if survey is None:
         surveyname = parfrom.replace('.parset','') + '_%05i' % (index)
         savefolder = '/data/ClusterBuster-Output/'
         print(parfrom, savefolder, surveyname)
         survey = iom.unpickleObject('%s/%s/pickled/Survey' % (savefolder, surveyname))
         
-    ''' reform is [-1,0,1] and is used to convert from the different snapshot numbering systems'''
+    """ reform is [-1,0,1] and is used to convert from the different snapshot numbering systems"""
     survey.name      = parto.replace('.parset','') + '_%05i' % (index_new)
     survey.outfolder = savefolder +  survey.name
     survey.logfolder = savefolder +  survey.name
@@ -1253,16 +1218,16 @@ def ReloadSurvey(survey=None,parfrom='MUSIC2COOL_NVSS_SSD.parset', parto='MUSIC2
     
 #    pase, _, _, _, _ = suut.interpret_parset(parfile, repository=workdir+'/parsets/', relative=(ABC is not None))
 #    misslist     = np.loadtxt('/home/jakobg/lib/ClusterBuster/surveysim/music2/AllMUSIC-AGN-missing.dat')   #pase['miscdata']+pase['missFile'])
-    misslist     = np.loadtxt('/home/jakobg/lib/ClusterBuster/surveysim/music2/ClusterCSV/AllMUSIC-missing.dat')   #pase['miscdata']+pase['missFile'])   
+    misslist     = np.loadtxt('/home/jakobg/lib/ClusterBuster/surveysim/music2/clusterCSV/MUSIC2-missing.dat')   #pase['miscdata']+pase['missFile'])
     fitleredGCls = []
     missing      = False
-    '''Thesis plot, DEVLOPMENT'''
-    '''Thesis plot'''
+    """Thesis plot, DEVLOPMENT"""
+    """Thesis plot"""
     
     for GCl in survey.GCls:
         GCl.relics = []  #do not consider any previous detections
         if reform: 
-            ''' Changes that format from compatible with the radiative simulation to the adiabatic simulation '''
+            """ Changes that format from compatible with the radiative simulation to the adiabatic simulation """
             GCl.mockobs.snap   -= 3     #or +3
             GCl.mockobs.headerc = 'Mpc' #or 'kpc'
             GCl.mockobs.snapfolder = '/data2/MUSIC-2/'
@@ -1270,11 +1235,11 @@ def ReloadSurvey(survey=None,parfrom='MUSIC2COOL_NVSS_SSD.parset', parto='MUSIC2
 
         ids  = GCl.mockobs.clid
         snap = GCl.mockobs.snap
-        ''' Exclude missing snapshots '''
+        """ Exclude missing snapshots """
         for miss in misslist:
             if ((miss[0] == ids) and (miss[1] == snap)):
                 missing=True
-#                        print('__ !!! !!!')  
+
         if not missing:
             fitleredGCls.append(GCl)
         else:    
@@ -1292,18 +1257,18 @@ def ReloadSurvey(survey=None,parfrom='MUSIC2COOL_NVSS_SSD.parset', parto='MUSIC2
     else:
         parfile = parfrom
 
-    ''' DEVELOPMENT  HOEFT_model
+    """ DEVELOPMENT  HOEFT_model
     survey.Rmodel = cbclass.PreModel_Hoeft(0, effList=[3e-6], B0=2.0, kappa=0.4)  #
     survey.Rmodel.t0      = 0.055   # Minimal time since reacceleration
     survey.Rmodel.t1      = 0.55    # Maximal time since reacceleration
     survey.Rmodel.n0      = 1e-6   # Number density of accretion shocks
     survey.Rmodel.n1      = 1e-2   # Number density of 'core'
     survey.Rmodel.ratio   = 0.05   # Initial normalisation PRE and thermal at shockfront
-    '''
+    """
     
     
 #    survey.compress       =  0.7  #float(pase['compress']), 
-    ''' DEVELOPMENT  GELSZINNIS_model'''
+    """ DEVELOPMENT  GELSZINNIS_model"""
 #    survey.Rmodel.pre           = False
 #    survey.Rmodel.p0            = 4e-9      
 #    survey.Rmodel.p_sigma       = 0  
@@ -1330,7 +1295,7 @@ def copy_ClusterOuts(snapfolder = '/data/ClusterBuster-Output/', copyfolder = '/
     copyfolder = snapfolder
     for run in runs:
             for adds in ['']:
-                ''' formerly this was ['','Additional2'] because different snapshots were stored in different folders '''
+                """ formerly this was ['','Additional2'] because different snapshots were stored in different folders """
                 folderSn = '%s/MUSIC2_NVSS02_SSD_%05i' % (snapfolder, run)
                 folderDe = '%s/abcpmc_MUSIC_NVSS02_Run_02/MUSIC2_NVSS02_SSD_%05i' % (copyfolder, run) 
                 os.system('mv %s.txt %s.txt' % (folderSn, folderDe))
@@ -1341,46 +1306,45 @@ def copy_ClusterOuts(snapfolder = '/data/ClusterBuster-Output/', copyfolder = '/
     return 0
 
 
-if __name__ == "__main__":
-#    create_ClusterLibrary(copyfolder=None)
-#    create_ClusterLibrary(snapfolder = '/radioarchive/MergerTrees/WithCoolSfrAgn/', Clfile = 'ClusterCSV/AllMUSIC-AGN', copyfolder=None)
+#if __name__ == "__main__":
+#    create_ClusterLibrary(snaps=range(0,15), copyfolder=None)
+#    create_ClusterLibrary(snaps=range(3,18),snapfolder='/radioarchive/MergerTrees/WithCoolSfrAgn/snaps/', Clfile='clusterCSV/MUSIC2-AGN', copyfolder=None)
 
 #    Create smaller snapshots
 #    copy_ClusterOuts()
-#    main('MUSIC2_prep.parset'  , Clfile = 'ClusterCSV/AllMUSIC'    , verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset  
-#    main('MUSIC2COOL_prep.parset', Clfile = 'ClusterCSV/AllMUSIC-AGN', verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset        
+#    main('MUSIC2_prep.parset'  , Clfile = 'clusterCSV/AllMUSIC'    , verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset  
+#    main('MUSIC2COOL_prep.parset', Clfile = 'clusterCSV/AllMUSIC-AGN', verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset        
 
-#    create_ClusterLibrary(snapfolder = '/radioarchive/MergerTrees/WithCoolSfrAgn/', copyfolder = '/data2/MUSIC-2-AGN/')
-#    create_ClusterLibrary(snapfolder = '/radioarchive/MergerTrees/Clusters/', copyfolder = '/data2/MUSIC-2-correctedM/')
+#    create_ClusterLibrary(snapfolder = '/radioarchive/MergerTrees/WithCoolSfrAgn/snaps/', copyfolder = '/data2/MUSIC-2-AGN/')
+#    create_ClusterLibrary(snapfolder = '/radioarchive/MergerTrees/Clusters/snaps/', copyfolder = '/data2/MUSIC-2-correctedM/')
 
 
 # ABC run
-#    main('%s.parset' % (args.par), Clfile = 'ClusterCSV/AllMUSIC-AGN', verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset   
+#    main('%s.parset' % (args.par), Clfile = 'clusterCSV/AllMUSIC-AGN', verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset   
 
 # DEBUGGING
 
 #    snap   = loadsnap.Loadsnap('/data2/MUSIC-2/snaps/SHOCKS_00001/clusterSUBSET.00001.snap.004.shocks')      #,headerc='Mpc'
 #    snap   = loadsnap.Loadsnap('/radioarchive/MergerTrees/Clusters/snaps/SHOCKS_00001/cluster.00001.snap.004.shocks')      #,headerc='Mpc'
 #    print( snap.head)
-#    print( np.mean(snap.pos[:,0]), np.mean(snap.pos[:,1]), np.mean(snap.pos[:,2]), snap.head )       
-
+#    print( np.mean(snap.pos[:,0]), np.mean(snap.pos[:,1]), np.mean(snap.pos[:,2]), snap.head )
 ##
-#    survey = main('MUSIC2_NVSS02_SSD.parset', Clfile = 'ClusterCSV/AllMUSIC', verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset 
+#    survey = main('MUSIC2_NVSS02_SSD.parset', Clfile = 'clusterCSV/AllMUSIC', verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset 
 #    print('!________________________________:::::::::::::::::::______________________', survey.outfolder)
 #    time.sleep(16)
 #    suut.AddFilesToSurvey(survey, savefolder=survey.outfolder, verbose=False,clusterwise=True)
     
     
     
-#    main('MUSIC2COOL_NVSS_SSD.parset', Clfile = 'ClusterCSV/AllMUSIC-AGN', verbose=False) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset  
-#    main('MUSIC2_statisticsMassesPower.parset', Clfile = 'ClusterCSV/AllMUSIC-AGN', verbose=False) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset   
+#    main('MUSIC2COOL_NVSS_SSD.parset', Clfile = 'clusterCSV/AllMUSIC-AGN', verbose=False) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset  
+#    main('MUSIC2_statisticsMassesPower.parset', Clfile = 'clusterCSV/AllMUSIC-AGN', verbose=False) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset   
 #
 #    time.sleep(30)   
 
 #    suut.MergeFilesToSurvey('/data/ClusterBuster-Output/'+'MUSIC2COOL_NVSS_SSD_%05i' % (2),'MUSIC2COOL_NVSS_SSD_%05i' % (2), verbose=False,clusterwise=True) 
 #    time.sleep(3)   
 #   main_ABC([-5,0,0], parfile='MUSIC2COOL_NVSS_SSD.parset', surveyname_new = 'MUSIC2COOL_NVSS_SSD_%05i' % (2)) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset 
-#   main_ABC([-5,0.5,0.5], surveyname_new = 'MUSIC2_NVSS_SSD_%05i' % (2), Clfile = 'ClusterCSV/AllMUSIC') #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset 
+#   main_ABC([-5,0.5,0.5], surveyname_new = 'MUSIC2_NVSS_SSD_%05i' % (2), Clfile = 'clusterCSV/AllMUSIC') #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset 
   
 #misc
 #    for index_new in [18]: 
@@ -1391,13 +1355,18 @@ if __name__ == "__main__":
 #    iom.plot_smt(folder, 'smt', log=True, rel=True)
     
     
-#    main('MUSIC2COOL_NVSS_SSD.parset', Clfile = 'ClusterCSV/AllMUSIC-AGN', verbose=False) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset  
+#    main('MUSIC2COOL_NVSS_SSD.parset', Clfile = 'clusterCSV/AllMUSIC-AGN', verbose=False) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset  
 #    ReloadSurvey()    
 #       time.sleep(3)             
 #    main_ABC([-5,0,0], surveyname_new = 'MUSIC2_NVSS01_SSD_00002') #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset 
 #        index
    
-#    create_ClusterLibrary(snapfolder = '/data/Threehundrets/', Clfile = 'ClusterCSV/Threehundrets', copyfolder = None, clusters =range(1,2), snaps  =range(86,129)) 
-#    survey = main('Threehundrets_prep.parset', Clfile = 'ClusterCSV/Threehundrets', verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset 
-    survey = main('Threehundrets.parset', Clfile = 'ClusterCSV/Threehundrets', verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset 
+#    create_ClusterLibrary(snapfolder = '/data/Threehundrets/', Clfile = 'clusterCSV/Threehundrets', copyfolder = None, clusters =range(1,2), snaps  =range(86,129)) 
+#    survey = main('Threehundrets_prep.parset', Clfile = 'clusterCSV/Threehundrets', verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset 
+#    survey = main('Threehundrets.parset', Clfile = 'clusterCSV/Threehundrets', verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset
+#    suut.AddFilesToSurvey(survey, savefolder=survey.outfolder, verbose=False,clusterwise=True)
+
+    survey = main('Threehundrets_prep.parset', Clfile = 'clusterCSV/Three', verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset
+    survey = main('Threehundrets.parset', Clfile = 'clusterCSV/Three', verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset
     suut.AddFilesToSurvey(survey, savefolder=survey.outfolder, verbose=False,clusterwise=True)
+

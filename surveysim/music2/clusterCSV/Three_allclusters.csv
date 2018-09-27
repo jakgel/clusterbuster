@@ -1,0 +1,4 @@
+,clID,snapID,redshift,M200,originalpath
+1,1,128,0,1778279410039050,/data/Threehundrets/SHOCKS_00001/cluster.00001.snap.128.shocks
+2,1,128,0,1778279410039050,/data/Threehundrets/ShockTest/cluster.00001.snap.128.modifiedP_wmonotonic.shocks
+3,1,128,0,1778279410039050,/data/ThreehundretsShockTest/cluster.00001.snap.128.standard.shocks

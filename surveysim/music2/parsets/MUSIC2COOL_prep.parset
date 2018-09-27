@@ -17,8 +17,8 @@ UVcoverage     = NVSS     # Int out of ... to specify survey
 
 # Specify output
 pickleClusters = True       # Pickle Clusters?
-snapfolder     = /radioarchive/MergerTrees/WithCoolSfrAgn/    #folder where the clustersnapshots are stored
-xrayfolder     = /radioarchive/MergerTrees/WithCoolSfrAgn/    #folder where the full X-ray data is stored
+snapfolder     = /radioarchive/MergerTrees/WithCoolSfrAgn/snaps/    #folder where the clustersnapshots are stored
+xrayfolder     = /radioarchive/MergerTrees/WithCoolSfrAgn/snaps/    #folder where the full X-ray data is stored
 headerC        = kpc                                          #Unit of the central header coordinates
 outf           = /data2/WithCoolSfrAgn/                       #folder where to output will be stored
 

@@ -406,7 +406,7 @@ class Galaxycluster(object):
         self.relics     = relics  # a list of relics One to many  
         self.dinfo      = replaceNone(dinfo, DetInfo())   # detection information --> One per radio map!  ... One to one ? 
         self.histo      = Histo    # Histogramm of all binned objects, anyhow a future function could provide this right out of the image(s)
-        self.mockobs    = replaceNone(mockobs,MockObs()) # mockobs   information --> One per radio map! One to one ?
+        self.mockobs    = replaceNone(mockobs,MockObs(0)) # mockobs   information --> One per radio map! One to one ?
         self.compacts   = compacts # A list of (compact) sources that should be / were substacted
         
                                                

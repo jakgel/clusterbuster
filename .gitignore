@@ -1,5 +1,9 @@
 *.pyc
 *~
+*.~lock*
+*.xml
+
+*idea
 *multiutil*
 *analysis*
 */cw*
@@ -26,3 +30,4 @@
 *surveyreal/Images_NVSS/raw/*
 *surveyreal/Images_NVSS/diffuse/*
 *surveyreal/Images_NVSS/subtracted/*
+

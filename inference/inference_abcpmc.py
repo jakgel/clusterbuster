@@ -27,10 +27,10 @@ from functools import partial
 
 
 
-'''=== Here starts the flesh and meet of the analysis done for my PhD ==='''
+"""=== Here starts the flesh and meet of the analysis done for my PhD ==="""
 def main_abcpmc_MUSIC2(conf, new_run=True, test=False):
 
-    ''' 
+    """ 
     config should contain
     [][]: a list etc.
     
@@ -41,7 +41,7 @@ def main_abcpmc_MUSIC2(conf, new_run=True, test=False):
     
     
     About the treads: 14-16 treads are fine, as more treats wont be fully used and just stuff the taskqueue
-    '''
+    """
     
     
     # Loads the real data to compare with (and if neccessary also test data)
@@ -56,7 +56,7 @@ def main_abcpmc_MUSIC2(conf, new_run=True, test=False):
 
 
 
-    ''' The abcpmc part starts: Define thetas i.e. parameter values to be inferred  and priors'''
+    """ The abcpmc part starts: Define thetas i.e. parameter values to be inferred  and priors"""
 
     if conf['prior']['type'] == 'tophat':
         bounds = json.loads(conf['prior']['bounds'])
@@ -70,23 +70,23 @@ def main_abcpmc_MUSIC2(conf, new_run=True, test=False):
         return 0
 
 
-    eps = abcpmc.ConstEps(conf.getint('pmc','T'), json.loads(conf['metrics']['eps_startlimits']))
+    eps = abcpmc.ConstEps(conf.getint('pmc', 'T'), json.loads(conf['metrics']['eps_startlimits']))
        
     
     if test:
-        sampler = abcpmc.Sampler(N=conf.getint('pmc','Nw'), Y=data, postfn=testrand, dist=testmetric, 
-                                 threads=conf.getint('mp','Nthreads'), maxtasksperchild=conf.getint('mp','maxtasksperchild'))
+        sampler = abcpmc.Sampler(N=conf.getint('pmc', 'Nw'), Y=data, postfn=testrand, dist=testmetric,
+                                 threads=conf.getint('mp', 'Nthreads'), maxtasksperchild=conf.getint('mp', 'maxtasksperchild'))
     else:
-        sampler = abcpmc.Sampler(N=conf.getint('pmc','Nw'), Y=data, postfn=partial(music2run.main_ABC,parfile=conf['simulation']['parfile']), 
+        sampler = abcpmc.Sampler(N=conf.getint('pmc', 'Nw'), Y=data, postfn=partial(music2run.main_ABC,parfile=conf['simulation']['parfile']),
                                  dist=partial(surmet.abcpmc_dist_severalMetrices, metrics= json.loads(conf['metrics']['used']), outpath=conf['paths']['abcpmc']), 
-                                 threads=conf.getint('mp','Nthreads'), maxtasksperchild=conf.getint('mp','maxtasksperchild'))
+                                 threads=conf.getint('mp', 'Nthreads'), maxtasksperchild=conf.getint('mp', 'maxtasksperchild'))
         #dist=surmet.abcpmc_dist_severalMetrices, 
     sampler.particle_proposal_cls = abcpmc.OLCMParticleProposal
     
-    ''' compare with AstroABC
+    """ compare with AstroABC
     sampler = astroabc.ABC_class(Ndim,walkers,data,tlevels,niter,priors,**prop)
     sampler.sample(music2run.main_astroABC)    
-    '''
+    """
     
     
     t0 = time.time()
@@ -98,8 +98,8 @@ def main_abcpmc_MUSIC2(conf, new_run=True, test=False):
 
 
 def launch(sampler,prior,alpha,eps,ratio_min = 4e-2,surveypath=None, pool=None, plotting=False):
-    ''' Launches pools
-     Could become implemeted in abcpmc itself'''
+    """ Launches pools
+     Could become implemeted in abcpmc itself"""
     
     pools = []
     for pool in sampler.sample(prior, eps, pool):
@@ -116,9 +116,9 @@ def launch(sampler,prior,alpha,eps,ratio_min = 4e-2,surveypath=None, pool=None, 
         
         
         
-        ''' Creates plots on the fly '''
+        """ Creates plots on the fly """
         if plotting:
-            plot_abctraces(pools,surveypath)
+            plot_abctraces(pools, surveypath)
  
         if pool.ratio < ratio_min:
             print('Ended abcpmc because ratio_min < %.3e' % (ratio_min))
@@ -129,7 +129,7 @@ def launch(sampler,prior,alpha,eps,ratio_min = 4e-2,surveypath=None, pool=None, 
 
 
 
-''' My own testpart '''
+""" My own testpart """
 def testrand(notused, randomseed=False):
     if randomseed:
         import random
@@ -141,9 +141,9 @@ def testrand(notused, randomseed=False):
     return 0
 
 def testmetric(inp1, inp2):
-    ''' The testmetric does not care about the inputs 
+    """ The testmetric does not care about the inputs 
         Returns: 3 random gaussian values
-    '''
+    """
 
 #    print(np.random.normal(0.5,0.1,3))
     return np.random.normal(1.0,0.15,3)
@@ -151,17 +151,17 @@ def testmetric(inp1, inp2):
 
 
 
-''' Functionalities '''
+""" Functionalities """
 
 def plot_abctraces(pools, surveypath=''):
     
-    ''' Input: a list of pools in the abc format 
-        Generates trace plots of the thetas,eps and metrics '''
+    """ Input: a list of pools in the abc format 
+        Generates trace plots of the thetas,eps and metrics """
 
     sns.set_style("white")
     matplotlib.rc("font", size=30)
 
-    ''' Plot Metric-Distances '''
+    """ Plot Metric-Distances """
     distances = np.array([pool.dists for pool in pools])
     print(distances.shape)
     f, ax = plt.subplots()
@@ -174,7 +174,7 @@ def plot_abctraces(pools, surveypath=''):
     plt.legend()
     plt.savefig('%s/Metrics.png' % (surveypath))
 
-    ''' Plot Variables '''
+    """ Plot Variables """
     thetas = np.array([pool.thetas for pool in pools])
     print(thetas.shape)
     f, ax = plt.subplots()
@@ -188,20 +188,21 @@ def plot_abctraces(pools, surveypath=''):
     plt.savefig('%s/Thetas.png' % (surveypath))
     
     
-    ''' Plot Variables '''
+    """ Plot Variables """
+    #TODO: Fix bug ... you need to call pools or pool?
     thetas = pool.thetas
     figure = corner.corner(thetas)
     figure.savefig('%s/CornerThetas_%02i.png' % (surveypath,len(pools)-1))
     
-    '''
+    """
     corner.corner(distances)
     plots the various distances over each other and shows nicely that they are uncorrelated. 
     This is not super important, you could also use correlated distances with this abbroach. On the other hand it is interesting to see
     that both measures are independent, often this is a sign that they are good features!
-    '''
+    """
     
 
-    ''' Plot Epsilon'''
+    """ Plot Epsilon"""
     fig,ax = plt.subplots()
     eps_values = np.array([pool.eps for pool in pools])
     for ii in  range(distances.shape[2]):
@@ -213,7 +214,7 @@ def plot_abctraces(pools, surveypath=''):
     fig.savefig('%s/Thresholds.png' % (surveypath))
 
 
-    ''' Violin Plots '''
+    """ Violin Plots """
     fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(9, 4))
     
     # generate some random test data
@@ -251,7 +252,7 @@ def plot_abctraces(pools, surveypath=''):
     plt.setp(axes, xticks=[y+1 for y in range(len(all_data))])
     fig.savefig('%s/Violin.png' % (surveypath))
     
-    ''' Plot Parameters'''
+    """ Plot Parameters"""
     for ii,_ in enumerate(pools):   
         if thetas.shape[1] > 1:
             jg = sns.jointplot(pools[ii].thetas[:, 0], 
@@ -269,7 +270,7 @@ def plot_abctraces(pools, surveypath=''):
 
 
 if __name__ == "__main__":
-    ''' Full routines for parsing a combination of argparse, configparser and json'''
+    """ Full routines for parsing a combination of argparse, configparser and json"""
     parser = argparse.ArgumentParser(description='Evaluates the best solutions of survey simulations with the abc abbroach.')
     parser.add_argument('-parini', dest='parini'  , action='store', default='params.ini', type=str,help='set filepath for parameter initialisation file.')
     args = parser.parse_args()

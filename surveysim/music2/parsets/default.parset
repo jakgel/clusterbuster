@@ -46,7 +46,7 @@ pickleClusters = True       # Pickle Clusters?
 Mach           = False      # Add MachNumberImage        ?
 Dens           = False      # Add DensNumberImage        ?
 snapfolder     = /radioarchive/MergerTrees/Clusters/snaps/    #folder where the clustersnapshots are stored
-xrayfolder     = /radioarchive/MergerTrees/Clusters/          #folder where the full X-ray data is stored
+xrayfolder     = /radioarchive/MergerTrees/Clusters/snaps/    #folder where the full X-ray data is stored
 headerC        = Mpc                                          #Unit of the central header coordinates
 smarttime_sub  = 1800     # '' for default
 outf           = /data/MUSIC-2/Output/  # outfile, Is going to get tweaked
@@ -56,7 +56,7 @@ savewodetect   = False
 miscdata       = /home/jakobg/lib/ClusterBuster/surveysim/music2/
 DSAtable       = Hoeft_radio/q_mach_machr_tablefine(10,3).txt
 PSItable       = Hoeft_radio/mach_psi_tablefine(10,3).txt
-missFile       = ClusterCSV/AllMUSIC-missing.dat
+missFile       = clusterCSV/MUSIC2-missing.dat
 
 snaplistz    = None #Not implemented, If you want too choose specific snapshots enter this, else put None and use all snapshots in the csv. Ordering: Decreasing redshift like [4.000,1.500,0.000]
 snapidlist   = [1,2,3,4,5,6,7,8,9,10,11,12,13,14]
