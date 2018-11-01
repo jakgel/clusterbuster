@@ -80,7 +80,7 @@ def create_table_frame(protoobj, caption, level, dictionary, delimiter='&', ende
     idline   = ''
     unline   = ''
     sizeline = '\\scriptsize\n'
-    labeline = '\label{tab:%s}\n' % (label)
+    labeline = "" #"'\label{tab:%s}\n' % (label)
     capline  = '\caption{%s} \n' % (caption)
     delime   = '\hline\hline\n'
     
@@ -122,7 +122,7 @@ def create_table_frame(protoobj, caption, level, dictionary, delimiter='&', ende
         
         
         head =  ("""\\begin{table*}\n\\begin{center}""" + capline + sizeline) * int(outer) + tabline + delime +labeline + idline + unline + delime
-        foot = '\hline\hline\n\\end{tabular}\n'+int(outer)*'\\end{center}\n\\label{tab:NVSSrelics}\n\\end{table*}'  
+        foot = '\hline\hline\n\\end{tabular}\n'+int(outer)*'\\end{center}\n\\end{table*}'
                                    
 
         
