@@ -69,7 +69,7 @@ def ClusterVol_lum(surveys, location):
 
 
 
-def create_table_frame(protoobj, caption, level, dictionary, delimiter='&', ender='\\', label = 'NVSSrelics',longtab=False, outer=True):
+def create_table_frame(protoobj, caption, dictionary, delimiter='&', ender='\\', longtab=False, outer=True):
     
     # l  r  r  r  r  r  r  r  r  r  r}
     
@@ -87,8 +87,8 @@ def create_table_frame(protoobj, caption, level, dictionary, delimiter='&', ende
     for ii,entry in enumerate(dictionary):
         tabline += ' %s ' % entry[2]
         if  not isinstance(entry[0], list) and isinstance(entry[0](protoobj), dbclass.measurand):
-             idline += entry[0](protoobj).label   
-             unline += entry[0](protoobj).unit 
+            idline += entry[0](protoobj).label
+            unline += entry[0](protoobj).unit
              
         else:
              idline += entry[3]
@@ -135,7 +135,7 @@ def create_table_frame(protoobj, caption, level, dictionary, delimiter='&', ende
 
 
 
-def create_table_columns(objectlist, level, dictionary, delimiter='&', ender='\\\\'):
+def create_table_columns(objectlist, dictionary, delimiter='&', ender='\\\\'):
     
     columns = []
     for obj in objectlist:
@@ -162,16 +162,15 @@ def create_table_columns(objectlist, level, dictionary, delimiter='&', ender='\\
 
 
 
-def create_table(objectlist, dictionary, caption='nocap', level=None, outer=False, longtab=False):
+def create_table(objectlist, dictionary, caption='nocap', outer=False, longtab=False):
     ''' A function to create a late table based on an object list and an dictionary of values '''
     
-    header, ender = create_table_frame(objectlist[0], caption, level, dictionary, outer=outer, longtab=outer)
-    columns       = create_table_columns(objectlist, level, dictionary)
-        
+    header, ender = create_table_frame(objectlist[0], caption, dictionary, outer=outer, longtab=outer)
+    columns       = create_table_columns(objectlist, dictionary)
+
+    print(type(header), type(columns), type(ender))
     print(columns)
     return header + columns + ender
-
-
 
 
 def RList2table_paper_new(location, survey, longtab=False):   
@@ -183,17 +182,18 @@ def RList2table_paper_new(location, survey, longtab=False):
     
 #'', r/ö/, .label, .unit, rrrr}  
 #lambda x: cbclass.measurand( x.R200/1000       , '$R_{200}$', un = 'Mpc' )  
-    dictionary = [ [lambda x: x.name.replace('_',' ')  , '%25s', 'l' , 'Identifier', ''],
-                   [lambda x: x.RA    , '%5.2f' , 'r'],
-                   [lambda x: x.Dec   , '%+7.2f', 'r'],
-                   [[lambda x: x.flux(),lambda x: x.flux.std[0]], '$%7.1f\pm%5.1f$' , 'r', '$S_{1.4}$', '[mJy]'],
-                   [[lambda x: np.log10(x.P_rest()),lambda x: np.log10((x.P_rest()+x.P_rest.std[0])/x.P_rest()), lambda x:np.log10((x.P_rest()-x.P_rest.std[0])/x.P_rest())], '$%5.2f^{+%4.2f}_{%4.2f}$', 'r', 'log$_{10}(P_{1.4})$' , '[W/Hz$^{-1}$]'],
-                   [lambda x: x.LAS , '%5.2f', 'r'], #add error if you like
-                   [lambda x: x.LLS , '%5.0f', 'r'], #add error if you like
+    dictionary = [ [lambda x: x.name.replace('_',' '), '%25s', 'l' , 'Identifier', ''],
+                   [lambda x: x.RA , '%5.2f' , 'r'],
+                   [lambda x: x.Dec, '%+7.2f', 'r'],
+                   [lambda x: x.Mach, '%.1f', 'r'],
+                   [[lambda x: x.flux(), lambda x: x.flux.std[0]], '$%7.1f\pm%5.1f$' , 'r', '$S_{1.4}$', '[mJy]'],
+                   [[lambda x: np.log10(x.P_rest()), lambda x: np.log10((x.P_rest()+x.P_rest.std[0])/x.P_rest()), lambda x:np.log10((x.P_rest()-x.P_rest.std[0])/x.P_rest())], '$%5.2f^{+%4.2f}_{%4.2f}$', 'r', 'log$_{10}(P_{1.4})$' , '[W/Hz$^{-1}$]'],
+                   [lambda x: x.LAS, '%5.2f', 'r'], #add error if you like
+                   [lambda x: x.LLS, '%5.0f', 'r'], #add error if you like
                    #[Omega not needed],
-                   [lambda x: x.iner_rat() ,'%.2f', 'r',  '$\lambda_2/\lambda_1$', '[]'],
-                   [lambda x: x.Dproj      ,'%.0f', 'r'],
-                   [lambda x: x.theta_rel(),'%.1f', 'r',  '$\phi$', '[deg]']
+                   [lambda x: x.iner_rat(), '%.2f', 'r', '$\lambda_2/\lambda_1$', '[]'],
+                   [lambda x: x.Dproj_pix, '%.0f', 'r'],
+                   [lambda x: x.theta_rel(), '%.1f', 'r', '$\phi$', '[deg]']
                  ]
     caption = 'Radio relic emission islands identified in the %s images'  % (survey.name)
     table = create_table(RList, dictionary, caption=caption)
@@ -207,7 +207,6 @@ def RList2table_paper_new(location, survey, longtab=False):
     
     
 def RList2table_paper(location, survey, longtab=False):   
-    
 
     RList    = survey.fetch_totalRelics(zborder=0.05)
     # To sort the list in place..., sort for Cluster ID
@@ -222,12 +221,12 @@ def RList2table_paper(location, survey, longtab=False):
     % \centering
     \caption{Radio relic emission islands identified in the NVSS images}\\\\ \hline\hline
     \label{tab:NVSSrelics}
-    Identifier                &  RA    &  Dec   &  $S_{1.4}$  &   log$_{10}(P_{1.4})$        &   LAS    &  LLS   & $\Omega$       &  $\\lambda_2/\\lambda_1$   & $D_\mathrm{proj}$  &  $\phi$ \\\\ 
+    Identifier                &  RA    &  Dec   &  $S_{1.4}$  &   log$_{10}(P_{1.4})$        &   LAS    &  LLS   & $\Omega$       &  $\\lambda_2/\\lambda_1$   & $D_\mathrm{proj,pix}$  &  $\phi$ \\\\ 
                               &  [deg] & [deg]  & [mJy]       &   [W/Hz$^{-1}$]   & [arcmin] &  [kpc]   &  [$\Omega_\mathrm{beam}$]  &   []    &  [kpc]     &  [deg]     \\\\ \hline
     \\endfirsthead
     \multicolumn{11}{l}{\\tablename\ \\thetable\ -- \\textit{Continued from previous page}} \\\\
     \hline
-    Identifier                &  RA    &  Dec   &    $S_{1.4}$    &   log$_{10}(P_{1.4})$     &   LAS & LLS   &  $\Omega$      &  $\\lambda_2/\\lambda_1$   & $D_\mathrm{proj}$  &  $\phi$ \\\\ 
+    Identifier                &  RA    &  Dec   &    $S_{1.4}$    &   log$_{10}(P_{1.4})$     &   LAS & LLS   &  $\Omega$      &  $\\lambda_2/\\lambda_1$   & $D_\mathrm{proj,pix}$  &  $\phi$ \\\\ 
                               &  [deg] & [deg]  & [mJy]       &   [W/Hz$^{-1}$]   & [arcmin] &  [kpc]   &  [$\Omega_\mathrm{beam}$]  &   []    &  [kpc]     &  [deg]     \\\\ \hline
     \\endhead
     \hline\hline \multicolumn{11}{r}{\\textit{Continued on next page}} \\\\
@@ -243,7 +242,7 @@ def RList2table_paper(location, survey, longtab=False):
     \\begin{tabular}{ l  r  r  r  r  r  r  r  r  r  r}
     \hline\hline
     \label{tab:NVSSrelics}
-    Identifier                &  RA    &  Dec   &    $S_{1.4}$ &   log$_{10}(P_{1.4})$     &   LAS  &  LLS   & $\Omega$       &  $\\lambda_2/\\lambda_1$   & $D_\mathrm{proj}$  &  $\phi$ \\\\ 
+    Identifier                &  RA    &  Dec   &    $S_{1.4}$ &   log$_{10}(P_{1.4})$     &   LAS  &  LLS   & $\Omega$       &  $\\lambda_2/\\lambda_1$   & $D_\mathrm{proj,pix}$  &  $\phi$ \\\\ 
                               &  [deg] & [deg]  & [mJy]       &   [W/Hz$^{-1}$]   & [arcmin] &  [kpc]   &  [$\Omega_\mathrm{beam}$]  &   []    &  [kpc]     &  [deg]     \\\\ \hline\hline 
     """
         foot = '\hline\hline\n\\end{tabular}\n'+int(outer)*'\\end{center}\n\\label{tab:NVSSrelics}\n\\end{table*}'  
@@ -288,7 +287,10 @@ def RList2table_paper(location, survey, longtab=False):
 	
         if m.P_rest() == 0:
             print('!!!!!!!! m.Prest == 0', m.name,  m.P_rest)
-            string = "%25s & %5.2f & %+7.2f  & $%7.1f\pm%5.1f$ &"   % (namestring, m.RA(), m.Dec(), m.flux(), m.flux.std[0])  +  "$%5.2f^{+%4.2f}_{%4.2f}$ &  $%5.2f$&" % (np.log10(m.P_rest()), np.log10((m.P_rest()+m.P_rest.std[0]/m.P_rest())), np.log10((m.P_rest()-m.P_rest.std[1])/m.P_rest()), m.LAS()) +  "$%5.0f\pm%5.0f$ & $%5.1f\pm%3.1f$ &" %( m.LLS(), m.LLS.std[0], m.area()/m.dinfo.Abeam[1], m.area.std[0]/m.dinfo.Abeam[1] )   +  "%5.2f  &  %4.0f  &  %5.1f \\\\" %(m.iner_rat(), m.Dproj(), m.theta_rel())  
+            string = "%25s & %5.2f & %+7.2f  & $%7.1f\pm%5.1f$ &"   % (namestring, m.RA(), m.Dec(), m.flux(), m.flux.std[0])  \
+                     +  "$%5.2f^{+%4.2f}_{%4.2f}$ &  $%5.2f$&" % (np.log10(m.P_rest()), np.log10((m.P_rest()+m.P_rest.std[0]/m.P_rest())), np.log10((m.P_rest()-m.P_rest.std[1])/m.P_rest()), m.LAS()) \
+                     +  "$%5.0f\pm%5.0f$ & $%5.1f\pm%3.1f$ &" %( m.LLS(), m.LLS.std[0], m.area()/m.dinfo.Abeam[1], m.area.std[0]/m.dinfo.Abeam[1] )   \
+                     +  "%5.2f  &  %4.0f  &  %5.1f \\\\" %(m.iner_rat(), m.Dproj_pix(), m.theta_rel())
       
         #string = "%25s  %5.1f \\" %(namestring, m.theta_rel[1]) 
       
@@ -297,11 +299,6 @@ def RList2table_paper(location, survey, longtab=False):
     mf.write( foot )
     #mf.write('\hline\n\\end{tabular}\n\\end{table}')
     mf.close()
-  
-
-
-
-
 
 
 def GClList2table_paper(location, survey, shortlist=None, longtab=False):   
@@ -355,6 +352,8 @@ Cluster               &  z   &  $M_{200}$          &  $F_\mathrm{NVSS}$   &   $F
     ''' Start with relic cluster '''
     mf = open(location,"w")
     mf.write(head)
+
+    n_clusters=0
     for m in survey.GCls:
         
         
@@ -369,7 +368,10 @@ Cluster               &  z   &  $M_{200}$          &  $F_\mathrm{NVSS}$   &   $F
     #              print '!!!!!!!! m.Prest == 0', m.name,  m.P_rest
             string = "%25s & $%.3f$ &  %.2f & %s & $%5.1f$ &"   % (m.name, m.z.value, m.M200.value/1e14, m.getstatusstring()[1], m.flux_lit.value)  +   '%s' % (m.gettypestring())  + '& %s - %s\\\\' % (findshort(m.Lx.ref.ident, shortlist) , findshort(m.flux_lit.ref.ident, shortlist) )
             mf.write(string + '\n')
-    
+            n_clusters += 1
+
+    print('n_clusters:',  n_clusters )
+
     mf.write( foot )
     mf.close()
     

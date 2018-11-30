@@ -52,8 +52,12 @@ class measurand(entry):
     def __init__(self, value, dic, label=False, std=0, skew=0, vrange=[None,None], vmin=None, vmax=None, un = 'arbitrary unit', distr='gauss', ref=None):
         
         entry.__init__(self, value, dic, label)
-        self.unit       =  un      # A unit, here as a string
-        
+
+        if un is None:
+            self.unit = ' '
+        else:
+            self.unit = un # A unit, here as a string
+
         #== variable range
         self.vrange     = vrange
         self.set_vrange(vmin, vmax)

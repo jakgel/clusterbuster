@@ -32,11 +32,11 @@ import NFW.mass_concentration           as massC
 
 #from .mathut  import *
 
-from   clusterbuster.cosmocalc   import cosmocalc 
-from   astropy                   import units as u 
-from   astropy.coordinates       import SkyCoord
-from   astropy.cosmology         import FlatLambdaCDM   # from astropy.cosmology import WMAP9 as cosmo   
-from   scipy                     import sparse
+from clusterbuster.cosmocalc   import cosmocalc
+from astropy                   import units as u
+from astropy.coordinates       import SkyCoord
+from astropy.cosmology         import FlatLambdaCDM   # from astropy.cosmology import WMAP9 as cosmo
+from scipy                     import sparse
 
 def get_truth(inp, relate, cut):
     ops = {'>': operator.gt,
@@ -76,15 +76,15 @@ class Survey(object):
         self.DetInfo   = DetInfo   # A specified DetInfo as proxy for an homogeneous survey; Detinfo include a beam, and a noiseMAP --> properties should be taken from the neirest entry
         self.dinfo     = dinfo
         self.mainhist  = mainhist  # Histogramm of all binned objects/ without any initialization, works as an proxy
-        ''' In this case Histo would become a simulation'''
+        """ In this case Histo would become a simulation"""
         
         
         
         
         self.filteredClusters = None
         
-        '''This should be handled in the case of a mock survey'''
-        '''So there should be a nock survey and a real survey, both as childs from a generall survey'''
+        """This should be handled in the case of a mock survey"""
+        """So there should be a nock survey and a real survey, both as childs from a generall survey"""
         self.Rmodel    =  replaceNone(Rmodel, RModel([],simu=False))   # A Bfield model
         
         # Total measures, you can also write an function for that
@@ -93,7 +93,7 @@ class Survey(object):
         self.P_anti    = 0        # Pro ratio
         self.F_pro     = 0        # Pro ratio
         self.F_anti    = 0        # Pro ratio
-        
+
         # Output related properties
         if outfolder is None: outfolder =  '/data/ClusterBuster-Output/%s' % (survey) 
         self.outfolder  = outfolder
@@ -125,7 +125,7 @@ class Survey(object):
         
     def polar(self, eff=None, aligned=True, normalize=True, minrel=1,  positive=False,  mirrored=False, mode='flux', zborder = 0 ,ztype = '>', **kwargs):
           
-          ''' 
+          """ 
           Input: needs to histogram of the survey to be set, radial axis: 2 N, polar axis: 4 M
           
           
@@ -142,20 +142,22 @@ class Survey(object):
           
           
           BUG: For a very low angular bin size the estimate of the projected flux ratio of pro and anti axis changes!
-          '''
+          """
           
-          '''DEVELOPMENT'''
+          """DEVELOPMENT"""
           ndist       = 35    #-->deprecated! but a better umber (nicer looking then the raw grid)
           distmax     = 3500  # very important, should somehow part of the histogramm class
           # This is a design desicion ... in the standart case, the histogramm should ourient itself on the histogram variable of the Survey class
           mesh        = np.zeros_like( self.mainhist.hist.T )   #np.zeros((npolar,ndist))
-          '''DEVELOPMENT END'''
+          """DEVELOPMENT END"""
           
           mainhist = np.zeros_like( self.mainhist.hist.T )
           sigstats = []
           
-          if eff is None: eff = self.Rmodel.effList[0]
-          if self.filteredClusters is None: self.FilterCluster(minrel=minrel,eff=eff,zborder=zborder, ztype='>')
+          if eff is None:
+              eff = self.Rmodel.effList[0]
+          if self.filteredClusters is None:
+              self.FilterCluster(minrel=minrel, eff=eff, zborder=zborder, ztype='>')
           for ii,GCl in enumerate(self.filteredClusters):
               GCl.histo = self.mainhist
               GCl.updateInformation(eff=eff, Filter=True)    
@@ -163,10 +165,10 @@ class Survey(object):
     
                   Histo = GCl.histo
                   shiftHist  = np.roll(Histo.hist.T, -int(aligned*(GCl.relic_pro_index)), axis=1)  # This was a bug:/ AreaHist**(self.expA)    
-                  ''' The scale is very important, it would be good to normalize the flux we do this by implementing the expScale parameter.
+                  """ The scale is very important, it would be good to normalize the flux we do this by implementing the expScale parameter.
                   This is flexible enough to give different weights to bright/faitn relics. Another question for statistical analysis is, if
                   the average  or an integrated value is more interesting.
-                  '''               
+                  """               
                   if   mode == 'flux':
                       scale     = 1. 
                   elif mode =='power':
@@ -184,7 +186,7 @@ class Survey(object):
               halfHist = np.add(mainhist[:,0:int(shiftHist.shape[1]*1/2)], np.fliplr(mainhist[:,int(shiftHist.shape[1]*1/2):]) )
               
               
-              ''' Transformation for plotting: Only works if histo was already set'''
+              """ Transformation for plotting: Only works if histo was already set"""
               if mirrored:
                   halfHist_plot = np.add(np.fliplr(mainhist[:,0:int(shiftHist.shape[1]*1/2)]), mainhist[:,int(shiftHist.shape[1]*1/2):] )                  
               else:
@@ -199,7 +201,7 @@ class Survey(object):
               AreaHist  = 2*np.pi*(2*np.pi)/len(angle)*(outerZ**2-innerZ**2)     
               halfHist_plot  /= AreaHist**(self.expA)    #self.expA
     
-              ''' radially binned '''
+              """ radially binned """
               part1 = np.sum(halfHist[:,int(halfHist.shape[1]/2):int(halfHist.shape[1]+1)], axis=1)[::-1]
               part2 = np.sum(halfHist[:,0:int(halfHist.shape[1]/2+1)], axis=1)
               if positive:
@@ -221,7 +223,7 @@ class Survey(object):
                 
 
     def FilterCluster(self, minrel=1, eff=None, zborder=0, ztype='>', minimumLAS=0, GClflux=0, index=None, getindex=False, verbose=False,  **kwargs):
-          ''' Gives all the cluster with the relics that fullfill given criteria '''
+          """ Gives all the cluster with the relics that fullfill given criteria """
           
           if index is not None:
               if index == 'All':
@@ -229,7 +231,7 @@ class Survey(object):
               else:
                   return [ self.GCls[i] for i in index]  
               
-          ''' This part is implemented to give consistent results in plotting and metric etc. for a given dropseed '''
+          """ This part is implemented to give consistent results in plotting and metric etc. for a given dropseed """
           if self.dropseed is not None:
               state    = self.dropseed.get_state()
               self.dropseed.set_state( (state[0],state[1],0,state[3],state[4]) )
@@ -241,11 +243,11 @@ class Survey(object):
                      GCl.largestLAS() >=  minimumLAS and GCl.flux() >= GClflux and GCl.stoch_drop(self.dropseed)] 
           
            
-          ''' and get_truth(GCl.z, ztype, zborder) and 
-                     GCl.largestLAS() >  minimumLAS and GCl.flux() > GClflux and GCl.stoch_drop(self.dropseed) '''
+          """ and get_truth(GCl.z, ztype, zborder) and 
+                     GCl.largestLAS() >  minimumLAS and GCl.flux() > GClflux and GCl.stoch_drop(self.dropseed) """
                   
                     
-          ''' Should also give an result, if no cluster fullfills the criterion '''          
+          """ Should also give an result, if no cluster fullfills the criterion """          
           if len(results) > 0:
               indices,self.filteredClusters = map(list,zip(*results))
           else:
@@ -279,7 +281,7 @@ class Survey(object):
          return sum([GCl.hist for GCl in self.GCls], 0)
      
     def fetchpandas(survey, plotmeasures, surname=True, vkwargs_FilterCluster={}, kwargs_FilterObjects={}):
-        ''' Return a panda array generated from the survey catalogue 
+        """ Return a panda array generated from the survey catalogue 
         
         survey: A ClusterBusterSurvey
         
@@ -293,23 +295,23 @@ class Survey(object):
         simulated
         simulated
         
-        '''  
+        """  
     
         logs = [True for measure in plotmeasures] # a stub, you should be able to specify this
     
-        ''' This part is outdated and shuld be removed once the eficiency is removed '''
+        """ This part is outdated and shuld be removed once the eficiency is removed """
         eff = survey.Rmodel.effList[0]
         if survey.Rmodel.simu: 
             feff = eff
         else:
             feff = 1.
-        ''' REMOVE END '''
+        """ REMOVE END """
     
         List_full = []
         datalist  = []
     
-        ''' This very ugly steps just creates a List of (relic,GCL) from the survey
-        As in the future galaxy clusters will gain be a property of relcis again this step will be shorter  and more readable'''
+        """ This very ugly steps just creates a List of (relic,GCL) from the survey
+        As in the future galaxy clusters will gain be a property of relcis again this step will be shorter  and more readable"""
         
         for GCl in survey.FilterCluster():
                 GCl.updateInformation(eff=feff)
@@ -326,18 +328,14 @@ class Survey(object):
                 datavalues.append(data)
             
             datalist.append(datavalues)
-            
-    
-    #                      + [GCl.M200.labels(log=False),dbc.measurand(0,'$D_\mathrm{proj}$',un='$R_{200}$').labels(log=False)]
-    
-        ''' Create a pandas dataframe '''
-        columns =[measure(relic).labels(log=log) for measure,log in zip(plotmeasures,logs)] #\
-        pdframe =  pd.DataFrame(np.log10(datalist), columns=columns)
+
+        """ Create a pandas dataframe """
+        columns = [measure(relic).labels(log=log) for measure,log in zip(plotmeasures, logs)]
+        pdframe = pd.DataFrame(np.log10(datalist), columns=columns)
         if surname:
             pdframe['Survey'] = survey.name
-    
 
-        if len(pdframe)<3:
+        if len(pdframe) < 3:
             print('Only %i elements in the pdframe, will skip this one' % (len(pdframe)))
             return 
         else:
@@ -373,10 +371,10 @@ class Galaxycluster(object):
         self.z      = dbc.measurand(  z,  'z',  label = '$z$' , un = None)  #Redshift          
 
 
-        '''  We differentiate several (currently two) measures of the clsuter central position 
+        """  We differentiate several (currently two) measures of the clsuter central position 
         One is the center of the dipole (we assume a double merger) of the cluster              sky_double
         The other one is the position of the X-Ray brightness peak of the more massive cluster  sky_main 
-        ''' 
+        """ 
         RA_d, Dec_d  = RA, Dec # Curenty not implemented, DEBUGGING
         RA_m, Dec_m  = RA, Dec # Curenty not implemented, DEBUGGING
         self.sky_double    = SkyCoord(RA_d, Dec_d, frame='icrs' , unit='deg')
@@ -395,11 +393,11 @@ class Galaxycluster(object):
         self.PreNorm    = None
                         
 
-        ''' A generall or map specific reference '''
+        """ A generall or map specific reference """
         self.reference  = reference 
         
 
-        ''' Maps specific properties ... in the future this could be a list of map-classes '''            
+        """ Maps specific properties ... in the future this could be a list of map-classes """            
         #=== Classes attached to it
         self.status     = status   # A list of possible atatuses
         self.regions    = regions  # a list of the region used to seperate relics  # One to many; regions=RelicRegion('', [], rtype=1)
@@ -430,7 +428,7 @@ class Galaxycluster(object):
         self.contSour  = []         # A list of contaminating sources, The source themself could be represented by objects   
        
         
-        ''' filter criteria '''
+        """ filter criteria """
         self.maxcomp    = 0.17   # shape criterion
         self.updateInformation(massproxis=True)           # Information with added value:
      
@@ -440,17 +438,17 @@ class Galaxycluster(object):
     functions
     """
     def set_center(self): 
-        ''' This funtion does not have any current use.
+        """ This funtion does not have any current use.
         
         input: sky coordinates
         
         At its completed state it should be used to redefine the cluster centre.
         This however is only of use if the the polary binned histogramms are adjusted to that.
-        At this step is currently done on the fly, using this function is a thing of future versions '''
+        At this step is currently done on the fly, using this function is a thing of future versions """
         
     
     def maps_update(self, nparray, mapname, fitsname, dinfo=None):
-        ''' This functions is used to write a .fits file to disk. and to update the map dictionary
+        """ This functions is used to write a .fits file to disk. and to update the map dictionary
         
         Input arguments:
             The numpy array map
@@ -460,7 +458,7 @@ class Galaxycluster(object):
             
         Currently, there is a detour by copyiing the dictonary. I did this to counter the effect, that the dictionaries of all galaxy clusters ended up do be the same.
         Once I understood this effect a little better, I can up with a slimmer solution.
-        '''
+        """
         if dinfo is None:
             dinfo = self.dinfo
         
@@ -471,17 +469,15 @@ class Galaxycluster(object):
         fitsut.map2fits( nparray, dinfo, fitsname) # s_pixel, center1, center2  
         mapdic[mapname]   =  fitsname
         self.mapdic       =  mapdic
-                        
-       
-    
+
     #==== importing dill and 'dilling' the objects instead of pickling can help     
     # The lambda function does make the file unpickelable
     #  self.Filter = lambda x: (x.flux > self.minflux and (x.iner_rat/(x.LAS/(x.dinfo.beam[0]/60.))) < self.maxcomp)  
 
     def filterRelics(self, Filter=True, maxcomp=None, eff=None, regard=[1,2,3]): # Debug Filter=True
-        ''' Returns the list of relics,filtered due to certain conditions 
+        """ Returns the list of relics,filtered due to certain conditions 
         eff is not used anymore and only here for compability regions
-        ''' 
+        """ 
 
         if Filter:
             minflux = self.dinfo.rms * 4 * 1000 #microjansky to millijansky
@@ -513,49 +509,47 @@ class Galaxycluster(object):
 #        # apply image mask based on contours        
 #        
 #        return Image
-        
-        
        
     def updateInformation(self, massproxis=False, eff=1, **filterargs):
-        ''' Updates the cluster information, based on the associated regions/relics
+        """ Updates the cluster information, based on the associated regions/relics
             Also includes properties, which are by definition accociated to clusters with radio relics
-        '''     
+        """     
 
         # This cosmologies don't cope well together --> go to astropy!
         self.cosmoPara= cosmocalc( self.z(), H0=70, WM=0.27, WV=0.73)
         self.cosmo    = FlatLambdaCDM(H0=70, Om0=0.3, Ob0=0.05) 
-        ''' competing with comocalc implementation, one could use it like 
+        """ competing with comocalc implementation, one could use it like 
         self.cosmoPara['PS_kpc'] --> self.cosmo.kpc_proper_per_arcmin(self.z()).value/60
-        '''
+        """
         # Cosmology used --> exchange with astropy for future compatibility and functionalities !
         self.cosmoDL  = self.cosmoPara['DL_cm']   # Gyr Mpc cm
         self.cosmoPS  = self.cosmoPara['PS_kpc']  # kpc/''                             
 
         # Computes M200 from other mass proxies if needed  
         if massproxis:    
-            self.infer_M200_MX(self.M500,500)     
-            self.infer_M200_MX(self.M100,100)
-            self.infer_M200_MX(self.Mvir,178)
+            self.infer_M200_MX(self.M500, 500)
+            self.infer_M200_MX(self.M100, 100)
+            self.infer_M200_MX(self.Mvir, 178)
             self.infer_M200_LX()
           
           
             #starts to compute all other quantities from this value
             self.infer_LX_M200()
-            self.M500       = self.M(500)
-            self.R200       = self.R(200)   # a function of the mass and redshift
+            self.M500 = self.M(500)
+            self.R200 = self.R(200)   # a function of the mass and redshift
             
           
-            ''' Lambda_vir = 178 for the critical density of the universe
+            """ Lambda_vir = 178 for the critical density of the universe
                 The critical density is very similar to the average density
-            '''
-            self.Mvir       = self.M(178)   # virial mass in solar masses
-            self.Rvir       = self.R(178)   # virial radius in Mpc (comoving volume?)          
+            """
+            self.Mvir = self.M(178)   # virial mass in solar masses
+            self.Rvir = self.R(178)   # virial radius in Mpc (comoving volume?)
           
-            '''Development '''
+            """Development """
             if self.M200.value == 0: self.M200.value = np.nan
 
 
-        ''' relics '''
+        """ relics """
   #      self.regions       = []
         self.flux          = dbc.measurand(  0, 'F'        , un = 'mJy') 
         self.flux_ps       = dbc.measurand(  0, 'F_ps'     , un = 'mJy' , label='$F_\mathrm{ps}$') 
@@ -583,7 +577,7 @@ class Galaxycluster(object):
             self.flux_ps       += relic.flux_ps
             self.flux_ps.std_add(relic.flux_ps.std)
             self.largestLAS.value   = max(self.largestLAS(), relic.LAS())
-    #            self.regions.append(relic.region) '''Created BUG; update needed? 
+    #            self.regions.append(relic.region) """Created BUG; update needed? 
             self.area.std       += [0.2*np.sqrt(relic.area/self.dinfo.Abeam[1])]*2                 # arcmin^2
             self.area100kpc.std += [area*(self.cosmoPS*60/100)**2 for area in relic.area.std]   # in (100kpc)^2
             self.accumHisto(relic.polHist)
@@ -592,14 +586,14 @@ class Galaxycluster(object):
         return self
 
     def accumHisto(self, Hist):
-        ''' Adds histogramms of sparse numpy arrays '''
+        """ Adds histograms of sparse numpy arrays """
         
         if self.histo is not None and Hist is not None:
-            self.histo.hist    += Hist.A
+            self.histo.hist += Hist.A
 
 
     def comp_LX_M200(self, M=0):
-        ''' Boehringer+Chon+2014 , equ'''
+        """ Boehringer+Chon+2014 , Equ. 10 """
         alpha = 1.51
         h100  = 0.70
         h70   = 1.0
@@ -607,21 +601,21 @@ class Galaxycluster(object):
         return 0.1175*Ez**alpha/h100**(2-alpha)* (M*h70/1e14)**alpha * h70**2
 
 
-    def comp_M(self,m,overdensity): 
-        ''' works with https://github.com/joergdietrich/NFW the original mass overdensity based dependent & depends on  z'''
+    def comp_M(self, m, overdensity):
+        """ works with https://github.com/joergdietrich/NFW the original mass overdensity based dependent
+        & depends on  z"""
         umass = u.Quantity(m, u.solMass)
         return  massC.m200_to_mdelta(umass, massC.duffy_concentration, overdensity, args=(self.z, self.cosmo)).value 
 
 
-    def M(self,overdensity=200): # the original virial mass overdensity based on z     
+    def M(self, overdensity=200): # the original virial mass overdensity based on z
         if self.M200() > 1e5:
-
             result = self.comp_M(self.M200(), overdensity)
-            return  dbc.measurand(result, 'M%i' % (overdensity),  label='$M_{%i}$' % (overdensity), un='$M_\odot$')
+            return dbc.measurand(result, 'M%i' % (overdensity),  label='$M_{%i}$' % (overdensity), un='$M_\odot$')
         else:
-            return  dbc.measurand(0, 'M%i' % (overdensity),  label='$M_{%i}$' % (overdensity), un='$M_\odot$')
+            return dbc.measurand(0, 'M%i' % (overdensity),  label='$M_{%i}$' % (overdensity), un='$M_\odot$')
         
-    def R(self,overdensity=200):
+    def R(self, overdensity=200):
         # inspired by http://www.star.bris.ac.uk/bjm/lectures/cluster-cosmology/3-scaling.pdf
         #M200 = 4np.pi/3 * overdensity * rho_crit *  r(200)**3
         f_a = 3.0857e21  # kpc to cm
@@ -631,8 +625,8 @@ class Galaxycluster(object):
         return dbc.measurand(result, 'R%i' % (overdensity),  label='$R_{%i}$' % (overdensity), un='$kpc$')
         
     def infer_M200_LX(self):
-        if self.M200() == 0 and self.Lx() != 0:
 
+        if self.M200() == 0 and self.Lx() != 0:
             checkMass = [10**m for m in np.arange(13.5,16,0.05)]
             massTest  = []
             for m in checkMass: 
@@ -641,9 +635,9 @@ class Galaxycluster(object):
             self.M200.value = checkMass[m_index]   # [0:2pi]
           
     def infer_M200_MX(self, Mx, x):
-        ''' This method is VERY slow, it takes around 2 seconds per computation '''     
-        if self.M200() == 0 and Mx() != 0:
+        """ This method is VERY slow, it takes around 2 seconds per computation """
 
+        if self.M200() == 0 and Mx() != 0:
             checkMass = [10**m for m in np.arange(13.0,16,0.05)]
             massTest  = []
             for m in checkMass: 
@@ -653,22 +647,22 @@ class Galaxycluster(object):
                       
     # inspired by Boehringer et al 2014  (also see Nuza+2017)
     def infer_LX_M200(self):
+
         if self.Lx() == 0 and  self.M200() != 0:
             self.Lx.val  = self.comp_LX_M200(self.M200)
 
     def flux2power_woRedening(self):
         # To factor for converting flux [Jy?] to power (erg/s)
-        return 1e-29*(4* np.pi*np.power(self.cosmoDL*1e-2,2))
-    
-    
+        return 1e-29*(4* np.pi*np.power(self.cosmoDL*1e-2, 2))
+
     
     def relics_polarDistribution(self, histo=None, **kwargs):
 
-        ''' This function identifies to axis of preferred radio emission in the galaxy cluster
+        """ This function identifies to axis of preferred radio emission in the galaxy cluster
             In the first step the dividing line that minimizes/maximizes an regression criterium.
             In the next step the fluxes within these regions are computed.
             
-            This procedure depends on gcl.histo, if flux is outside the given range it won't be put into consideration (radius etc!)'''
+            This procedure depends on gcl.histo, if flux is outside the given range it won't be put into consideration (radius etc!)"""
         
 
         eps = 1.e-15 #15  # 1  Femto Jy as offset ... hopefully this doesn't change the results
@@ -676,43 +670,42 @@ class Galaxycluster(object):
         if histo is None:
             histo = self.histo
         if histo is not None:
-            collabsed  = np.sum(histo.hist, axis=(1))   # Collabses along the distance axis
+            collabsed  = np.sum(histo.hist, axis=1)   # Collabses along the distance axis
             N = collabsed.shape[0]
 
             
             # This is some simple form of regression!
-            fitarray_pro  = [np.sum(  np.multiply(np.power(collabsed, 0.25), np.abs(np.cos(histo.ticks[0]-shift)) ) )  for shift in histo.ticks[0]]
+            fitarray_pro = [np.sum(np.multiply(np.power(collabsed, 0.25), np.abs(np.cos(histo.ticks[0]-shift)))) for shift in histo.ticks[0]]
             fitarray_anti = fitarray_pro
             
             # Some values that would fit nicely into the cluster class
             # The value fitted would give the counterclockwise angle. This is why I subtract the from 2pi
-            self.relic_pro_index  = np.argmax(fitarray_pro)
-            self.relic_pro_angle  = histo.ticks[0][self.relic_pro_index]      # [0:2pi]
+            self.relic_pro_index = np.argmax(fitarray_pro)
+            self.relic_pro_angle = histo.ticks[0][self.relic_pro_index]      # [0:2pi]
             
             self.relic_anti_index = np.argmin(fitarray_anti)
             self.relic_anti_angle = histo.ticks[0][self.relic_anti_index]   # [0:2pi]
             
     
-            self.pro1  = np.sum( maut.polar_from_to( collabsed, [int(self.relic_pro_index-1./4.*N), int(self.relic_pro_index  + 1./4.*N)] )) + eps
-            self.pro2  = np.sum( collabsed )  - self.pro1   + 2.*eps
+            self.pro1 = np.sum(maut.polar_from_to(collabsed, [int(self.relic_pro_index-1./4.*N), int(self.relic_pro_index + 1./4.*N)])) + eps
+            self.pro2 = np.sum(collabsed) - self.pro1 + 2.*eps
     
             # There is a very weird bug that causes np.sum(test2) to be zero even if you subtract it before
-            self.anti1  = np.sum( maut.polar_from_to( collabsed, [int(self.relic_anti_index),int(self.relic_anti_index  + 1./2.*N)]) )  + eps 
-            self.anti2 = np.sum( collabsed )  - self.anti1  + 2.*eps 
+            self.anti1 = np.sum(maut.polar_from_to( collabsed, [int(self.relic_anti_index),int(self.relic_anti_index + 1./2.*N)])) + eps 
+            self.anti2 = np.sum(collabsed) - self.anti1 + 2.*eps 
     
             # simple but innefficient way to make sure that the vectors have one and not two major directions
             if self.pro2 / self.pro1 > 1:
      
-                self.relic_pro_index  = int((self.relic_pro_index + len(fitarray_pro)/2 ) %  len(fitarray_pro))
-                self.relic_pro_angle  = histo.ticks[0][self.relic_pro_index]      # [0:2pi]
-                self.pro1, self.pro2  = self.pro2 , self.pro1
+                self.relic_pro_index = int((self.relic_pro_index + len(fitarray_pro)/2) % len(fitarray_pro))
+                self.relic_pro_angle = histo.ticks[0][self.relic_pro_index]      # [0:2pi]
+                self.pro1, self.pro2 = self.pro2, self.pro1
     
-                
             if self.anti2 / self.anti1 > 1:
                 
-                self.relic_anti_index = int((self.relic_anti_index + len(fitarray_pro)/2 ) %  len(fitarray_pro))
+                self.relic_anti_index = int((self.relic_anti_index + len(fitarray_pro)/2) % len(fitarray_pro))
                 self.relic_anti_angle = histo.ticks[0][self.relic_anti_index]   # [0:2pi]
-                self.anti1 , self.anti2  = self.anti2 , self.anti1
+                self.anti1, self.anti2 = self.anti2, self.anti1
                 
         else:
             self.pro1, self.pro2, self.anti1, self.anti2 = eps, eps, eps, eps
@@ -727,19 +720,19 @@ class Galaxycluster(object):
     
     
     def gettypestring(self, vec=False) :
-        ''' returns a typestring for the diffusive emission components in this galaxy cluster. 
-        In the case of several emission types of different candidate status I have to think of an solution'''
+        """ Returns a typestring for the diffusive emission components in this galaxy cluster.
+        In the case of several emission types of different candidate status I have to think of an solution"""
         
         tarr = [0]*4
-    
+
         for reg in self.regions:
             if reg.rtype.classi == 0 or reg.rtype.classi == -1:
-                tarr[0] = 1.0-0.5*int(reg.candidate)
+                tarr[0] = 1.0-0.6*int(reg.candidate)
             if reg.rtype.classi == 1 or reg.rtype.classi == 3:
-                tarr[1] = 1.0-0.5*int(reg.candidate)
+                tarr[1] = 1.0-0.6*int(reg.candidate)
             if reg.rtype.classi == 2:
-                tarr[1] = 1.0-0.5*int(reg.candidate)  
-                tarr[2] = 1.0-0.5*int(reg.candidate)
+                tarr[1] = 1.0-0.6*int(reg.candidate)
+                tarr[2] = 1.0-0.6*int(reg.candidate)
              
         if len(self.regions) > 1 and tarr[2] == 0:
             tarr[0] = 0.5
@@ -747,26 +740,26 @@ class Galaxycluster(object):
         if self.halo == 'TRUE': #self.halo
             tarr[3] = 1.0 
         if self.halo == 'CAND': ##buggy, does not seem to work
-            tarr[3] = 0.5    
+            tarr[3] = 0.4
                 
         if vec: return tarr        
-#        print self.name, tarr
+
         tstr = ''     
-        tstr +=  '\\textcolor{black!%.f}{\\textbf{(}}' % (tarr[1]*100)
-        tstr +=  '\\textcolor{black!%.f}{$\\bullet$}'  % (tarr[3]* 50)
-        tstr +=  '\\textcolor{black!%.f}{\\textbf{)}}' % (tarr[2]*100)
-        tstr +=  '\\textcolor{black!%.f}{*}'           % (tarr[0]*100)
+        tstr += '\\textcolor{black!%.f}{\\textbf{(}}' % (tarr[1]*100)
+        tstr += '\\textcolor{black!%.f}{$\\bullet$}'  % (tarr[3]* 50)
+        tstr += '\\textcolor{black!%.f}{\\textbf{)}}' % (tarr[2]*100)
+        tstr += '\\textcolor{black!%.f}{*}'           % (tarr[0]*100)
         return tstr
-    
+
     
     def getstatusstring(self, zmin=0.05) :
-        ''' Returns if the galaxy cluster was considered and the analysisi and the statusstring  descriping either the total flux density value or
-            the resson why the cluster was not included in the analysisi '''
+        """ Returns if the galaxy cluster was considered and the analysisi and the statusstring  descriping either the total flux density value or
+            the resson why the cluster was not included in the analysisi """
         
         if self.flux > 0 and self.z>zmin:
             return True, '$%.1f$' % (self.flux.value)
         else:
-            ''' NVSS specific '''
+            """ NVSS specific """
             
             status   = self.status.split(',')
             statuses = []
@@ -782,11 +775,11 @@ class Galaxycluster(object):
                     else:
                         statuses.append('not gischt')
                     
-            if 'CLASSI'    in status : statuses.append('not gischt')
-            if 'CONF'      in status : statuses.append('contam.'   )
-            if 'FAINT'     in status : statuses.append('too faint' )
-            if 'noMAP'     in status : statuses.append('low Dec'   )
-            if 'NOCLUSTER' in status : statuses.append('no cluster')
+            if 'CLASSI'    in status: statuses.append('not gischt')
+            if 'CONF'      in status: statuses.append('contam.'   )
+            if 'FAINT'     in status: statuses.append('too faint' )
+            if 'noMAP'     in status: statuses.append('low Dec'   )
+            if 'NOCLUSTER' in status: statuses.append('no cluster')
 
 
 
@@ -796,7 +789,7 @@ class Galaxycluster(object):
             return None, statusstring
     
     def where_all(self, allwhere=None, **kwargs):
-        ''' Returns a numpy-where list for a two dimensional array that an be used to mask all relics in an 2D-map'''
+        """ Returns a numpy-where list for a two dimensional array that an be used to mask all relics in an 2D-map"""
 
         for relic  in self.relics: #self.filterRelics(**kwargs):        
             if allwhere is not None:
@@ -808,17 +801,16 @@ class Galaxycluster(object):
         return allwhere
     
     def whereToMask(self, H, iL):
-        ''' Returns a numpy array for a mask and an array of a given shape '''
-        #allmask.astype(int)
+        """ Returns a numpy array for a mask and an array of a given shape """
         return [iL[0].astype(np.int64),iL[1].astype(np.int64)]
     
     def Mask_Map(self, H, normalize=1, **kwargs):
-        '''Input:
+        """Input:
            H       :  A numpy array that represents the values of the evenly sampled map
            Normalize: Array or Float for Normalization 
            
            Out: A masked and normalized numpy array weighted by the 'nornalization' factor
-           '''
+           """
         iL   = self.where_all(**kwargs)
         mask = self.whereToMask(H, iL)
  
@@ -830,25 +822,25 @@ class Galaxycluster(object):
 
 
     def stoch_drop(self, dropseed):
-        ''' stochasticaly drops cluster objects based on  discovery_prop_cluster()'''
+        """ stochasticaly drops cluster objects based on  discovery_prop_cluster()"""
         if dropseed is None:
             return True
         return self.discovery_prop_cluster() > dropseed.uniform(0, 1)
     
     def discovery_prop_cluster(self):
-        ''' Assigns a probalistic value (0-1) that the given relic hosting cluster would be detected in any relic survey 
+        """ Assigns a probalistic value (0-1) that the given relic hosting cluster would be detected in any relic survey 
             In the current implementation, this is a super simple approach that assumes that
             the most prominent object determines the discovery probability.
             
             In the truth characteristic structures like double relics might increase the discovery probability.
             This is why if there is more than 2 objects above a certain value,
             we double the discovery probability ... in the future
-            '''
+            """
 
         return max(surut.discovery_prop(self.relics) ) #, a=3, b=0.10
         
     def __str__(self):
-        ''' I don't see any reason to keep this return value. Is this for any specific filtercluster statement?'''
+        """ I don't see any reason to keep this return value. Is this for any specific filtercluster statement?"""
         return True 
     
         
@@ -872,7 +864,7 @@ class Galaxycluster_simulation(Galaxycluster):
     self.Prest_vol  = dbc.measurand(Prest_Vol, 'Prest_vol', label='$P_\\mathrm{rest,vol}$', un = "W/Hz")   # total radio emission within virial radius (of projected quantities), could also be a future functionality for an efficiency of 1
     self.PrestVazza = PrestVazza
  
-    ''' thse measures are particular used for the CW simulations ''' 
+    """ thse measures are particular used for the CW simulations """ 
     self.R100_vaz  = dbc.measurand(R100, 'R100_vaz', label='$R_\mathrm{100,vaz}$', un='Mpc')    # R200 in [Mpc] 
     self.interratio= ratio           # log10 (Interpolation Ratio)
 
@@ -885,8 +877,8 @@ class Galaxycluster_simulation(Galaxycluster):
 
 
 class DetInfo:
-    ''' This class is used to define the observational parameters of an created map, albeit one survey/ each galaxy cluster could have regions with differing detaction informations
-    '''
+    """ This class is used to define the observational parameters of an created map, albeit one survey/ each galaxy cluster could have regions with differing detaction informations
+    """
     def __init__(self, name='', beam=[1,1,0], spixel=1, rms=0, limit=0, nucen=1.4, center=None, pcenter=[0,0], survey = 'NVSS', telescope='VLA-D'):
 
         self.FWHM2sigma =1/2.354 
@@ -910,8 +902,8 @@ class DetInfo:
         self.Abeam   = [1.133*self.beam_pix[0]*self.beam_pix[1], 1.133*self.beam[0]*self.beam[1]/3600] 
 
     def convolve_map(self, npmap):
-        '''Convolves a map and converts the  to numpy quantities.
-        The sum of the array is not preserved, because of the way the map represent flux per beam'''                      
+        """Convolves a map and converts the  to numpy quantities.
+        The sum of the array is not preserved, because of the way the map represent flux per beam"""                      
         return self.Abeam[0]*ndi.gaussian_filter(npmap, (self.FWHM2sigma*self.beam_pix[0],self.FWHM2sigma*self.beam_pix[1]))  ## gaussian convolution              
                 
                
@@ -951,7 +943,7 @@ class RModel(BFieldModel):
         
       BFieldModel.__init__(self, **kwargs)
       
-      ''' Metaparameter '''
+      """ Metaparameter """
       self.pre       = pre
       self.effList   = effList
       self.simu      = simu
@@ -965,7 +957,7 @@ class PreModel_Hoeft(RModel):
   """ 
   def __init__(self, id, **kwargs ):
         
-      ''' Model of preexisting electrons, see internal .pdf description'''
+      """ Model of preexisting electrons, see internal .pdf description"""
       RModel.__init__(self, id, pre=True, **kwargs)
       self.t0      = 0.5   # Minimal time since reacceleration
       self.t1      = 5     # Maximal time since reacceleration
@@ -979,7 +971,7 @@ class PreModel_Gelszinnis(RModel):
   """ 
   def __init__(self, id, p0=1e-4, p_sigma=1, sigmoid_0=1e-4, sigmoid_width=1, **kwargs ):
         
-      ''' Model of preexisting electrons, see internal .pdf description'''
+      """ Model of preexisting electrons, see internal .pdf description"""
       RModel.__init__(self, id, pre=True, **kwargs)
       self.p0            = p0            # p_rat
       self.p_sigma       = p_sigma       # scatter sigmoid in lognormal coordinates
@@ -1032,7 +1024,7 @@ class DetRegion(object):
   def __init__(self, name, cnt, cnt_WCS=[]):
     
      
-     ''' DEVELOPMENT BEGIN '''
+     """ DEVELOPMENT BEGIN """
      self.name       = name
      self.detections = []
      self.cnt        = cnt    # In list of an list ... (I know!] cnt coordinates
@@ -1040,12 +1032,12 @@ class DetRegion(object):
     
 #     def accumulate(classi=['relics']):   
 #         for detections in self.detections('class'=relics):
-#             '''accumulate properties, like for galaxy clusters'''
+#             """accumulate properties, like for galaxy clusters"""
 #             LAS  =1
 #             flux =1
      
       
-     ''' DEVELOPMENT END '''
+     """ DEVELOPMENT END """
      
      
       
@@ -1080,7 +1072,7 @@ class RelicRegion(DetRegion): # Define a new object: RelicRegion
        self.alpha_err= 0.3   
        
        
-    '''DEVELOPMENT
+    """DEVELOPMENT
     #'' Maps pecific properties ... in the future this could be a list of map-classes ''#       
     #=== Classes attached to it
     self.status     = status   # A list of possible atatuses
@@ -1120,7 +1112,7 @@ class RelicRegion(DetRegion): # Define a new object: RelicRegion
             self.relics = self.relics + relics
             self.updateInformation(**filterargs)
             
-    DEVELOPMENT END'''  
+    DEVELOPMENT END"""  
             
   def __str__(self):
     return("The RelicRegion %s of relic type=%3i with an alpha of %5.3f" % (self.name, self.rtype, self.alpha))
@@ -1144,7 +1136,7 @@ class RelicTypes:
     #return("The cluster %12s at dec=%11s and ra = %9s has an z of %5.3f" % (self.name, self.dec, self.ra, self.z))      
       
 class ApperanceAtFrequ(patches.Ellipse):
-  ''' REDUNTANT in current implementation'''
+  """ REDUNTANT in current implementation"""
   def __init__(self, flux=1, frequ=1.4, major=0, minor=0, posangle=0):
       self.flux     = flux  # [mJy at 1.4 GHz]
       self.frequ    = frequ #frequency
@@ -1154,7 +1146,7 @@ class ApperanceAtFrequ(patches.Ellipse):
     
     
 class RadioSource(ephem.FixedBody):
-    ''' REDUNTANT in current implementation'''
+    """ REDUNTANT in current implementation"""
     def __init__(self, ra=0, dec=0, flux = 1, frequ=1.4, ha= 0, major=0, minor=0, posangle=0): #ra='00:00:00', dec='00:00:00'
         #"""
         #decription
@@ -1174,18 +1166,18 @@ class RadioSource(ephem.FixedBody):
     
 # Define a new object: relic
 class Relic:
-      """
-      A class for representing an observed relic (radio relic, phoenix, etc.) in our visible universe.
-      To initialize all values it needs a galaxy cluster to be assigned
-      ... region and dinfo might be outdated
-      ... ! the angle computation might be needed to  updated !
-      ... make sure that all possible output quantities that are not arrays, lists ore class objects are measurands
-      ... inconsistencies exist for the alpha value and its usage 
-      ... might add astropy functionalities --> including using astropy quantities (quantity + unt)
-      ... In future this might become a child class of the RadioSource class
-      """
+    """
+    A class for representing an observed relic (radio relic, phoenix, etc.) in our visible universe.
+    To initialize all values it needs a galaxy cluster to be assigned
+    ... region and dinfo might be outdated
+    ... ! the angle computation might be needed to  updated !
+    ... make sure that all possible output quantities that are not arrays, lists ore class objects are measurands
+    ... inconsistencies exist for the alpha value and its usage
+    ... might add astropy functionalities --> including using astropy quantities (quantity + unt)
+    ... In future this might become a child class of the RadioSource class
+    """
 
-      def __init__(self, region, dinfo, RA, Dec, LAS, area, GCl=False, F=0, F_ps=0, F_lit=0, LLS_lit=0, alpha=None, alpha_err=0, alphaFLAG=False, theta_elong=False, cov=False, cnt=[], Mach=None, Dens=0, Dproj_pix=0, eff=0, polHist=None, sparseD=None, sparseW = None, sparseA=None, pmask=None):
+    def __init__(self, region, dinfo, RA, Dec, LAS, area, GCl=False, F=0, F_ps=0, F_lit=0, LLS_lit=0, alpha=None, alpha_err=0, alphaFLAG=False, theta_elong=False, cov=False, cnt=[], Mach=None, Dens=0, Dproj_pix=0, eff=0, polHist=None, sparseD=None, sparseW = None, sparseA=None, pmask=None):
         """
         parameters
         """
@@ -1200,10 +1192,9 @@ class Relic:
         self.polHist     =  polHist  # a sparse numpy array
         
 
-        
         ##===  Averaged: Position and coordiantes
-        self.RA          = dbc.measurand(  RA, 'RA' , un = 'deg')  
-        self.Dec         = dbc.measurand(  Dec, 'Dec', un = 'deg') 
+        self.RA          = dbc.measurand( RA, 'RA' , un = 'deg')
+        self.Dec         = dbc.measurand( Dec, 'Dec', un = 'deg')
           
         self.Dproj_pix   = dbc.measurand( Dproj_pix, 'Dproj_pix', label='$D_\\mathrm{proj,pix}$', un = "kpc", std = max(0.1*Dproj_pix,100.) ) # in kpc; projected distance 
                                      
@@ -1214,7 +1205,7 @@ class Relic:
         
         #=== All Fluxes are in mJy  
         self.flux_ps     =  dbc.measurand( F_ps, 'F_ps', label='$F_\\mathrm{ps}$', un = 'mJy', std = 0.10*F_ps)  #shoud be a function!  
-        flux_err         =  np.sqrt(  (dinfo.rms*1e3*self.area()/dinfo.Abeam[1])**2 + (0.05*self.flux_ps())**2 + (0.10*F)**2 )
+        flux_err         =  np.sqrt( (dinfo.rms*1e3*self.area()/dinfo.Abeam[1])**2 + (0.05*self.flux_ps())**2 + (0.10*F)**2 )
         self.flux        =  dbc.measurand( F   , 'F'                             , un = 'mJy', std = flux_err)
                     
                     
@@ -1237,7 +1228,7 @@ class Relic:
         self.cov         = cov        #2x2 covariance matrix
         self.theta_elong = theta_elong
         
-        ''' Shape information '''
+        """ Shape information """
         eigvals, eigvecs = np.linalg.eigh(cov)
         self.eigvecs     = np.sort(eigvecs, axis=1)[::-1]   #not yet workung perfectly! I think there is a bug inside, you could test by multiplying eigvecs with egvalues to see if the covariance matrix is reproduced!
         self.eigvals     = np.sort(eigvals)[::-1]
@@ -1252,7 +1243,7 @@ class Relic:
         self.sparseW     = sparseW   # flux weight
         self.sparseA     = sparseA   # angle
          
-        ''' pmask is used to fasten the binning of following quantities'''                
+        """ pmask is used to fasten the binning of following quantities"""                
         self.wT          =  None  # a sparse numpy array; flux weighted Temperature
         self.wRho        =  None  # a sparse numpy array; flux weighted electron upstream density     
         self.wMach       =  None  # a sparse numpy array; flux weighted Mach number
@@ -1277,140 +1268,135 @@ class Relic:
             'This relic has no galaxy cluster assigned!'
         
 
-      """
-      functions
-      """
-      
-      # Average mach number, from https://arxiv.org/pdf/1611.01273.pdf (2016) ; page 13, equ. 5; though they have an inconsistentdefinitionof alpha(assume alpha>0 in equation)
-      # Note that: This equation is tailored for alphas that are defined to be negative  for relics.
-      #             2alpha+4/ 2alpha
-      #              -2alpha-inj+3/(-2alpha_inj+1)
-      #               -2alpha+4/(-2alpha+2)
-      #               -alpha+2/-alpha+1
+    """
+    functions
+    """
 
-      ''' See Colafrancesco+2017 equ. 5 & 6 '''
-      def infer_Mach(self,Mach=None):  
-          ''' Derive the MAch number proxy if the spectral index is known '''
-          
-#          print (self.alpha())
-          if Mach is not None:
-              self.Mach      = dbc.measurand( Mach              , '$\overline{M}$', un=None )
-          else:
-              if self.alpha.value is None:
-                  alpha = -1.03
-                  Mach = np.nan #np.sqrt( (-alpha+1) / (-alpha-1 ) )  #= 
-              else:
-                  alpha      = min(self.alpha.value,-1.03) 
-                  Mach      = np.sqrt( (-alpha+1) / (-alpha-1 ) )
-              self.Mach        = dbc.measurand( Mach , '$\overline{M}$', un=None ) 
+    # Average mach number, from https://arxiv.org/pdf/1611.01273.pdf (2016) ; page 13, equ. 5; though they have an inconsistentdefinitionof alpha(assume alpha>0 in equation)
+    # Note that: This equation is tailored for alphas that are defined to be negative  for relics.
+    #             2alpha+4/ 2alpha
+    #              -2alpha-inj+3/(-2alpha_inj+1)
+    #               -2alpha+4/(-2alpha+2)
+    #               -alpha+2/-alpha+1
 
-      
-      def create_Histo(self,GCl,normtype='R200'):
-          ''' Creates a PolarHistogram if the Histogram() type is set ''' 
-          
-          if GCl.histo is not None:
+    """ See Colafrancesco+2017 equ. 5 & 6 """
+    def infer_Mach(self, Mach = None):
+        """ Derive the Mach number proxy if the spectral index is known """
 
-              Nexp     = GCl.histo.norm.Nexp 
-              normtype = GCl.histo.norm.ntype
-    
-              if normtype == 'R200'   :  norm= GCl.R200() * (1500/GCl.R200())**(Nexp-1)                 
-              if normtype == 'Rvir'   :  norm= GCl.Rvir() * (1500/GCl.Rvir())**(Nexp-1)                 
-              if normtype == 'Dproj'  :  norm= 1e3                                  
-              
-    
-              self.polHist =  sparse.csr_matrix(np.histogram2d( self.sparseA, self.sparseD/norm, bins=GCl.histo.bins, normed=False, weights=self.sparseW) [0] )        
+        #          print (self.alpha())
+        if Mach is not None:
+            self.Mach = dbc.measurand(Mach, '$\overline{M}$', un=None)
+        else:
+            if self.alpha.value is None:
+                alpha = -1.03
+                Mach = np.nan #np.sqrt( (-alpha+1) / (-alpha-1 ) )  #=
+            else:
+                alpha = min(self.alpha.value,-1.03)
+                Mach = np.sqrt( (-alpha+1) / (-alpha-1 ) )
+            self.Mach = dbc.measurand( Mach , '$\overline{M}$', un=None)
+
 
       
-      def shape_advanced(self):   
-            #m.iner_rat/(m.LAS/(m.dinfo.beam[0]/60.
-            return dbc.measurand( self.iner_rat/ ( self.LAS / (self.dinfo.beam[0]/60.) ), 'shape_advanced'  , label='shape$_\mathrm{PC_1}$', un=None)   
+    def create_Histo(self,GCl,normtype='R200'):
+        """ Creates a PolarHistogram if the Histogram() type is set """
+
+        if GCl.histo is not None:
+
+            Nexp     = GCl.histo.norm.Nexp
+            normtype = GCl.histo.norm.ntype
+
+            if normtype == 'R200':  norm = GCl.R200() * (1500/GCl.R200())**(Nexp-1)
+            if normtype == 'Rvir':  norm = GCl.Rvir() * (1500/GCl.Rvir())**(Nexp-1)
+            if normtype == 'Dproj': norm = 1e3
+
+            self.polHist =  sparse.csr_matrix(np.histogram2d(self.sparseA, self.sparseD/norm, bins=GCl.histo.bins,
+                                                             normed=False, weights=self.sparseW) [0] )
+
+      
+    def shape_advanced(self):
+        return dbc.measurand( self.iner_rat/ ( self.LAS / (self.dinfo.beam[0]/60.) ), 'shape_advanced', label= 'shape$_\mathrm{PC_1}$', un=None)
                   
-        
-      #def comp_uncorr_proc(self, *arg, *args):
-      #       self.flux_err   =  np.sqrt(  (dinfo.rms*1e3*self.area/dinfo.Abeam[1] )**2 + (0.05*self.flux_ps)**2 + (0.10*self.flux)**2 )
-        
+
       
-      def averages_quantities(self):
-            ''' flux weighted properties '''
-            if self.wMach is not None: #4.358 needed?
-                self.T       = dbc.measurand( np.sum(self.wT)/np.sum(self.sparseW)                 , 'T_av'   , label='$\overline{T}$', un = 'keV' ) 
-                self.Mach    = dbc.measurand( np.sum(self.wMach)/np.sum(self.sparseW)              , 'M_av'   , label='$\overline{M}$', un = None )
-                self.Rho     = dbc.measurand( np.sum(self.wRho)/np.sum(self.sparseW)               , 'rho_av' , label='$\overline{\\rho}_\mathrm{down}$', un = 'cm$^{-3}$' ) #label='$\overline{\rho}_\mathrm{down}$',
-                self.Area_av = dbc.measurand( np.sum(self.wArea)/np.sum(self.sparseW)*1e6          , 'area_av', label='$\overline{\mathrm{area}}$', un = 'kpc$^2$' ) 
-                self.Area    = dbc.measurand( np.sum(self.wArea)/np.sum(self.sparseW)*len(self.sparseW) , 'area'               , un = 'Mpc$^2$' )
-                self.B       = dbc.measurand( np.sum(self.wB)/np.sum(self.sparseW), 'B'                , un = '$\mu G$' )
-                self.fpre    = dbc.measurand( np.sum(self.wPre)/np.sum(self.sparseW), 'f_\mathrm{Pre}' , un = '' )
-                
-                self.DoG_rel  = dbc.measurand( np.sum(self.wDoG_rel) , 'DoG_\mathrm{rel}')
+    def averages_quantities(self):
+        """ flux weighted properties """
+        if self.wMach is not None: #4.358 needed?
+            self.T       = dbc.measurand( np.sum(self.wT)/np.sum(self.sparseW)                 , 'T_av'   , label='$\overline{T}$', un = 'keV' )
+            self.Mach    = dbc.measurand( np.sum(self.wMach)/np.sum(self.sparseW)              , 'M_av'   , label='$\overline{M}$', un = None )
+            self.Rho     = dbc.measurand( np.sum(self.wRho)/np.sum(self.sparseW)               , 'rho_av' , label='$\overline{\\rho}_\mathrm{down}$', un = 'cm$^{-3}$' ) #label='$\overline{\rho}_\mathrm{down}$',
+            self.Area_av = dbc.measurand( np.sum(self.wArea)/np.sum(self.sparseW)*1e6          , 'area_av', label='$\overline{\mathrm{area}}$', un = 'kpc$^2$' )
+            self.Area    = dbc.measurand( np.sum(self.wArea)/np.sum(self.sparseW)*len(self.sparseW) , 'area'               , un = 'Mpc$^2$' )
+            self.B       = dbc.measurand( np.sum(self.wB)/np.sum(self.sparseW), 'B'                , un = '$\mu G$' )
+            self.fpre    = dbc.measurand( np.sum(self.wPre)/np.sum(self.sparseW), 'f_\mathrm{Pre}' , un = '' )
+
+            self.DoG_rel  = dbc.measurand( np.sum(self.wDoG_rel) , 'DoG_\mathrm{rel}')
 #                self.Rho_up   = dbc.measurand( np.sum(self.wRho_up)/np.sum(self.sparseW)            , 'rho_up' , label='$\overline{\\rho}_\mathrm{up}$'  , un = 'cm$^{-3}$' )
 #                self.Rho_down = dbc.measurand( np.sum(self.wRho_down)/np.sum(self.sparseW)          , 'rho_dow', label='$\overline{\\rho}_\mathrm{down}$', un = 'cm$^{-3}$' )
 #                self.T_up     = dbc.measurand( np.sum(self.wT_up)/np.sum(self.sparseW)              , 'T_up'   , label='$\overline{T_\\mathrm{up}}$', un = 'keV' ) 
 #                self.T_down   = dbc.measurand( np.sum(self.wT_down)/np.sum(self.sparseW)            , 'T_dow'  , label='$\overline{T_\\mathrm{down}}}$', un = 'keV' ) 
-            
-            if self.wAlpha is not None:   
-                self.alpha   = dbc.measurand( -np.sum(self.wAlpha)/np.sum(self.sparseW) , 'alpha', label='$\\alpha$', un = None ) 
+
+        if self.wAlpha is not None:
+            self.alpha   = dbc.measurand( -np.sum(self.wAlpha)/np.sum(self.sparseW) , 'alpha', label='$\\alpha$', un = None )
 #                self.alpha.value  =  -np.sum(self.wAlpha)/np.sum(self.sparseW)
 #                self.infer_Mach()
 
                 
-      def asign_cluster(self, GCl):
-            self.GCl = GCl
-            self.create_Histo(GCl)
-          
-            if self.region.name == '':
-               self.name        = GCl.name 
-            else:
-               self.name        = GCl.name + '_' + self.region.name    
-          
-            self.LLS         =  dbc.measurand( self.LAS *60* GCl.cosmoPS         , 'LLS'       , un = "kpc"         ,  std=[std*60*GCl.cosmoPS           for std in self.LAS.std]) 
-            self.area100kpc  =  dbc.measurand( self.area*(GCl.cosmoPS*60/100)**2 , 'area100kpc', un = "(100kpc)$^2$",  std=[std*(GCl.cosmoPS*60/100)**2  for std in self.area.std])        
-            
-            # All radio Luminousities are in 10^24 W/Hz, factor 1e-29 -->  1e-3 Jy/mJy  *  (1e-26 W/(Hz m^2)) / Jy
-            # All radio Luminousities are in W/Hz    
-            # See Nuza et all. 2012
-            self.bw_cor     = 1./(1.+GCl.z.value)                               # Bandwidth quenching not covered by Luminosity Distancre
-            P               = self.bw_cor  *  self.flux.value*GCl.flux2power_woRedening()
-            self.P          = dbc.measurand( P , 'P', label='$P_\\mathrm{obs}$', un = "W/Hz", 
-                                          std = P*np.sqrt( (self.flux.std/self.flux.value)**2 + ( self.region.alpha_err*np.log(1+GCl.z.value)*(1+GCl.z.value)**self.alpha_z() )**2) )  # include z error
-            self.P_rest     = dbc.measurand( self.P.value*self.speccor(GCl), 'P_rest', label='$P_\\mathrm{rest}$', un = "W/Hz", 
-                                          std = [std*self.speccor(GCl) for std in self.P.std] )   #!!! generall alpha; 
-            self.P_lit      = dbc.measurand( self.flux_lit()*1e-29*(4* np.pi*np.power(GCl.cosmoDL *1e-2,2)), 'Plit', label='$P_\\mathrm{lit}$', un = "W/Hz")   
-            
-            self.vec_GCl    = [(GCl.RA.value-self.RA())*np.cos(self.Dec()*np.pi/180), self.Dec.value-GCl.Dec.value]       # corrected for spherical coordiante system 
-            self.theta_GCl  = (np.angle(self.vec_GCl[0]+self.vec_GCl[1]*1j, deg=True)+360)%360 # in deg;  The complex number form  allows for np.angle. Theta increases counterclockwise
-        
-            self.Dproj      = dbc.measurand( np.linalg.norm(self.vec_GCl)*3600*GCl.cosmoPS, 'Dproj', label='$D_\\mathrm{proj}$', un='kpc')
-            self.Dproj_rel  = dbc.measurand( np.linalg.norm(self.vec_GCl)*3600*GCl.cosmoPS, 'Dproj', label='$D_\\mathrm{proj}$', un='kpc')
-#            self.Dproj.std  = self.Dproj.std( min(max(0.1*self.Dproj(),100.),0.99*self.Dproj()) )
-            
-            if self.Dproj>1e4: self.Dproj.value = 0
-              
-            if self.theta_elong:  # [ Ellipsecontours, Moment of Inertia, Ellipse moments ]
-               self.theta_elong     = self.theta_elong                                                  # in deg; vector measured     np.angle
-               self.theta_rel       = dbc.measurand( maut.MinAngle_quarter(self.theta_elong, self.theta_GCl), 'theta_rel', label = '$\\theta_\mathrm{relic-GCl}$', un='$^\circ$', vrange= [0,90])   # in deg; vector measured     np.angle
-            else:
-               self.theta_elong     = False
-               self.theta_rel       = False
-        
-            
-            # Please mind that for the physical scale (LLS/area) the error will go with ^2 or ^4, depending on how z effects the scale (maybe a local gradient would be better)
-      def alpha_z(self, default=True):
+    def asign_cluster(self, GCl):
+        self.GCl = GCl
+        self.create_Histo(GCl)
+
+        if self.region.name == '':
+           self.name        = GCl.name
+        else:
+           self.name        = GCl.name + '_' + self.region.name
+
+        self.LLS         =  dbc.measurand( self.LAS *60* GCl.cosmoPS         , 'LLS'       , un = "kpc"         ,  std=[std*60*GCl.cosmoPS           for std in self.LAS.std])
+        self.area100kpc  =  dbc.measurand( self.area*(GCl.cosmoPS*60/100)**2 , 'area100kpc', un = "(100kpc)$^2$",  std=[std*(GCl.cosmoPS*60/100)**2  for std in self.area.std])
+
+        # All radio Luminousities are in 10^24 W/Hz, factor 1e-29 -->  1e-3 Jy/mJy  *  (1e-26 W/(Hz m^2)) / Jy
+        # All radio Luminousities are in W/Hz
+        # See Nuza et all. 2012
+        self.bw_cor     = 1./(1.+GCl.z.value)                               # Bandwidth quenching not covered by Luminosity Distancre
+        P               = self.bw_cor  *  self.flux.value*GCl.flux2power_woRedening()
+        self.P          = dbc.measurand( P , 'P', label='$P_\\mathrm{obs}$', un = "W/Hz",
+                                      std = P*np.sqrt( (self.flux.std/self.flux.value)**2 + ( self.region.alpha_err*np.log(1+GCl.z.value)*(1+GCl.z.value)**self.alpha_z() )**2) )  # include z error
+        self.P_rest     = dbc.measurand( self.P.value*self.speccor(GCl), 'P_rest', label='$P_\\mathrm{rest}$', un = "W/Hz",
+                                      std = [std*self.speccor(GCl) for std in self.P.std] )   #!!! generall alpha;
+        self.P_lit      = dbc.measurand( self.flux_lit()*1e-29*(4* np.pi*np.power(GCl.cosmoDL *1e-2,2)), 'Plit', label='$P_\\mathrm{lit}$', un = "W/Hz")
+
+        self.vec_GCl    = [(GCl.RA.value-self.RA())*np.cos(self.Dec()*np.pi/180), self.Dec.value-GCl.Dec.value]       # corrected for spherical coordiante system
+        self.theta_GCl  = (np.angle(self.vec_GCl[0]+self.vec_GCl[1]*1j, deg=True)+360)%360 # in deg;  The complex number form  allows for np.angle. Theta increases counterclockwise
+
+        self.Dproj      = dbc.measurand( np.linalg.norm(self.vec_GCl)*3600*GCl.cosmoPS, 'Dproj', label='$D_\\mathrm{proj}$', un='kpc')
+        self.Dproj_rel  = dbc.measurand( np.linalg.norm(self.vec_GCl)*3600*GCl.cosmoPS, 'Dproj', label='$D_\\mathrm{proj}$', un='kpc')
+    #            self.Dproj.std  = self.Dproj.std( min(max(0.1*self.Dproj(),100.),0.99*self.Dproj()) )
+
+        if self.Dproj>1e4: self.Dproj.value = 0
+
+        if self.theta_elong:  # [ Ellipsecontours, Moment of Inertia, Ellipse moments ]
+           self.theta_elong     = self.theta_elong                                                  # in deg; vector measured     np.angle
+           self.theta_rel       = dbc.measurand( maut.MinAngle_quarter(self.theta_elong, self.theta_GCl), 'theta_rel', label = '$\\theta_\mathrm{relic-GCl}$', un='$^\circ$', vrange= [0,90])   # in deg; vector measured     np.angle
+        else:
+           self.theta_elong     = False
+           self.theta_rel       = False
+
+        # Please mind that for the physical scale (LLS/area) the error will go with ^2 or ^4, depending on how z effects the scale (maybe a local gradient would be better)
+
+    def alpha_z(self, default=True):
         if default or self.alpha is None:
             alpha     =  self.region.rtype.alpha
           #alpha_err =  0.3 #self.alpha_err
         else:
-            alpha     =  self.alpha() 
+            alpha     =  self.alpha()
         return alpha
           
     
-      def speccor(self, GCl, default=True):
-          #alpha_err =  self.alpha_err
-
+    def speccor(self, GCl, default=True):
         speccor = 1./np.power(1.+GCl.z(), self.alpha_z(default) )
         self.spec_cor = speccor
-        return  speccor
+        return speccor
         
-      def __str__(self):
+    def __str__(self):
         # return("The cluster %12s at dec=%6.2f and rec = %6.2f has an z of %5.3f" % (self.name, self.dec, self.rec, self.z))
         return 'relic.name: %s' % (self.name)
         #return("The cluster %12s at dec=%11s and ra = %9s has an z of %5.3f" % (self.name, self.dec, self.ra, self.z))

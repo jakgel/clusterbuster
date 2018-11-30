@@ -34,18 +34,24 @@ import clusterbuster.iout.survey       as ioclass
 import clusterbuster.maput             as maput
 import clusterbuster.fitsut            as fitsut
 
+
+from astropy.io import fits
+from astropy.convolution import convolve
+from astropy.convolution import Gaussian2DKernel
+from astropy.wcs import WCS
+from reproject import reproject_interp
                 
 def updateClusters_missingRegions(ClList,AddList):
-    ''' This adds relic regions based on a .csv file to the cluster List 
+    """ This adds relic regions based on a .csv file to the cluster List 
     It is a workaround to have a fast update of the already existing datafiles with the soon to be standard file system,
     in this case  only for clusters without NVSS detections are updated via the identifiers.
     
     Later on this might be incorporated in the CB suite
-    '''
+    """
 
     regions = pd.read_csv(AddList,comment='#')
 
-    ''' FIX the classification by mapping'''    
+    """ FIX the classification by mapping"""    
     mapping = {'PHOENIX'          : 0, 
                'RELIC'            : 1,
                'SHOCKLET'         : 3,
@@ -62,7 +68,7 @@ def updateClusters_missingRegions(ClList,AddList):
      
 
     for index, row in regions.iterrows():
-        ''' Just append the cluster if its status is not True and add the missing relic regions '''
+        """ Just append the cluster if its status is not True and add the missing relic regions """
         for GCl in ClList:
             if GCl.status not in ['TRUE'] and GCl.name == row['Cluster']:  
 
@@ -70,7 +76,7 @@ def updateClusters_missingRegions(ClList,AddList):
                 if int(row['CLASS_int']) == -2: continue  # For now exclude halos, just because they are currently a seperate entry in the clusters file
 #                    print( row['Cluster'], row['CLASS_int']           
                 rtype     = int(row['CLASS_int'])
-                '''Development'''
+                """Development"""
                 alpha     = -1  #row['Alpha']
                 alpha_err =  0  #row['Alpha_error']
                 alphaFLAG =  False
@@ -79,24 +85,23 @@ def updateClusters_missingRegions(ClList,AddList):
                                               alphaFLAG=alphaFLAG, candidate=candidate)
                                              
 
-                ''' DEVELOPMENT WORKAROUND
+                """ DEVELOPMENT WORKAROUND
                 GCl.regions.append(region) is not working!
-                '''
+                """
 
                 GCl.add_regions([region])
                 
     return ClList
 
 def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', plot=True):
-    ''' Extracts survey relics from an real world survey
-    '''
+    """ Extracts survey relics from an real world survey
+    """
     
     for survey in surveys:
         print( '###==== Step 0b: Initialize internal variables/objects for survey: %s ====###' % (survey) )
 
         ClList   = []
         Excluded = []
-        relics   = []
         subtract    = ['slist','fits'] # im, fits, slist
 
         smt      = iom.SmartTiming()
@@ -115,7 +120,7 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
         
         Clusters.where(Clusters.notnull(), 0)
         
-        ''' Part of development: rpelace nan values with values that can be handled by clustebruster '''
+        """ Part of development: rpelace nan values with values that can be handled by clustebruster """
         
         for strings in ['REF_LX','REF_M200','REF_M500','REF_F']:
             Clusters[strings] = Clusters[strings].replace(np.nan, '', regex=True)
@@ -131,7 +136,7 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
         for index, CL in Clusters.iterrows():
             if CL['Cluster'] and  CL['Cluster'] not in [o.name for o in ClList] and CL['Cluster'] not in ['']: 
                 try:
-                    '''I did this to remove unfinished, but recent additions to the relic database'''
+                    """I did this to remove unfinished, but recent additions to the relic database"""
                     if int(CL['Discovery']) >= 2018:
                         continue
                 except:
@@ -200,8 +205,8 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
                                                      limit=NVSSlimit, telescope=telescope, 
                                                      nucen = NVSSnu, center=center[0], pcenter=center[1])
                 if survey == 'TGSS':
-                        s_pixel    = [spixel[1]*GCl.cosmoPS*3600,spixel[1]*3600]  
-                        TGSSbeam   = [ 25.,25./s_pixel[1] ]  
+                        s_pixel    = [spixel[1]*GCl.cosmoPS*3600, spixel[1]*3600]  
+                        TGSSbeam   = [25., 25./s_pixel[1]]  
                         TGSS_rms   = 3.0e-3     # in Jy/beam
                         TGSSlimit  = 2*TGSS_rms 
                         beamrec    = 1. if GCl.Dec>19 else 1. / np.cos( np.radians(GCl.Dec - 19 ) ) 
@@ -212,16 +217,10 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
                                                      limit=TGSSlimit, telescope=telescope, 
                                                      nucen = TGSSnu, center=center[0], pcenter=center[1])
 
-
-
                 #============= Load relic search region  =============#
                 # Make in np.image
                 regfile     = infolder + 'Regions/RR_%s.reg' % (Cl_name) 
                 GCl.regions = ioclass.readDS9relics(regfile, spixel, center[0], center[1])
-
-
-
-
 
                 #============= Subtract Sources  =============#
                 # in Sources folder
@@ -238,10 +237,8 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
                 if 'slist' in subtract:
                     slist =  infolder + 'Sources/slist/%s.slist' % (Cl_name)
                     if os.path.isfile(slist):
-                    #if 1==1:
                       scL = iom.read_para_list( slist )
 
-                      # Either Add up sources
                       for sc in scL:
 
                          if sc['shape'] == 'Gaussian':
@@ -256,10 +253,7 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
                          #model_conv  +=  maput.ImageGaussian_inv(model_conv.shape, sc['flux']*1e-3*freq_factor, g_size, [COOp[0]-1.,COOp[1]-1], theta = sc['theta'], FWHM=True)  #*gaussian_area
                       model_conv = model   
                       use_list  = True
-#                    except:
-#                        warnings.warn("No source subtraction list specified for %s. Alternatively the format of the parameter file causes problems."  % (Cl_name))
-##                        warnings.warn("No source subtraction list specified for %s. Alternatively the format of the parameter file causes problems."  % (Cl_name))
-                        
+
                 if 'fits' in subtract:
                     highres_image = infolder + 'Images_%s/%s-%s.fits' % ("FIRST", "FIRST", Cl_name)
                     if os.path.isfile(highres_image):
@@ -267,15 +261,6 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
                         # regridd
        
                         # http://reproject.readthedocs.io/en/stable/  --> works on fits files
-                        #import pyfits as fits
-                        from astropy.io import fits
-                        from astropy.convolution import convolve
-                        from astropy.convolution import Gaussian2DKernel
-                        from astropy.wcs import WCS  
-                        from reproject import reproject_interp
-                        
-                        #from astropy.utils.data import get_pkg_data_filename
-    
                         hdu1 = fits.open(fitsimage)[0]
                         image_2, center_2, spixel_2 = fitsut.fits2numpy(highres_image)
                         s_pixel_2    = [spixel_2[1]*GCl.cosmoPS*3600,spixel_2[1]*3600]  
@@ -302,10 +287,6 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
 #                            hdu.data = np.expand_dims(hdu.data, axis=0)
                             hdu.header['CRPIX1'] = hdu.header['CRPIX1'] + pad
                             hdu.header['CRPIX2'] = hdu.header['CRPIX2'] + pad
-                            
-                            
-                            
-                            
 
 #
 #                        from astropy.io import fits
@@ -352,7 +333,7 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
                        
 
                         print('_______________________________', array.shape, image.shape)  
-                        array                          = array.squeeze() #could be removed
+                        array = array.squeeze() #could be removed
 
                         fitsut.map2fits(array , GCl.dinfo, infolder + 'Images_%s/%s-%s_test3.fits' % ("FIRST", "FIRST", Cl_name))    
                         squeezed = array.squeeze() #could be removed
@@ -366,7 +347,7 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
 
                 residuum  = image-model_conv
 
-                ''' Development: Only get the flux within the search region '''       
+                """ Development: Only get the flux within the search region """       
                 extreme_res =  True
                 residuum =  maput.ContourMasking(residuum,[region.cnt[0] for region in GCl.regions])
                 
@@ -381,13 +362,11 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
                 smt()
                 
                 #============= impose relic.search  =============#
-                s_radio_SI  =  1 / Jy_SI / (4*np.pi*(GCl.cosmoDL*1e-2)**2)  # radiounit*s_radioSI is Jy/particle        #Umrechnung
-        
                 for ii,region in enumerate(GCl.regions):
                   smt(task='RelicExtr')
-                  relics    = relex.RelicExtraction(residuum, s_radio_SI, z, GCl=GCl, dinfo=GCl.dinfo, rinfo = region, Imcenter=center, subtracted=model)[0:2] # faintexcl=3.6
+                  relics = relex.RelicExtraction(residuum, z, GCl=GCl, dinfo=GCl.dinfo, rinfo = region, Imcenter=center, subtracted=model)[0:2]  # faintexcl=3.6
                   smt()                                
-                  relics         = sorted(relics, key=lambda x: x.flux, reverse=True)
+                  relics = sorted(relics, key=lambda x: x.flux, reverse=True)
                   
                   for relic in relics:
                       relic.alpha.value = region.alpha
@@ -419,45 +398,44 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
     
         print('#=====  Last Step: Output is produced ====#'); smt(task='output') 
         
-        ''' This is an intervening step: Update and ... the missing clusters, in the future this might done at the beginning at an first step '''
-        ClList = updateClusters_missingRegions(ClList, RegionFile) #topfolder+RegionFile
+        """ This is an intervening step: Update and ... the missing clusters, in the future this might done at the beginning at an first step """
+        ClList = updateClusters_missingRegions(ClList, RegionFile) # topfolder+RegionFile
         
 
         print( '#=====  A: Pickle Objects ====#' )
         iom.pickleObject(ClList, outfolder+'pickled/', 'ClList')
         
         print( '#=====  B: Create the Survey and pickle it ====#' )
-        cnt_levels = [9e-4,1.8e-3,3.6e-3,7.2e-3,1.44e-2]
-        
-        synonyms = [ ('1RXS J060313.4+421231',  '1RXS J06+42'),
-          ('ACT-CLJ0102-4915'     ,  'ACT-CLJ01-49'),       
-	      ('CIZA J0649.3+1801'    ,  'CIZA J0649'), #CIZA J0649+18
-          ('CIZA J0107.7+5408'    ,  'CIZA J0107'),
-	      ('CIZA J2242.8+5301'    ,  'CIZA J2243'), #CIZA J2243+53  
-          ('MACS J0025-1222'      ,   'MACS J0025'),
-	      ('MACS J0717.5+3745'    ,  'MACS J0717'), #MCS J0717+37    
-	      ('MACS J1149.5+2223'    ,  'MACS J1149'), # J1149+22
-	      ('MACS J1752.0+4440'    ,  'MACS J1752'), #MCS J1752+44     
-	      ('MACS J2243.3-0935'    ,  'MACS J2243'), #MCS J1752+44   
-          ('MaxBCG 138.91895+25.19876' , 'MaxBCG 138+25'),   
-          ('MaxBCG 217.95869+13.53470' , 'MaxBCG 217+13'),       
-	      ('PSZ1 G004.5-19.5'     ,  'PSZ1 G004'), #PSZ1 G004-19
-	      ('PSZ1 G096.89+24.17'   ,  'PSZ1 G097'), #PSZ1 G097+24
-	      ('PSZ1 G108.18-11.53'   ,  'PSZ1 G108'), #PSZ1 G108-12
-	      ('PLCK G200.9-28.2'     ,  'PLCK G200'), #PSZ1 G108-12  
-	      ('PLCK G287.0+32.9'     ,  'PLCK G287'), #PLCK G287+33
-	      ('RXC J0225.1-2928'     ,  'RXC J0225'),  
-	      ('RXC J1053.7+5452'     ,  'RXC J1054'), # RXC J1054+55
-	      ('RXC J1053.7+5452 '    ,  'RXC J1053'), #RXC J1054+55
-	      ('RXC J1234.2+0947'     ,  'RXC J1234'), # RXC J1054+55    
-	      ('RXC J1314.4-2515'     ,  'RXC J1314'), # RXC J1314-25
-	      ('ZwCl 0008+5215'       ,  'ZwCl 0008'), # ZwCl 0008+52
-	      ('ZwCl 1447.2+2619'     ,  'ZwCl 1447'), # ZwCl 0008+52
-	      ('ZwCl 2341+0000'       ,  'ZwCl 2341'), #ZwCl 2341+00
-	      ('[KMA2007] 217.95869+13.53470',  'KMA2007'), #ZwCl 2341+00
-	      ]
-        
-              
+        cnt_levels = [9e-4, 1.8e-3, 3.6e-3, 7.2e-3, 1.44e-2]
+
+        synonyms = [('1RXS J060313.4+421231', '1RXS J06+42'),
+                    ('ACT-CLJ0102-4915', 'ACT-CLJ01-49'),
+                    ('CIZA J0649.3+1801', 'CIZA J0649'),  # CIZA J0649+18
+                    ('CIZA J0107.7+5408', 'CIZA J0107'),
+                    ('CIZA J2242.8+5301', 'CIZA J2243'),  # CIZA J2243+53
+                    ('MACS J0025-1222', 'MACS J0025'),
+                    ('MACS J0717.5+3745', 'MACS J0717'),  # MCS J0717+37
+                    ('MACS J1149.5+2223', 'MACS J1149'),  # J1149+22
+                    ('MACS J1752.0+4440', 'MACS J1752'),  # MCS J1752+44
+                    ('MACS J2243.3-0935', 'MACS J2243'),  # MCS J1752+44
+                    ('MaxBCG 138.91895+25.19876', 'MaxBCG 138+25'),
+                    ('MaxBCG 217.95869+13.53470', 'MaxBCG 217+13'),
+                    ('PSZ1 G004.5-19.5', 'PSZ1 G004'),  # PSZ1 G004-19
+                    ('PSZ1 G096.89+24.17', 'PSZ1 G097'),  # PSZ1 G097+24
+                    ('PSZ1 G108.18-11.53', 'PSZ1 G108'),  # PSZ1 G108-12
+                    ('PLCK G200.9-28.2', 'PLCK G200'),  # PSZ1 G108-12
+                    ('PLCK G287.0+32.9', 'PLCK G287'),  # PLCK G287+33
+                    ('RXC J0225.1-2928', 'RXC J0225'),
+                    ('RXC J1053.7+5452', 'RXC J1054'),  # RXC J1054+55
+                    ('RXC J1053.7+5452 ', 'RXC J1053'),  # RXC J1054+55
+                    ('RXC J1234.2+0947', 'RXC J1234'),  # RXC J1054+55
+                    ('RXC J1314.4-2515', 'RXC J1314'),  # RXC J1314-25
+                    ('ZwCl 0008+5215', 'ZwCl 0008'),  # ZwCl 0008+52
+                    ('ZwCl 1447.2+2619', 'ZwCl 1447'),  # ZwCl 0008+52
+                    ('ZwCl 2341+0000', 'ZwCl 2341'),  # ZwCl 2341+00
+                    ('[KMA2007] 217.95869+13.53470', 'KMA2007'),  # ZwCl 2341+00
+                    ]
+
 #        synonyms_lit = [('2017A&A...597A..15D', '2017A+A_deGasperin+Intema+'),
 #                        ('2017arXiv170801718K', '2017arXiv_Kale+Wik+')]
         for GCl in ClList:
@@ -465,13 +443,13 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
                 if GCl.name.replace('_',' ') == syn[0] or GCl.name == syn[0]:
                     print( '! Name replacement:', syn )
                     GCl.name = syn[1]
-            GCl.name =GCl.name.replace('_',' ')
+            GCl.name = GCl.name.replace('_', ' ')
             GCl.updateInformation()
          
 
         norm = cdb.norm('R200',Nexp=1)
-        Histo      = cdb.Histogram2D(nbins=(64,46), fromto= [[0,2.*np.pi],[0,1.5]], norm=norm )     # angle_projected(rad), D_proj(R200) 
-        Survey         = cbclass.Survey(ClList, survey, cnt_levels = cnt_levels, synonyms=synonyms, dinfo=GCl.dinfo, mainhist=Histo, surshort=survey)  # 'NVSS' should be replaced with a real survey class
+        Histo = cdb.Histogram2D(nbins=(64,46), fromto= [[0,2.*np.pi],[0,1.5]], norm=norm )     # angle_projected(rad), D_proj(R200)
+        Survey = cbclass.Survey(ClList, survey, cnt_levels = cnt_levels, synonyms=synonyms, dinfo=GCl.dinfo, mainhist=Histo, surshort=survey)  # 'NVSS' should be replaced with a real survey class
         Survey.emi_max = 2e-2
         Survey.scatterkwargs = {"alpha":0.7,"fmt":"o","markersize":10}   
         Survey.histkwargs = {"alpha":0.4}   
@@ -479,7 +457,6 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
 
         for GCl in Survey.GCls:
             print(GCl.name, GCl.status)
-
 
     smt(forced=True)
     return True

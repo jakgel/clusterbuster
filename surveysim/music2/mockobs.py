@@ -244,7 +244,7 @@ def Run_MockObs( bulked, GClrealisations, locations, steps = [1,2,3,4,5,6,7], CA
               
             smt(task='RelicExtr_[sub]'); #print( '###==== Step 7: Extract radio relics ====###'
     
-            relics = relex.RelicExtraction(IM1, s_radio_SI, z, GCl=gcl, dinfo=dinf, eff=eff, rinfo=cbclass.RelicRegion('',[],rtype=1)) #, faintexcl=0.4, Mach=Hmach, Dens=Hdens, 
+            relics = relex.RelicExtraction(IM1, z, GCl=gcl, dinfo=dinf, eff=eff, rinfo=cbclass.RelicRegion('',[],rtype=1)) #, faintexcl=0.4, Mach=Hmach, Dens=Hdens,
     
             smt(task='RelicHandling_[sub]')
             relics          = sorted(relics, key=lambda x: x.flux, reverse=True)
