@@ -88,7 +88,7 @@ def create_table_frame(protoobj, caption, dictionary, delimiter='&', ender='\\',
         tabline += ' %s ' % entry[2]
         if  not isinstance(entry[0], list) and isinstance(entry[0](protoobj), dbclass.measurand):
             idline += entry[0](protoobj).label
-            unline += entry[0](protoobj).unit
+            unline += entry[0](protoobj).unit_string()
              
         else:
              idline += entry[3]
@@ -185,13 +185,14 @@ def RList2table_paper_new(location, survey, longtab=False):
     dictionary = [ [lambda x: x.name.replace('_',' '), '%25s', 'l' , 'Identifier', ''],
                    [lambda x: x.RA , '%5.2f' , 'r'],
                    [lambda x: x.Dec, '%+7.2f', 'r'],
-                   [lambda x: x.Mach, '%.1f', 'r'],
-                   [[lambda x: x.flux(), lambda x: x.flux.std[0]], '$%7.1f\pm%5.1f$' , 'r', '$S_{1.4}$', '[mJy]'],
-                   [[lambda x: np.log10(x.P_rest()), lambda x: np.log10((x.P_rest()+x.P_rest.std[0])/x.P_rest()), lambda x:np.log10((x.P_rest()-x.P_rest.std[0])/x.P_rest())], '$%5.2f^{+%4.2f}_{%4.2f}$', 'r', 'log$_{10}(P_{1.4})$' , '[W/Hz$^{-1}$]'],
+                   #[lambda x: x.Mach, '%.1f', 'r'],
+                   [lambda x: x.alpha, '%.1f', 'r'],
+                   [[lambda x: x.flux(), lambda x: x.flux.std[0]], '$%7.1f\pm%5.1f$' , 'r', '$S_{1.4}$', '\mathrm{[mJy]}'],
+                   [[lambda x: np.log10(x.P_rest()), lambda x: np.log10((x.P_rest()+x.P_rest.std[0])/x.P_rest()), lambda x:np.log10((x.P_rest()-x.P_rest.std[0])/x.P_rest())], '$%5.2f^{+%4.2f}_{%4.2f}$', 'r', 'log$_{10}(P_{1.4})$' , '\mathrm{[W/Hz$^{-1}$]}'],
                    [lambda x: x.LAS, '%5.2f', 'r'], #add error if you like
                    [lambda x: x.LLS, '%5.0f', 'r'], #add error if you like
                    #[Omega not needed],
-                   [lambda x: x.iner_rat(), '%.2f', 'r', '$\lambda_2/\lambda_1$', '[]'],
+                   [lambda x: x.iner_rat(), '%.2f', 'r', '$\lambda_2/\lambda_1$', ''],
                    [lambda x: x.Dproj_pix, '%.0f', 'r'],
                    [lambda x: x.theta_rel(), '%.1f', 'r', '$\phi$', '[deg]']
                  ]

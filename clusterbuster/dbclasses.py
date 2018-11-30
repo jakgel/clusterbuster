@@ -53,10 +53,7 @@ class measurand(entry):
         
         entry.__init__(self, value, dic, label)
 
-        if un is None:
-            self.unit = ' '
-        else:
-            self.unit = un # A unit, here as a string
+        self.unit = un # A unit, here as a string
 
         #== variable range
         self.vrange     = vrange
@@ -82,7 +79,15 @@ class measurand(entry):
     def std_add(self, std):  # Also use reversed for other operations
         self.std[0] = np.sqrt(self.std[0]**2 + std[0])
         self.std[1] = np.sqrt(self.std[1]**2 + std[1])
-        
+
+
+    def unit_string(self):
+
+        if self.unit is None:
+            return ''
+        else:
+            return '[%s]' % (self.unit)
+
     def labels(self, log=False):
         ''' Returns the labels of measurand objects  
             Use 'log=True' if you want to indicate that you use the logarithmic values
@@ -90,8 +95,8 @@ class measurand(entry):
         if self.unit is None:
             unit = ''
         else:
-            unit = ' [%s]' % (self.unit)
-        
+            unit = ' %s' % (self.unit_string())
+
         if log: return 'log$_{10}($%s%s$)$' % (self.label, unit)  
         else:   return '%s%s'               % (self.label, unit)     
         

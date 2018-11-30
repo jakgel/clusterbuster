@@ -1218,7 +1218,7 @@ class Relic:
           
         #=== spectral index and k corection
         # For radio rleics should be inbeetween -1.2 and -1.0, hence negative!
-        self.alpha       = dbc.measurand(alpha, 'alpha', 'spectral index $\\alpha$', std = alpha_err)
+        self.alpha       = dbc.measurand(alpha, 'alpha', '$\\alpha_\mathrm{int}$', std = alpha_err)
         self.alphaFLAG   = alphaFLAG
         #self.kcor        = (1.+GCl.z)**(1-self.alpha)
         

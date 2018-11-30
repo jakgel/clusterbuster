@@ -1208,7 +1208,7 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
     print(pdframe_combined.Survey.unique())
     g = sns.PairGrid(pdframe_combined, hue="Survey", palette="Set2",dropna=True)     
     g = g.map_upper (sns.regplot, scatter_kws={'edgecolors':"white","linewidth":1,"alpha":0.3})  #plt.scatter , , edgecolor="white"
-    g = g.map_diag(sns.kdeplot, lw=3, legend=False, alpha=0.5)  #histtype="step"  {'cmap':['Blues_d','Blues']}
+    g = g.map_diag(sns.kdeplot, lw=3, legend=False, alpha=0.7, shade=True)  #histtype="step"  {'cmap':['Blues_d','Blues']}
     
 
 
@@ -1239,7 +1239,7 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
 
 
 # Taken from https://stackoverflow.com/questions/40726733/plotting-multiple-datasets-on-a-seaborn-pairgrid-as-kdeplots-with-different-colo
-def make_kde(*args, **kwargs):    
+def make_kde(*args, **kwargs):
     sns.kdeplot(*args, cmap=next(make_kde.cmap_cycle), **kwargs)
 
 #    fig.clf() 
