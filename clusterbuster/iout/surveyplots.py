@@ -1165,7 +1165,8 @@ def create_Test( SurveySamples, symbolsism, R200exp=False, markers = np.asarray(
   
 """=== Section of single object analysis ==="""   
 """========================================="""
-    
+import seaborn as sns;
+from itertools import cycle
 
 def joinpandas(pdframes):
     pdframe_combined = None
@@ -1178,14 +1179,15 @@ def joinpandas(pdframes):
 
     return pdframe_combined
     
-def create_scattermatrix( SurveySamples, plotmeasures, suffix=''):
-     
+def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
+    sns.set(style="ticks", color_codes=True)
+
     """ Creates a scatter matrix, off a list of quantities ... nice! 
     Input: SurveySamples ... there is currently no differnciation between different Survey Samples (symbolwise or else)
     """ 
     from pandas.tools.plotting import scatter_matrix
- 
-    pdframes = [survey.fetchpandas(plotmeasures) for survey in SurveySamples]
+
+    pdframes = [survey.fetchpandas(plotmeasures, logs=logs, vkwargs_FilterCluster={"zborder":0.05}) for survey in SurveySamples]
     pdframe_combined = joinpandas(pdframes)                    
 
     print(len(SurveySamples))    
@@ -1200,11 +1202,7 @@ def create_scattermatrix( SurveySamples, plotmeasures, suffix=''):
          cmap = sns.light_palette(color, as_cmap=True)
          plt.imshow(np.abs([x,y].corr()), cmap=cmap, **kwargs) 
     """
-    
-    
 
-    import seaborn as sns; sns.set(style="ticks", color_codes=True)
-    from itertools import cycle
     
     pdframe_combined.to_csv(path_or_buf='/data/Test-%s.csv' % (SurveySamples[0].name))
     print(pdframe_combined.Survey.unique())
@@ -1212,11 +1210,9 @@ def create_scattermatrix( SurveySamples, plotmeasures, suffix=''):
     g = g.map_upper (sns.regplot, scatter_kws={'edgecolors':"white","linewidth":1,"alpha":0.3})  #plt.scatter , , edgecolor="white"
     g = g.map_diag(sns.kdeplot, lw=3, legend=False, alpha=0.5)  #histtype="step"  {'cmap':['Blues_d','Blues']}
     
-    # Taken from https://stackoverflow.com/questions/40726733/plotting-multiple-datasets-on-a-seaborn-pairgrid-as-kdeplots-with-different-colo
-    def make_kde(*args, **kwargs):    
-        sns.kdeplot(*args, cmap=next(make_kde.cmap_cycle), **kwargs)
-        
-    pdframe_combined.Survey.unique()    
+
+
+    pdframe_combined.Survey.unique()
     colorsmaps = ('BuGn','Oranges', 'Red') 
         
     make_kde.cmap_cycle = cycle(colorsmaps[0:len(pdframe_combined.Survey.unique())])    #, 'Reds_r'
@@ -1239,7 +1235,13 @@ def create_scattermatrix( SurveySamples, plotmeasures, suffix=''):
     plt.savefig('%s%s%s.png' % (nowfolder,nowfile,suffix),dpi=400) #filename
     plt.savefig('%s%s%s.pdf' % (nowfolder,nowfile,suffix)) #filename	    #fig.clf()
 
-    plt.clf() 
+    plt.clf()
+
+
+# Taken from https://stackoverflow.com/questions/40726733/plotting-multiple-datasets-on-a-seaborn-pairgrid-as-kdeplots-with-different-colo
+def make_kde(*args, **kwargs):    
+    sns.kdeplot(*args, cmap=next(make_kde.cmap_cycle), **kwargs)
+
 #    fig.clf() 
             
 

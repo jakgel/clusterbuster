@@ -280,7 +280,7 @@ class Survey(object):
           
          return sum([GCl.hist for GCl in self.GCls], 0)
      
-    def fetchpandas(survey, plotmeasures, surname=True, vkwargs_FilterCluster={}, kwargs_FilterObjects={}):
+    def fetchpandas(survey, plotmeasures, logs=None,  surname=True, vkwargs_FilterCluster={}, kwargs_FilterObjects={}):
         """ Return a panda array generated from the survey catalogue 
         
         survey: A ClusterBusterSurvey
@@ -296,9 +296,10 @@ class Survey(object):
         simulated
         
         """  
-    
-        logs = [True for measure in plotmeasures] # a stub, you should be able to specify this
-    
+
+        if logs is None:
+            logs = [True for measure in plotmeasures] # a stub, you should be able to specify this
+
         """ This part is outdated and shuld be removed once the eficiency is removed """
         eff = survey.Rmodel.effList[0]
         if survey.Rmodel.simu: 
@@ -313,7 +314,7 @@ class Survey(object):
         """ This very ugly steps just creates a List of (relic,GCL) from the survey
         As in the future galaxy clusters will gain be a property of relcis again this step will be shorter  and more readable"""
         
-        for GCl in survey.FilterCluster():
+        for GCl in survey.FilterCluster(**vkwargs_FilterCluster):
                 GCl.updateInformation(eff=feff)
                 List_full.append(  [ (GCl,relic)  for relic in GCl.filterRelics(eff=feff)]  )
                 
@@ -323,15 +324,17 @@ class Survey(object):
     
             relic.asign_cluster(GCl)
             datavalues = []
-            for measure in plotmeasures:
+            for measure, log in zip(plotmeasures, logs):
                 data     = measure(relic).value
+                if log:
+                    data = np.log10(data)
                 datavalues.append(data)
             
             datalist.append(datavalues)
 
         """ Create a pandas dataframe """
         columns = [measure(relic).labels(log=log) for measure,log in zip(plotmeasures, logs)]
-        pdframe = pd.DataFrame(np.log10(datalist), columns=columns)
+        pdframe = pd.DataFrame(datalist, columns=columns)
         if surname:
             pdframe['Survey'] = survey.name
 
@@ -1060,7 +1063,7 @@ class RelicRegion(DetRegion): # Define a new object: RelicRegion
     if alphaFLAG:
        self.alpha   = -np.abs(float(alpha))  #We assume the input alpha to be negative
     else:
-       self.alpha   = None
+       self.alpha   = float("NaN")
                              
                              
     if alpha_err:
