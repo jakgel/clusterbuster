@@ -12,7 +12,7 @@ from scipy import ndimage                # used to compute the centroid
 import clusterbuster.surveyclasses as cbclass
 import clusterbuster.maput as maput
 
-def RelicExtraction(image, z, contourMask = [], Imcenter=False, GCl=False, dinfo=False, rinfo= False, faintexcl=False, subtracted=False, term=False, eff=1, cnt_minlength=5, gather_histo_information=True):
+def RelicExtraction(image, z, contourMask = [], Imcenter=False, GCl=False, dinfo=False, rinfo= False, faintexcl=False, subtracted=False, term=False, cnt_minlength=5, gather_histo_information=True):
   
     """ Extracts Relics from a numpy array
     gather_histo_information: 0 of not derived, 1 if derived
@@ -99,7 +99,7 @@ def RelicExtraction(image, z, contourMask = [], Imcenter=False, GCl=False, dinfo
             Dproj_pix  = 0
 
         relic = cbclass.Relic(rinfo, dinfo, RA, Dec, LAS, area, GCl=GCl, alpha=rinfo.alpha, alphaFLAG=rinfo.alphaFLAG, theta_elong=theta_elong,
-                                    cov=cov, cnt=cnt, F=flux, F_ps=flux_ps, Dproj_pix = Dproj_pix, eff=eff,
+                                    cov=cov, cnt=cnt, F=flux, F_ps=flux_ps, Dproj_pix = Dproj_pix,
                                     sparseD=distance, sparseW=angle_hist, sparseA=weights, pmask=rel)
         relics.append(relic)
 

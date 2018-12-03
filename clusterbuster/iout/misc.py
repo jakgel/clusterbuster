@@ -368,7 +368,7 @@ def readDS9regions(regfile, spixel, center, pixref, pixelcoords=True):
    
    
    
-def plot_smt(folder, smtlog,log=False, rel=False):  ##plot_smt('../Analysis-MUSIC-2/Output-JG-N40000-eff0.2/smt.log' )
+def plot_smt(folder, smtlog,log=False, rel=False):
   import re
   
   with open(folder + smtlog, 'r') as f:

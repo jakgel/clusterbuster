@@ -36,7 +36,7 @@ import surveysim.music2.mockobsxray as Xray
 from PyPDF2 import PdfFileMerger
 
 def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=True, additive=False,
-                             aligned=False, cbar=True, addinfo=False, mirrored=False, minrel=1,eff=None,
+                             aligned=False, cbar=True, addinfo=False, mirrored=False, minrel=1,
                              zborder=0.05, plottype='flux', title="Polar binned radio relic flux",
                              dpi=None, add_pi=1/2, Histo=dbc.Histogram2D(), suffix=''):
     """ posible inprovements: http://stackoverflow.com/questions/22562364/circular-histogram-for-python 
@@ -85,14 +85,12 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
         buckedfolder = os.path.abspath(os.path.join(survey.outfolder, '..', 'bucket'))
     #    buckedfolder = '../%s' % (survey.outfolder) 
         iom.check_mkdir(buckedfolder)
-        eff = survey.Rmodel.effList[0]
-
         if 1 == 2:
-            for ii, GCl in enumerate(survey.FilterCluster(minrel=minrel,eff=eff,zborder=zborder,ztype='>')):
+            for ii, GCl in enumerate(survey.FilterCluster(minrel=minrel,zborder=zborder,ztype='>')):
 
 
                 """ Deriving the Histogramm should be a functionality of the survey or the relic cluster, so this should become outdated """
-                GCl.updateInformation(eff=eff, Filter=True)
+                GCl.updateInformation(Filter=True)
                 if GCl.histo is not None and np.sum(GCl.histo.hist) != 0:
                     inner  = Histo.bins[1][0:-1]
                     outer  = Histo.bins[1][1::]
@@ -156,14 +154,6 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
             radials.append(radial)
             stats.append(stat)
             if compsurvey is not None: deviations.append(np.sum(np.abs(radial-comprad)))
-#
-#            if development:
-#                fig, ax    = plt.subplots(figsize=(14,14), dpi=dpi)  #,subplot_kw=dict(projection='polar') 
-#                ax.pcolormesh(np.asarray(range(35))*3.5/35, np.asarray(range(46))*1.5/46, mesh, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot)  )  # Histo.ticks[0]/2
-#                plt.xlabel('$R_{200}/\mathrm{Mpc}$')
-#                plt.ylabel('$D_\mathrm{proj}/R_{200}$')
-#                plt.savefig('%s/butterfly-%s%.2f.%s' % (   nowfolder,survey.name, np.log10(eff), ftype))
-#                
 
             # plot ratio of relics flux,
             # plot average/median pro relic distance
@@ -209,7 +199,7 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
         if modeltext and survey.Rmodel.simu:
             mod = survey.Rmodel 
             kwargs = {'verticalalignment':'bottom', 'horizontalalignment':'right', 'transform':ax1.transAxes, 'color':'black', 'fontsize':15, 'alpha':0.8}
-            ax1.text(0.40, 0.90       , '$\log_{10}(eff) =%+.2f$,' % ( np.log10(eff)),   **kwargs)
+            ax1.text(0.40, 0.90       , '$\log_{10}(eff) =%+.2f$,' % ( np.log10(mod.effList[0])),   **kwargs)
             ax1.text(0.40, 0.90-1*dist_text_params, '$\log_{10}(B_0) =%+.2f$,' % ( np.log10(mod.B0)),**kwargs)
             ax1.text(0.40, 0.90-2*dist_text_params, '$\kappa       = %+0.2f$ ' % ( mod.kappa),       **kwargs)
             if compsurvey  is not None: 
@@ -269,14 +259,15 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
 
 
     """From https://stackoverflow.com/questions/51871420/matplotlib-polar-histogram-has-shifted-bins/51876418"""
-    plt.clf()
-    bins_number = 10
-    width = 2 * np.pi / bins_number
-    ax = plt.subplot(1, 1, 1, projection='polar')
-    bars = ax.bar(bins[:bins_number], n, width=width, bottom=0.0)
-    for bar in bars:
-        bar.set_alpha(0.5)
-    plt.show()
+    if 1 == 2:
+        plt.clf()
+        bins_number = 10
+        width = 2 * np.pi / bins_number
+        ax = plt.subplot(1, 1, 1, projection='polar')
+        bars = ax.bar(bins[:bins_number], n, width=width, bottom=0.0)
+        for bar in bars:
+            bar.set_alpha(0.5)
+        plt.show()
 
     return 0
         
@@ -286,7 +277,6 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
                   maxdist=1700, filterargs = {'zborder':0, 'ztype':'>', 'minimumLAS':4, 'GClflux':20, 'index':None}):
      
     pdfs  = []
-    eff   = survey.Rmodel.effList[0]
 #    cmap  = 'afmhot'   #'BuPu'   #
 #    norm  = MPLcolors.PowerNorm(gamma=2) #CW uses a gamma of 2
     #cmap =plt.cm.get_cmap('RdYlBu')
@@ -306,15 +296,6 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
     for GCl in survey.FilterCluster(**filterargs):
     
         GCl = copy.deepcopy(GCl) # Because else changes will influence all galaxy clusters, you knwo class referencing in python, i.e.
-#        print(GCl.filterRelics(eff))
-#        print(filterargs)
-#        self.Rmodel.effList[0]
-#        print('!!!', [relic.flux() for relic in GCl.filterRelics(eff)])
-#        print(GCl.largestLAS(),GCl.flux(), GCl.filterRelics(eff), GCl.filterRelics(), eff)
-#        print('!!!', GCl.relics)  
-#        return 0
-
- 
         if xray:  
             """X-Ray""" 
             if 'Brems' not in GCl.mapdic:     
@@ -359,8 +340,6 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
             f.tick_labels.set_yformat("dd:mm:ss") 
             f.axis_labels.hide()
 
-
-
         # The basic image
         if dynamicscale:
             vmax    = np.max(f._data)
@@ -383,7 +362,7 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
 
         if not xray:
             
-            for relic in GCl.filterRelics(eff=eff):
+            for relic in GCl.filterRelics():
                 pixelcnt = np.transpose(np.squeeze(relic.cnt))
 #                print( pixelcnt.shape )
                 wcscnts  =  f.pixel2world(pixelcnt[0,:],pixelcnt[1,:])
@@ -704,7 +683,7 @@ def stats_lineregress(name, data_x, data_y, verbose = False):
     return None, None
 
 
-def create_Mass_redshift2( SurveySamples, zrange,colors, markers = np.asarray(['.','s']), effi=[], log=[False,False], logplot=[True,True], lockedaxis=False):
+def create_Mass_redshift2( SurveySamples, zrange,colors, markers = np.asarray(['.','s']), log=[False,False], logplot=[True,True], lockedaxis=False):
 
     """
     Takes as inputs;
@@ -719,229 +698,214 @@ def create_Mass_redshift2( SurveySamples, zrange,colors, markers = np.asarray(['
     """
     
     # (r.iner_rat/(r.LAS/(r.dinfo.beam[0]/60.)))
-    if len(effi)==0: effi = SurveySamples[0].Rmodel.effList
-                 
     parA = lambda x: x.z
     parB = lambda x: x.M200
     
     cm = plt.cm.get_cmap('RdYlBu')
     z_symbols = ['o','>']
     z_snaps   = [0.0,0.5]  
-            
-    for eff in effi: 
-        
-        #======= Old style (begin)
-#        fig = plt.figure(facecolor="white", figsize=(5.6, 4.2)) # aspect='equal'
-#        axScatter = fig.add_subplot(1,1,1)
-#        axScatter.tick_params(which='both', direction='in')
 
 
-        """======= New style (begin)"""
-        
-        nullfmt = NullFormatter()         # no labels
-        
-        # definitions for the axes
-        left, width = 0.1, 0.65
-        bottom, height = 0.1, 0.65
-        bottom_h = left_h = left + width + 0.02
-        
-        rect_scatter = [left, bottom, width, height]
-        rect_histx   = [left, bottom_h, width, 0.2]
-        rect_histy   = [left_h, bottom, 0.2, height]
-        
-        # start with a rectangular Figure
-        fig = plt.figure(1, figsize=(6, 6))
-        
-        axScatter = plt.axes(rect_scatter)
-        axHistx = plt.axes(rect_histx)
-        axHisty = plt.axes(rect_histy)
-        
-        # ticks inside
-        axScatter.tick_params(which='both', direction='in')
-        axHistx.tick_params(which='both', direction='in')
-        axHisty.tick_params(which='both', direction='in')
-        
-        
-        #show grid
-        axScatter.grid()
-        axHistx.grid()
-        axHisty.grid()
-        
-        # no labels
-        axHistx.xaxis.set_major_formatter(nullfmt)
-        axHisty.yaxis.set_major_formatter(nullfmt)
-        
-        """======= New style (end)"""
+
+    """======= New style (begin)"""
+    nullfmt = NullFormatter()         # no labels
+
+    # definitions for the axes
+    left, width = 0.1, 0.65
+    bottom, height = 0.1, 0.65
+    bottom_h = left_h = left + width + 0.02
+
+    rect_scatter = [left, bottom, width, height]
+    rect_histx   = [left, bottom_h, width, 0.2]
+    rect_histy   = [left_h, bottom, 0.2, height]
+
+    # start with a rectangular Figure
+    fig = plt.figure(1, figsize=(6, 6))
+
+    axScatter = plt.axes(rect_scatter)
+    axHistx = plt.axes(rect_histx)
+    axHisty = plt.axes(rect_histy)
+
+    # ticks inside
+    axScatter.tick_params(which='both', direction='in')
+    axHistx.tick_params(which='both', direction='in')
+    axHisty.tick_params(which='both', direction='in')
+
+
+    #show grid
+    axScatter.grid()
+    axHistx.grid()
+    axHisty.grid()
+
+    # no labels
+    axHistx.xaxis.set_major_formatter(nullfmt)
+    axHisty.yaxis.set_major_formatter(nullfmt)
+
+    """======= New style (end)"""
 #        axScatter.set_xlim( (0,0.3) )
 #        ax.set_ylim( (2e-2,1) )
 #        ax.set_autoscale_on(False)
-    
-        if logplot[0]: axScatter.set_xscale('log')
-        if logplot[1]: axScatter.set_yscale('log')
-    
-        plotl  = []
-        zlist  = []
-        Data_x = []
-        Data_y = []
-        SurveyHistkwargs = []
-    #   sc = plt.scatter(xy, xy, c=z, vmin=0, vmax=20, s=35, cmap=cm)
-    #   cbar = plt.colorbar(sc)
-    #   cbar.solids.set(alpha=1)
-    
-        for Survey in SurveySamples:
-            
-            print('create_LAS_shape::Survey.name:', Survey.name)
 
-            
-            if Survey.Rmodel.simu: 
-                feff = eff
-            else:
-                feff = 1
-            
-            if Survey.name == 'NVSS':
-                Survey.scatterkwargs.update( color='black', ecolor='black', alpha=0.4, fmt=None)
-                Survey.histkwargs.update( color='black', alpha=0.4)
-                del Survey.scatterkwargs['color']
-                del Survey.histkwargs['color']
-            else:
-                Survey.scatterkwargs.update( color='r', ecolor='r', fmt=None)
-                Survey.histkwargs.update( color='r')
-                del Survey.scatterkwargs['color']
-                del Survey.histkwargs['color']
-            del Survey.scatterkwargs['fmt']
-                # make the right colors
+    if logplot[0]: axScatter.set_xscale('log')
+    if logplot[1]: axScatter.set_yscale('log')
 
-            
-            for ii,z_snap in enumerate([z_snaps[0]]):     
-                    data_x = []; data_y=[]
-#                    for List_z in [GCl for GCl in Survey.FilterCluster(minrel=0, eff=eff) if GCl.mockobs.z_snap==z_snap] :
-                    List_z = [GCl for GCl in Survey.FilterCluster(minrel=0, eff=feff)] 
-                    if len(List_z) > 0:  
-                            data_x = [parA(meas).value for  meas in List_z]
-                            data_y = [parB(meas).value for  meas in List_z]
-                            proxyA,proxyB = parA(List_z[0]), parB(List_z[0]) 
-            
-                    Data_x.append(data_x)   
-                    Data_y.append(data_y)   
-                    SurveyHistkwargs.append(Survey.histkwargs)
-              
-        
-            if Survey.Rmodel.simu: 
-                for ii,z_snap in enumerate([z_snaps[0]]):  
-                    data_x = []; data_y=[]
-#                    for List_z in [GCl for GCl in Survey.FilterCluster(minrel=0, eff=eff) if GCl.mockobs.z_snap==z_snap] :
-                    List_z = [GCl for GCl in Survey.FilterCluster(minrel=1, eff=feff)] 
-                    
-                    if len(List_z) > 0:  
-                            data_x = [parA(meas).value for  meas in List_z]
-                            data_y = [parB(meas).value for  meas in List_z]
-                            proxyA,proxyB = parA(List_z[0]), parB(List_z[0]) 
-            
-                    Data_x.append(data_x)   
-                    Data_y.append(data_y)   
-                    SurveyHistkwargs.append(Survey.histkwargs)
-        
-        """======= New style (begin)"""   
-        print(len(Data_x))    
-        # Scatter
-        for Histkwargs, data_x, data_y in zip(SurveyHistkwargs, Data_x, Data_y):
-             
-            plotted = axScatter.errorbar( data_x, data_y, fmt = z_symbols[0], alpha=min(3.0*np.power(len(data_x),-0.40),1.))     # , **Survey.scatterkwargs
-                            
-            try:
-                zlist.append(plotted)
-            except:
-                warnings.warn("%s, efficiency %.2e has no detections." % (Survey.name,eff), DeprecationWarning)
-                
-            try:
-                plotl.append(plotted)
-            except:
-                warnings.warn("%s, efficiency %.2e has no detections." % (Survey.name,eff), DeprecationWarning)                         
-                          
+    plotl  = []
+    zlist  = []
+    Data_x = []
+    Data_y = []
+    SurveyHistkwargs = []
+#   sc = plt.scatter(xy, xy, c=z, vmin=0, vmax=20, s=35, cmap=cm)
+#   cbar = plt.colorbar(sc)
+#   cbar.solids.set(alpha=1)
 
-        # Axis
-        if proxyA.vrange[0] == proxyA.vrange[1]: proxyA.vrange = [None,None] #Workaround
-        if proxyB.vrange[0] == proxyB.vrange[1]: proxyB.vrange = [None,None] #Workaround
-        
-        if     logplot[0]: proxyA.vrange[0] = 0.1    
-        if not logplot[0]: proxyA.vrange[0] = 0.0
-                      
-        axScatter.set_xlim(left  =proxyA.vrange[0], right=proxyA.vrange[1])
-        axScatter.set_ylim(bottom=proxyB.vrange[0],   top=proxyB.vrange[1])  #top=proxyB.vrange[1]  --> but bug
-        axScatter.set_ylim(bottom=6e13, top=1e16)   
-    
-        axScatter.set_xlabel( proxyA.labels(log=log[0]) )
-        axScatter.set_ylabel( proxyB.labels(log=log[1]) )
+    for Survey in SurveySamples:
+
+        print('create_LAS_shape::Survey.name:', Survey.name)
+
+        if Survey.name == 'NVSS':
+            Survey.scatterkwargs.update( color='black', ecolor='black', alpha=0.4, fmt=None)
+            Survey.histkwargs.update( color='black', alpha=0.4)
+            del Survey.scatterkwargs['color']
+            del Survey.histkwargs['color']
+        else:
+            Survey.scatterkwargs.update( color='r', ecolor='r', fmt=None)
+            Survey.histkwargs.update( color='r')
+            del Survey.scatterkwargs['color']
+            del Survey.histkwargs['color']
+        del Survey.scatterkwargs['fmt']
+            # make the right colors
+
+
+        for ii,z_snap in enumerate([z_snaps[0]]):
+                data_x = []; data_y=[]
+#                    for List_z in [GCl for GCl in Survey.FilterCluster(minrel=0) if GCl.mockobs.z_snap==z_snap] :
+                List_z = [GCl for GCl in Survey.FilterCluster(minrel=0)]
+                if len(List_z) > 0:
+                        data_x = [parA(meas).value for  meas in List_z]
+                        data_y = [parB(meas).value for  meas in List_z]
+                        proxyA,proxyB = parA(List_z[0]), parB(List_z[0])
+
+                Data_x.append(data_x)
+                Data_y.append(data_y)
+                SurveyHistkwargs.append(Survey.histkwargs)
+
+
+        if Survey.Rmodel.simu:
+            for ii,z_snap in enumerate([z_snaps[0]]):
+                data_x = []; data_y=[]
+#                    for List_z in [GCl for GCl in Survey.FilterCluster(minrel=0) if GCl.mockobs.z_snap==z_snap] :
+                List_z = [GCl for GCl in Survey.FilterCluster(minrel=1)]
+
+                if len(List_z) > 0:
+                        data_x = [parA(meas).value for  meas in List_z]
+                        data_y = [parB(meas).value for  meas in List_z]
+                        proxyA,proxyB = parA(List_z[0]), parB(List_z[0])
+
+                Data_x.append(data_x)
+                Data_y.append(data_y)
+                SurveyHistkwargs.append(Survey.histkwargs)
+
+    """======= New style (begin)"""
+    print(len(Data_x))
+    # Scatter
+    for Histkwargs, data_x, data_y in zip(SurveyHistkwargs, Data_x, Data_y):
+
+        plotted = axScatter.errorbar( data_x, data_y, fmt = z_symbols[0], alpha=min(3.0*np.power(len(data_x),-0.40),1.))     # , **Survey.scatterkwargs
+
+        try:
+            zlist.append(plotted)
+        except:
+            warnings.warn("Survey %s has no detections." % (Survey.name), DeprecationWarning)
+
+        try:
+            plotl.append(plotted)
+        except:
+            warnings.warn("Survey %s has no detections." % (Survey.name), DeprecationWarning)
+
+
+    # Axis
+    if proxyA.vrange[0] == proxyA.vrange[1]: proxyA.vrange = [None,None] #Workaround
+    if proxyB.vrange[0] == proxyB.vrange[1]: proxyB.vrange = [None,None] #Workaround
+
+    if     logplot[0]: proxyA.vrange[0] = 0.1
+    if not logplot[0]: proxyA.vrange[0] = 0.0
+
+    axScatter.set_xlim(left  =proxyA.vrange[0], right=proxyA.vrange[1])
+    axScatter.set_ylim(bottom=proxyB.vrange[0],   top=proxyB.vrange[1])  #top=proxyB.vrange[1]  --> but bug
+    axScatter.set_ylim(bottom=6e13, top=1e16)
+
+    axScatter.set_xlabel( proxyA.labels(log=log[0]) )
+    axScatter.set_ylabel( proxyB.labels(log=log[1]) )
 #        plt.tight_layout()
 
-        lockedaxis = fig.get_axes()[0]
-        axScatter.set_autoscale_on(False)
-                     
-                                                               
-        # Histo
-        for Histkwargs, data_x, data_y in zip(SurveyHistkwargs, Data_x, Data_y):
-                
-            # Plotted
-            print(len(data_x))
-            if len(data_x) > 0:
-                if logplot[0]:
-                    axHistx.hist(data_x, bins=np.logspace( np.log10(axScatter.get_xlim()[0]), np.log10(axScatter.get_xlim()[1]), 10)                     ,  **Histkwargs) 
-                    axHistx.hist(data_x, histtype='step', bins=np.logspace( np.log10(axScatter.get_xlim()[0]), np.log10(axScatter.get_xlim()[1]), 10)    ,  color='black', alpha=0.6) 
-                    axHistx.set_xscale("log")  #pl.gca().
-                else:
-                    axHistx.hist(data_x, bins=np.linspace( axScatter.get_xlim()[0], axScatter.get_xlim()[1], 10)                    ,  **Histkwargs) 
-                    axHistx.hist(data_x, histtype='step', bins=np.linspace( axScatter.get_xlim()[0], axScatter.get_xlim()[1], 10)  ,  color='black', alpha=0.6)   
-                if logplot[1]:   
-                    axHisty.hist(data_y, bins=np.logspace( np.log10(axScatter.get_ylim()[0]), np.log10(axScatter.get_ylim()[1]), 10) ,  orientation='horizontal',  weights=[1./max(len(data_y),1)]*len(data_y) ,  **Histkwargs)
-                    axHisty.hist(data_y, histtype='step', bins=np.logspace( np.log10(axScatter.get_ylim()[0]), np.log10(axScatter.get_ylim()[1]), 10) ,  orientation='horizontal',  weights=[1./max(len(data_y),1)]*len(data_y) ,  color='black', alpha=0.6)
-                    axHisty.set_yscale("log")
-                else:
-                    axHisty.hist(data_y, bins=np.linspace( axScatter.get_ylim()[0], axScatter.get_ylim()[1], 10) ,  orientation='horizontal',  **Histkwargs)
-                    axHisty.hist(data_y, histtype='step', bins=np.linspace( axScatter.get_ylim()[0], axScatter.get_ylim()[1], 10) ,  orientation='horizontal',  color='black', alpha=0.6)
-                    
-                axHistx.set_xlim(axScatter.get_xlim())
-                axHisty.set_ylim(axScatter.get_ylim()) 
-        #        
-                
-                
-        """======= New style (end)"""
+    lockedaxis = fig.get_axes()[0]
+    axScatter.set_autoscale_on(False)
+
+
+    # Histo
+    for Histkwargs, data_x, data_y in zip(SurveyHistkwargs, Data_x, Data_y):
+
+        # Plotted
+        print(len(data_x))
+        if len(data_x) > 0:
+            if logplot[0]:
+                axHistx.hist(data_x, bins=np.logspace( np.log10(axScatter.get_xlim()[0]), np.log10(axScatter.get_xlim()[1]), 10)                     ,  **Histkwargs)
+                axHistx.hist(data_x, histtype='step', bins=np.logspace( np.log10(axScatter.get_xlim()[0]), np.log10(axScatter.get_xlim()[1]), 10)    ,  color='black', alpha=0.6)
+                axHistx.set_xscale("log")  #pl.gca().
+            else:
+                axHistx.hist(data_x, bins=np.linspace( axScatter.get_xlim()[0], axScatter.get_xlim()[1], 10)                    ,  **Histkwargs)
+                axHistx.hist(data_x, histtype='step', bins=np.linspace( axScatter.get_xlim()[0], axScatter.get_xlim()[1], 10)  ,  color='black', alpha=0.6)
+            if logplot[1]:
+                axHisty.hist(data_y, bins=np.logspace( np.log10(axScatter.get_ylim()[0]), np.log10(axScatter.get_ylim()[1]), 10) ,  orientation='horizontal',  weights=[1./max(len(data_y),1)]*len(data_y) ,  **Histkwargs)
+                axHisty.hist(data_y, histtype='step', bins=np.logspace( np.log10(axScatter.get_ylim()[0]), np.log10(axScatter.get_ylim()[1]), 10) ,  orientation='horizontal',  weights=[1./max(len(data_y),1)]*len(data_y) ,  color='black', alpha=0.6)
+                axHisty.set_yscale("log")
+            else:
+                axHisty.hist(data_y, bins=np.linspace( axScatter.get_ylim()[0], axScatter.get_ylim()[1], 10) ,  orientation='horizontal',  **Histkwargs)
+                axHisty.hist(data_y, histtype='step', bins=np.linspace( axScatter.get_ylim()[0], axScatter.get_ylim()[1], 10) ,  orientation='horizontal',  color='black', alpha=0.6)
+
+            axHistx.set_xlim(axScatter.get_xlim())
+            axHisty.set_ylim(axScatter.get_ylim())
+    #
+
+
+    """======= New style (end)"""
 
 #        axScatter.legend(plotl,['CW$_\mathrm{zsnap=0.0}$', 'CW$_\mathrm{zsnap=0.5}$', 'NVSS'], loc=0, frameon=False, handletextpad=0.1,  bbox_to_anchor=(0.25, 0.94), borderaxespad=0.) # loc=2
-        axScatter.legend(plotl,['Simu$_\mathrm{all}$', 'Simu$_\mathrm{relicdet}$', 'NVSS'], loc=0, frameon=False, handletextpad=0.1,  bbox_to_anchor=(0.30, 0.74), borderaxespad=0.) # loc=2
-    #    red_patch = mpatches.Patch(color='red', label='The red data')
-    
-    
-    
-        axScatter.set_autoscale_on(False)
-        shape_line_x =  np.linspace(0,1,30)   # [1,2.5,30]
-        slope        = 2
-        shape_line_y1  =  [  10**(13.8)*(slope**shape_line_x)   for x in shape_line_x]
-        axScatter.plot(shape_line_x, shape_line_y1, color='black', alpha=0.7)
-        
-        # no labels - second try
-        axHistx.xaxis.set_major_formatter(nullfmt) # does just remove one label, weird ...
-        axHisty.yaxis.set_major_formatter(nullfmt)
-        
-        #== Save file
-        nowfile = 'CraftyPlot_mass_VS_redshift_e%.0f' % (math.log10(eff)*100)     
-        #                fig2,ax1,proxyB, lockedaxis = create_Samples_A_histo( SurveySamples, parB, (zrange,colors), eff=eff, **addargs)  
-        #                fig.add_subplot(1,1,1)
-        #                fig.add_subplot(1,1,1)
-        #        plt.figure(fig)
-        # ask for the surveys model
-        # nowfolder  = Survey.outfolder + '/PostProcessing/%s_%s' % ( parA(meas).dic, parB(meas).dic )   #parA(meas).name, parB(meas).name)
-        nowfolder  = SurveySamples[0].outfolder + '/PostProcessing/'  
-        iom.check_mkdir(nowfolder)
-        print('Gonna save:  %s' % (nowfolder + nowfile))                           
-        fig.savefig('%s%s_scatter.png' % (nowfolder,nowfile)) #filename
-        fig.savefig('%s%s_scatter.pdf' % (nowfolder,nowfile)) #filename	    #fig.clf()
-        
-        fig.clf() 
+    axScatter.legend(plotl,['Simu$_\mathrm{all}$', 'Simu$_\mathrm{relicdet}$', 'NVSS'], loc=0, frameon=False, handletextpad=0.1,  bbox_to_anchor=(0.30, 0.74), borderaxespad=0.) # loc=2
+#    red_patch = mpatches.Patch(color='red', label='The red data')
+
+
+
+    axScatter.set_autoscale_on(False)
+    shape_line_x =  np.linspace(0,1,30)   # [1,2.5,30]
+    slope        = 2
+    shape_line_y1  =  [  10**(13.8)*(slope**shape_line_x)   for x in shape_line_x]
+    axScatter.plot(shape_line_x, shape_line_y1, color='black', alpha=0.7)
+
+    # no labels - second try
+    axHistx.xaxis.set_major_formatter(nullfmt) # does just remove one label, weird ...
+    axHisty.yaxis.set_major_formatter(nullfmt)
+
+    #== Save file
+    nowfile = 'CraftyPlot_mass_VS_redshift'
+    #                fig2,ax1,proxyB, lockedaxis = create_Samples_A_histo( SurveySamples, parB, (zrange,colors), **addargs)
+    #                fig.add_subplot(1,1,1)
+    #                fig.add_subplot(1,1,1)
+    #        plt.figure(fig)
+    # ask for the surveys model
+    # nowfolder  = Survey.outfolder + '/PostProcessing/%s_%s' % ( parA(meas).dic, parB(meas).dic )   #parA(meas).name, parB(meas).name)
+    nowfolder  = SurveySamples[0].outfolder + '/PostProcessing/'
+    iom.check_mkdir(nowfolder)
+    print('Gonna save:  %s' % (nowfolder + nowfile))
+    fig.savefig('%s%s_scatter.png' % (nowfolder,nowfile)) #filename
+    fig.savefig('%s%s_scatter.pdf' % (nowfolder,nowfile)) #filename	    #fig.clf()
+
+    fig.clf()
 
     return 0
 
 
-def create_Test( SurveySamples, symbolsism, R200exp=False, markers = np.asarray(['.','s']), effi=[], log=[False,False], logplot=[True,True], lockedaxis=False, minrel=1):
+def create_Test( SurveySamples, symbolsism, R200exp=False, markers = np.asarray(['.','s']), log=[False,False], logplot=[True,True], lockedaxis=False, minrel=1, scale_ref=1):
     """
     Takes as inputs;
     Surveysample - a list of galaxyclusters
@@ -953,11 +917,6 @@ def create_Test( SurveySamples, symbolsism, R200exp=False, markers = np.asarray(
     """
     
     (zrange,colors,z_symbols) = symbolism
-    
-    # (r.iner_rat/(r.LAS/(r.dinfo.beam[0]/60.)))
-    if len(effi)==0: effi = SurveySamples[0].Rmodel.effList
-                 
-
 
 #    parA = lambda x: x.Mach
 #    parA = lambda x: x.T
@@ -975,192 +934,181 @@ def create_Test( SurveySamples, symbolsism, R200exp=False, markers = np.asarray(
 
         titlepost = ''
 
+        #======= Old style (begin)
+#        fig = plt.figure(facecolor="white", figsize=(5.6, 4.2)) # aspect='equal'
+#        axScatter = fig.add_subplot(1,1,1)
+#        axScatter.tick_params(which='both', direction='in')
 
-    
-        for eff in effi: 
-            
-            #======= Old style (begin)
-    #        fig = plt.figure(facecolor="white", figsize=(5.6, 4.2)) # aspect='equal'
-    #        axScatter = fig.add_subplot(1,1,1)
-    #        axScatter.tick_params(which='both', direction='in')
-    
-    
-            """======= New style (begin)"""
-            
-            nullfmt = NullFormatter()         # no labels
-            
-            # definitions for the axes
-            left, width = 0.1, 0.65
-            bottom, height = 0.1, 0.65
-            bottom_h = left_h = left + width + 0.02
-            
-            rect_scatter = [left, bottom, width, height]
-            rect_histx   = [left, bottom_h, width, 0.2]
-            rect_histy   = [left_h, bottom, 0.2, height]
-            
-            # start with a rectangular Figure
-            fig = plt.figure(1, figsize=(6.5, 6.5))
-            
-            axScatter = plt.axes(rect_scatter)
-            axHistx = plt.axes(rect_histx)
-            axHisty = plt.axes(rect_histy)
-            
-            # ticks inside
-            axScatter.tick_params(which='both', direction='in')
-            axHistx.tick_params(which='both', direction='in')
-            axHisty.tick_params(which='both', direction='in')
-            
-            
-            #show grid
-            axScatter.grid()
-            axHistx.grid()
-            axHisty.grid()
-            
-            # no labels
-            axHistx.xaxis.set_major_formatter(nullfmt)
-            axHisty.yaxis.set_major_formatter(nullfmt)
-            
-            """======= New style (end)"""
-    #        axScatter.set_xlim( (0,0.3) )
-    #        ax.set_ylim( (2e-2,1) )
-    #        ax.set_autoscale_on(False)
-        
-            if logplot[0]: axScatter.set_xscale('log')
-            if logplot[1]: axScatter.set_yscale('log')
-        
-    
-            plotl  = []
-            zlist  = []
-            Data_x = []
-            Data_y = []
-            SurveyHistkwargs = []
-        #   sc = plt.scatter(xy, xy, c=z, vmin=0, vmax=20, s=35, cmap=cm)
-        #   cbar = plt.colorbar(sc)
-        #   cbar.solids.set(alpha=1)
-        
-            for Survey in SurveySamples:
-                
-                print('%s::Survey.name:' % (craftname,Survey.name))
-                
-                if Survey.Rmodel.simu: 
-                    feff = eff
-                    scale = min(effi)/eff   
-                else:
-                    feff = 1.
-                    scale = 1.
-                if Survey.name == 'NVSS':
-                    Survey.scatterkwargs.update( color='black', ecolor='black', alpha=0.4, fmt=None)
-                    Survey.histkwargs.update( color='black', alpha=0.4)
-                    del Survey.scatterkwargs['color']
-                    del Survey.histkwargs['color']
-                else:
-                    Survey.scatterkwargs.update( color='r', ecolor='r', fmt=None)
-                    Survey.histkwargs.update( color='r')
-                    del Survey.scatterkwargs['color']
-                    del Survey.histkwargs['color']
-                del Survey.scatterkwargs['fmt']
-                    # make the right colors
-    
-                   
-                data_x = []; data_y=[]
-    #            List_z = [GCl for GCl.filterRelics(eff=eff) in l for GCl in Survey.FilterCluster(minrel=minrel, eff=feff)] 
-                List_zz = []
-                for GCl in Survey.GCls:
-                        List_zz.append([relic for relic in GCl.filterRelics(eff=feff) if (relic.region.rtype.classi != 0)]  )
-                List_z = [item for sublist in List_zz for item in sublist]
-                print(Survey.name, feff, len(List_z))
-                
-                if len(List_z) > 0:  
-                        data_x = [parA(meas).value        for  meas in List_z]
-                        data_y = [parB(meas).value*scale  for  meas in List_z]
-                        proxyA,proxyB = parA(List_z[0]), parB(List_z[0]) 
-        
-                Data_x.append(data_x)   
-                Data_y.append(data_y)   
-                SurveyHistkwargs.append(Survey.histkwargs)
-                  
-            
-            """======= New style (begin)"""   
-                                 
-                             
-            for Histkwargs, data_x, data_y in zip(SurveyHistkwargs, Data_x, Data_y):
-            # Scatter
-                
-                if len(data_x) > 0:
-                    plotted = axScatter.errorbar( data_x, data_y, fmt = z_symbols[0], alpha=min(3.0*np.power(len(data_x),-0.40),1.))     #, **Survey.scatterkwargs
-                                    
-                    try:
-                        zlist.append(plotted)
-                    except:
-                        warnings.warn("%s, efficiency %.2e has no detections." % (Survey.name,eff), DeprecationWarning)
-                        
-                    try:
-                        plotl.append(plotted)
-                    except:
-                        warnings.warn("%s, efficiency %.2e has no detections." % (Survey.name,eff), DeprecationWarning)           
-                        
-                        
-            #    red_patch = mpatches.Patch(color='red', label='The red data')
-        
-            # This we have to fix, for many measurands [1,1] is given instead of [None,None]
-            if proxyA.vrange[0] == proxyA.vrange[1]: proxyA.vrange = [None,None] #Workaround
-            if proxyB.vrange[0] == proxyB.vrange[1]: proxyB.vrange = [None,None] #Workaround
-            
-                       
-            axScatter.set_xlim(left  =proxyA.vrange[0], right=proxyA.vrange[1])
-            axScatter.set_ylim(bottom=proxyB.vrange[0],   top=proxyB.vrange[1])  #top=proxyB.vrange[1]  --> but bug
-    
-        
-            axScatter.set_xlabel( proxyA.labels(log=log[0]) )
-            axScatter.set_ylabel( proxyB.labels(log=log[1]) )
-    #        plt.tight_layout()
-        	    
-            lockedaxis = fig.get_axes()[0]
-            
-            
-            axScatter.set_autoscale_on(False)    
-            
-            """  Histo"""                                     
-            for Histkwargs, data_x, data_y in zip(SurveyHistkwargs, Data_x, Data_y):
-    
-                
-                if len(data_x) > 0:                                            
-    
-                    axHistx.hist(data_x, bins=np.logspace( np.log10(axScatter.get_xlim()[0]), np.log10(axScatter.get_xlim()[1]), 10)                            ,  weights=[1./max(len(data_x),1)]*len(data_x) ,  **Histkwargs) 
-                    axHisty.hist(data_y, bins=np.logspace( np.log10(axScatter.get_ylim()[0]), np.log10(axScatter.get_ylim()[1]), 10) ,  orientation='horizontal',  weights=[1./max(len(data_y),1)]*len(data_y) ,  **Histkwargs)
-                    
-                    axHistx.hist(data_x, histtype='step', bins=np.logspace( np.log10(axScatter.get_xlim()[0]), np.log10(axScatter.get_xlim()[1]), 10)                            ,  weights=[1./max(len(data_x),1)]*len(data_x) ,  color='black', alpha=0.6) 
-                    axHisty.hist(data_y, histtype='step', bins=np.logspace( np.log10(axScatter.get_ylim()[0]), np.log10(axScatter.get_ylim()[1]), 10) ,  orientation='horizontal',  weights=[1./max(len(data_y),1)]*len(data_y) ,  color='black', alpha=0.6)
-        
-                    axHistx.set_xlim(axScatter.get_xlim())
-                    axHisty.set_ylim(axScatter.get_ylim())
-            #        
-                    axHistx.set_xscale("log")  #pl.gca().
-                    axHisty.set_yscale("log")
-            """======= New style (end)"""
-    
-            fig.legend(plotl,['CW', 'NVSS'], loc=0, frameon=False, handletextpad=0.1,  bbox_to_anchor=(0.24, 0.73), borderaxespad=0.) # loc=2
-            
-       
-            # no labels - second try
-            axHistx.xaxis.set_major_formatter(nullfmt) # does just remove one label, weird ...
-            axHisty.yaxis.set_major_formatter(nullfmt)
-            
-            #== Save file
-            nowfile = 'CraftyPlot_%s_e%.0f' % (craftname, math.log10(eff)*100)     
-            #                fig2,ax1,proxyB, lockedaxis = create_Samples_A_histo( SurveySamples, parB, (zrange,colors), eff=eff, **addargs)  
-            #                fig.add_subplot(1,1,1)
-            #                fig.add_subplot(1,1,1)
-            #        plt.figure(fig)
-            # ask for the surveys model
-            # nowfolder  = Survey.outfolder + '/PostProcessing/%s_%s' % ( parA(meas).dic, parB(meas).dic )   #parA(meas).name, parB(meas).name)
-            nowfolder  = SurveySamples[0].outfolder + '/PostProcessing/'  
-            iom.check_mkdir(nowfolder)
-            print('Gonna save:  %s' % (nowfolder + nowfile) )                          
-            fig.savefig('%s%s_scatter.png' % (nowfolder,nowfile)) #filename
-            fig.savefig('%s%s_scatter.pdf' % (nowfolder,nowfile)) #filename	    #fig.clf()
-            
-            fig.clf() 
+
+        """======= New style (begin)"""
+
+        nullfmt = NullFormatter()         # no labels
+
+        # definitions for the axes
+        left, width = 0.1, 0.65
+        bottom, height = 0.1, 0.65
+        bottom_h = left_h = left + width + 0.02
+
+        rect_scatter = [left, bottom, width, height]
+        rect_histx   = [left, bottom_h, width, 0.2]
+        rect_histy   = [left_h, bottom, 0.2, height]
+
+        # start with a rectangular Figure
+        fig = plt.figure(1, figsize=(6.5, 6.5))
+
+        axScatter = plt.axes(rect_scatter)
+        axHistx = plt.axes(rect_histx)
+        axHisty = plt.axes(rect_histy)
+
+        # ticks inside
+        axScatter.tick_params(which='both', direction='in')
+        axHistx.tick_params(which='both', direction='in')
+        axHisty.tick_params(which='both', direction='in')
+
+
+        #show grid
+        axScatter.grid()
+        axHistx.grid()
+        axHisty.grid()
+
+        # no labels
+        axHistx.xaxis.set_major_formatter(nullfmt)
+        axHisty.yaxis.set_major_formatter(nullfmt)
+
+        """======= New style (end)"""
+#        axScatter.set_xlim( (0,0.3) )
+#        ax.set_ylim( (2e-2,1) )
+#        ax.set_autoscale_on(False)
+
+        if logplot[0]: axScatter.set_xscale('log')
+        if logplot[1]: axScatter.set_yscale('log')
+
+
+        plotl  = []
+        zlist  = []
+        Data_x = []
+        Data_y = []
+        SurveyHistkwargs = []
+    #   sc = plt.scatter(xy, xy, c=z, vmin=0, vmax=20, s=35, cmap=cm)
+    #   cbar = plt.colorbar(sc)
+    #   cbar.solids.set(alpha=1)
+
+        for Survey in SurveySamples:
+
+            print('%s::Survey.name:' % (craftname,Survey.name))
+
+            if Survey.Rmodel.simu:
+                scale = scale_ref/Survey.Rmodel.simu.effList[0]
+            else:
+                scale = 1.
+            if Survey.name == 'NVSS':
+                Survey.scatterkwargs.update( color='black', ecolor='black', alpha=0.4, fmt=None)
+                Survey.histkwargs.update( color='black', alpha=0.4)
+                del Survey.scatterkwargs['color']
+                del Survey.histkwargs['color']
+            else:
+                Survey.scatterkwargs.update( color='r', ecolor='r', fmt=None)
+                Survey.histkwargs.update( color='r')
+                del Survey.scatterkwargs['color']
+                del Survey.histkwargs['color']
+            del Survey.scatterkwargs['fmt']
+                # make the right colors
+
+
+            data_x = []; data_y=[]
+            List_zz = []
+            for GCl in Survey.GCls:
+                    List_zz.append([relic for relic in GCl.filterRelics() if (relic.region.rtype.classi != 0)]  )
+            List_z = [item for sublist in List_zz for item in sublist]
+            print(Survey.name, len(List_z))
+
+            if len(List_z) > 0:
+                    data_x = [parA(meas).value        for  meas in List_z]
+                    data_y = [parB(meas).value*scale  for  meas in List_z]
+                    proxyA,proxyB = parA(List_z[0]), parB(List_z[0])
+
+            Data_x.append(data_x)
+            Data_y.append(data_y)
+            SurveyHistkwargs.append(Survey.histkwargs)
+
+
+        """======= New style (begin)"""
+
+
+        for Histkwargs, data_x, data_y in zip(SurveyHistkwargs, Data_x, Data_y):
+        # Scatter
+
+            if len(data_x) > 0:
+                plotted = axScatter.errorbar( data_x, data_y, fmt = z_symbols[0], alpha=min(3.0*np.power(len(data_x),-0.40),1.))     #, **Survey.scatterkwargs
+
+                try:
+                    zlist.append(plotted)
+                except:
+                    warnings.warn("Survey %s has no detections." % (Survey.name), DeprecationWarning)
+
+                try:
+                    plotl.append(plotted)
+                except:
+                    warnings.warn("Survey %s has no detections." % (Survey.name), DeprecationWarning)
+
+
+        #    red_patch = mpatches.Patch(color='red', label='The red data')
+
+        # This we have to fix, for many measurands [1,1] is given instead of [None,None]
+        if proxyA.vrange[0] == proxyA.vrange[1]: proxyA.vrange = [None,None] #Workaround
+        if proxyB.vrange[0] == proxyB.vrange[1]: proxyB.vrange = [None,None] #Workaround
+
+
+        axScatter.set_xlim(left  =proxyA.vrange[0], right=proxyA.vrange[1])
+        axScatter.set_ylim(bottom=proxyB.vrange[0],   top=proxyB.vrange[1])  #top=proxyB.vrange[1]  --> but bug
+
+
+        axScatter.set_xlabel( proxyA.labels(log=log[0]) )
+        axScatter.set_ylabel( proxyB.labels(log=log[1]) )
+#        plt.tight_layout()
+
+        lockedaxis = fig.get_axes()[0]
+
+
+        axScatter.set_autoscale_on(False)
+
+        """  Histo"""
+        for Histkwargs, data_x, data_y in zip(SurveyHistkwargs, Data_x, Data_y):
+
+
+            if len(data_x) > 0:
+
+                axHistx.hist(data_x, bins=np.logspace( np.log10(axScatter.get_xlim()[0]), np.log10(axScatter.get_xlim()[1]), 10)                            ,  weights=[1./max(len(data_x),1)]*len(data_x) ,  **Histkwargs)
+                axHisty.hist(data_y, bins=np.logspace( np.log10(axScatter.get_ylim()[0]), np.log10(axScatter.get_ylim()[1]), 10) ,  orientation='horizontal',  weights=[1./max(len(data_y),1)]*len(data_y) ,  **Histkwargs)
+
+                axHistx.hist(data_x, histtype='step', bins=np.logspace( np.log10(axScatter.get_xlim()[0]), np.log10(axScatter.get_xlim()[1]), 10)                            ,  weights=[1./max(len(data_x),1)]*len(data_x) ,  color='black', alpha=0.6)
+                axHisty.hist(data_y, histtype='step', bins=np.logspace( np.log10(axScatter.get_ylim()[0]), np.log10(axScatter.get_ylim()[1]), 10) ,  orientation='horizontal',  weights=[1./max(len(data_y),1)]*len(data_y) ,  color='black', alpha=0.6)
+
+                axHistx.set_xlim(axScatter.get_xlim())
+                axHisty.set_ylim(axScatter.get_ylim())
+        #
+                axHistx.set_xscale("log")  #pl.gca().
+                axHisty.set_yscale("log")
+        """======= New style (end)"""
+
+        fig.legend(plotl,['CW', 'NVSS'], loc=0, frameon=False, handletextpad=0.1,  bbox_to_anchor=(0.24, 0.73), borderaxespad=0.) # loc=2
+
+
+        # no labels - second try
+        axHistx.xaxis.set_major_formatter(nullfmt) # does just remove one label, weird ...
+        axHisty.yaxis.set_major_formatter(nullfmt)
+
+        #== Save file
+        nowfile = 'CraftyPlot_%s' % (craftname)
+        # ask for the surveys model
+        # nowfolder  = Survey.outfolder + '/PostProcessing/%s_%s' % ( parA(meas).dic, parB(meas).dic )   #parA(meas).name, parB(meas).name)
+        nowfolder  = SurveySamples[0].outfolder + '/PostProcessing/'
+        iom.check_mkdir(nowfolder)
+        print('Gonna save:  %s' % (nowfolder + nowfile) )
+        fig.savefig('%s%s_scatter.png' % (nowfolder,nowfile)) #filename
+        fig.savefig('%s%s_scatter.pdf' % (nowfolder,nowfile)) #filename	    #fig.clf()
+
+        fig.clf()
             
   
 """=== Section of single object analysis ==="""   
@@ -1223,7 +1171,7 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
     
     #== Save file
     nowfile = 'Scattermatrix'
-    #                fig2,ax1,proxyB, lockedaxis = create_Samples_A_histo( SurveySamples, parB, (zrange,colors), eff=eff, **addargs)  
+    #                fig2,ax1,proxyB, lockedaxis = create_Samples_A_histo( SurveySamples, parB, (zrange,colors), **addargs)
     #                fig.add_subplot(1,1,1)
     #                fig.add_subplot(1,1,1)
     #        plt.figure(fig)

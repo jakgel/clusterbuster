@@ -37,13 +37,13 @@ def AddFilesToSurvey(survey, savefolder, verbose = True, clusterwise=False):
 
     if verbose: print('%s%s*.pickle' % (location, fn))
         
-    for filename in glob.glob('%s%s*.pickle' % (location,fn)):  #glob.glob('%srelics/*.pickle' % (location)):  ;  (relics, histo, Bmodel, eff, mockobs)
+    for filename in glob.glob('%s%s*.pickle' % (location,fn)):  #glob.glob('%srelics/*.pickle' % (location)):
         if verbose:
             print('surveyutil::AddFilesToSurvey()::', filename)
         if os.path.getsize(filename) > minsize:
              if verbose: print('surveyutil::AddFilesToSurvey()::filename', filename)
              items = iom.unpickleObjectS(filename)
-             for (Cluster, Rmodel) in items: #(relics, eff, mockobs) in items:
+             for (Cluster, Rmodel) in items:
                  GCls.append(Cluster)
              os.remove(filename) 
 
@@ -55,39 +55,6 @@ def AddFilesToSurvey(survey, savefolder, verbose = True, clusterwise=False):
     
     iom.pickleObject(survey, location, 'Survey')
     return survey
-
-
-#def MergeFilesToSurvey(savefolder, surveyname, verbose = True, clusterwise=False):
-#
-#    import clusterbuster.surveyclasses as cbclass #crossimport
-#    
-#    minsize        = 1
-#    location       = savefolder+'/pickled/'
-#    print('MergeFilesToSurvey_files::', location)
-#    GCls           = []
-#    survey = cbclass.Survey([], surveyname, outfolder=savefolder)
-##    print '%sMonsterPickle*.pickle' % (location)             
-#    print(location)
-#    if verbose: print('%sMonsterPickle*.pickle' % (location))
-#    if clusterwise: 
-#        fn = 'GCl'
-#    else:
-#        fn = 'MonsterPickle'
-#    for filename in glob.glob('%s%s*.pickle' % (location,fn)):  #glob.glob('%srelics/*.pickle' % (location)):  ;  (relics, histo, Bmodel, eff, mockobs)
-##        print'!!!'
-#        if os.path.getsize(filename) > minsize:
-#             if verbose: print(filename)
-#             items = iom.unpickleObjectS(filename)
-#             for (Cluster, Rmodel) in items: #(relics, eff, mockobs) in items:
-#                 GCls.append(Cluster)
-#             os.remove(filename) 
-#
-#    GCls = sorted(GCls, key= iom.Object_natural_keys)
-#    survey.GCls =  GCls
-#     
-#    iom.pickleObject(survey, location, 'Survey')
-#    return 0
-
 
 def TestPar(var):
   
@@ -116,21 +83,21 @@ def interpret_parset(parfile, repository='/parsets/', default='default.parset', 
     
     if verbose: 
         print(parfile, comb_dict)
-        
-    
+
+
     z_arr    =  [float(z) for z in   iom.str2list(comb_dict['z_range']) ]
     if oldstyle:
         # Now this parset is used to create some lists needed for this script
-        B0_arr   =  iom.createlist(iom.str2list(comb_dict['B0']       ),comb_dict['B0_N']     , interpol= comb_dict['B0_type'])  
-        nu_arr   =  iom.createlist(iom.str2list(comb_dict['nu']       ),comb_dict['nu_N']     , interpol= comb_dict['nu_type'])   
-        eff_arr  =  iom.createlist(iom.str2list(comb_dict['eff_range']),comb_dict['eff_steps'], interpol= comb_dict['eff_type'])[::-1]  #invert array   
-        returnargs = (comb_dict, B0_arr, nu_arr, eff_arr, z_arr) 
+        B0_arr   =  iom.createlist(iom.str2list(comb_dict['B0']       ),comb_dict['B0_N']     , interpol= comb_dict['B0_type'])
+        nu_arr   =  iom.createlist(iom.str2list(comb_dict['nu']       ),comb_dict['nu_N']     , interpol= comb_dict['nu_type'])
+        eff_arr  =  iom.createlist(iom.str2list(comb_dict['eff_range']),comb_dict['eff_steps'], interpol= comb_dict['eff_type'])[::-1]  #invert array
+        returnargs = (comb_dict, B0_arr, nu_arr, eff_arr, z_arr)
     else:
-        returnargs = (comb_dict, z_arr) 
+        returnargs = (comb_dict, z_arr)
 
 
 
-    return returnargs 
+    return returnargs
      
 ''' former CW '''
 
