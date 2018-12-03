@@ -23,10 +23,10 @@ from scipy.special import expit
 
 #=== main functions
 def PrepareRadioCube(snap, psiFile='Hoeft_radio/mach_psi_table.txt', machFile='Hoeft_radio/q_mach_machr_table.txt', log=False):
-    ''' 
+    """ 
     This does some preparation steps that should be same, no matter, what model is used.
     I strongly recommend to use interpolated files like Hoeft_radio/mach_psi_tablefine(10,3).txt & Hoeft_radio/q_mach_machr_tablefine(10,3).txt
-    - finner interpolation steps will slow down the computation.'''
+    - finner interpolation steps will slow down the computation."""
     
     f         = 6.5                                               # Shock area fraction due to tab. 1 in  Hoeft+2008,  also consider M -> M *1.045 due to  Hoeft+2008
     N_k       = 64.                                               # Sebastian Nuzas Smoothig Kernel for SHock detection (not equal the smoothing kernel for other stuff)
@@ -51,22 +51,22 @@ def PrepareRadioCube(snap, psiFile='Hoeft_radio/mach_psi_table.txt', machFile='H
     U_to_keV  = loadsnap.conversion_fact_gadget_U_to_keV(  snap.head )   
     
     # Derive Temperatur (in subarray)
-    T         = U_to_keV*snap.udow[MF]              # in [keV]  
+    T = U_to_keV*snap.udow[MF] # in [keV]
  
     #==== Finding the closest corresponding value to table entries --> x is for Temperature, y stands for the mach number
-    results_x = math.find_closest(psi_x, T                     )
-    results_y = math.find_closest(psi_y, snap.mach[MF]*1.045   ) #
+    results_x = math.find_closest(psi_x, T)
+    results_y = math.find_closest(psi_y, snap.mach[MF]*1.045)
 
-    s         = H_mach[results_y,4]         # Electron energy distribution spectral index as function of mach number    
+    s = H_mach[results_y, 4] # Electron energy distribution spectral index as function of mach number
      
      
     # ... get an idea of the corresponding iluminated area  
-    h         = snap.hsml[MF]*1e-3                                # com+h [kpc] --> com+h [Mpc]  Hydrodynamical smoothing length, i.e. Size of kernel, determined as a measure of density  IMPORTANT: The term h^-1*expansion factor (because of comoving frame) is added later in CreateRadioCube!
-    factor_A  = loadsnap.comH_to_phys( snap.head )                      # Smoothing kernel part B; 0.7 steems from h=0.7; 1/(1+z) is the expansion factor; second part of computing A_i   
-    A_i       = f*h*h/N_k*factor_A**2                         # in [Mpc]^2 ... Inspired by equ 18 Hoeft+2008 (http://mnras.oxfordjournaloadsnap.org/content/391/4/1511.full.pdf)                            
+    h         = snap.hsml[MF]*1e-3                     # com+h [kpc] --> com+h [Mpc]  Hydrodynamical smoothing length, i.e. Size of kernel, determined as a measure of density  IMPORTANT: The term h^-1*expansion factor (because of comoving frame) is added later in CreateRadioCube!
+    factor_A  = loadsnap.comH_to_phys( snap.head )     # Smoothing kernel part B; 0.7 steems from h=0.7; 1/(1+z) is the expansion factor; second part of computing A_i
+    A_i       = f*h*h/N_k*factor_A**2                  # in [Mpc]^2 ... Inspired by equ 18 Hoeft+2008 (http://mnras.oxfordjournaloadsnap.org/content/391/4/1511.full.pdf)
     
     
-#    ''' DEBUGGING to infer the internal smoothing length and to compare it with other equations '''
+#    """ DEBUGGING to infer the internal smoothing length and to compare it with other equations """
 #    for luck in zip(snap.hsml[::30000], snap.rho[::30000]):
 #             print(luck[0]*factor_A,luck[1]*rho_to_ne*1.e4)
              
@@ -74,10 +74,10 @@ def PrepareRadioCube(snap, psiFile='Hoeft_radio/mach_psi_table.txt', machFile='H
     rho_e     =  snap.rdow[MF]*rho_to_ne*1.e4 # in [electrons 10^-4 cm^-3] az z=0
     Xi_e      =  1.                           # Xi_e : energy fraction of suprathermal electrons, around 10^(-6...-4)  by default set to one and rescalled later on
     
-    ''' If the Gelszinnis model if PREs is not used, this can be omitted '''
+    """ If the Gelszinnis-model if PREs is not used, this can be omitted """
     snap.DSAPsi = snap.rdow*0 
-    snap.DSAPsi = H_psi[results_y,results_x]
-    '''==='''
+    snap.DSAPsi = H_psi[results_y, results_x]
+    """==="""
     
     #=== Compute Radio Emission: Using Eq. 32 from Hoeft-Brueggen 2007
     snap.radi = np.array(snap.rdow*0,dtype='float64')    #Used to initiate a numpy array of the same size and shape as the others; the large float currently comes from radio emision which is to high
@@ -104,11 +104,11 @@ def PrepareRadioCube(snap, psiFile='Hoeft_radio/mach_psi_table.txt', machFile='H
     
 
 def PiggyBagSnap(snap, extended=True):
-    ''' Chooses just a few properties of the snap to reduce the load of interprocess communication  later on 
+    """ Chooses just a few properties of the snap to reduce the load of interprocess communication  later on 
     
     extented = True: yields additional information for deeper analysis
     
-    '''
+    """
 
     cutsnap          = loadsnap.Snapshot(snap.name) 
     cutsnap.head     = snap.head
@@ -125,24 +125,24 @@ def PiggyBagSnap(snap, extended=True):
         cutsnap.mach   = snap.mach
         cutsnap.area   = snap.area
         
-        '''DEVELOPMENT I --> this is needed, because it PiggyBagSnap is also used for Cutsnap in run survey, which leads to PiggyBagSnap_cut'''
+        """DEVELOPMENT I --> this is needed, because it PiggyBagSnap is also used for Cutsnap in run survey, which leads to PiggyBagSnap_cut"""
         cutsnap.hsml   = snap.hsml
         cutsnap.uup    = snap.uup
         
-        '''DEVELOPMENT II  Because in CreateMockOps, cuts are set due to the density and temperature of the projectile'''
+        """DEVELOPMENT II  Because in CreateMockOps, cuts are set due to the density and temperature of the projectile"""
         cutsnap.rho    = snap.rho
         cutsnap.u      = snap.u
         
-        '''DEVELOPMENT III
-        Because we create a model with PREs, where the Gelszinnis model uses a modification of this factor. If not used, this can be ommited'''
+        """DEVELOPMENT III
+        Because we create a model with PREs, where the Gelszinnis model uses a modification of this factor. If not used, this can be ommited"""
         cutsnap.DSAPsi = snap.DSAPsi    
  
     return cutsnap
 
 def PiggyBagSnap_cut( snap, procsnap, cutradio=None, cutmask=None): 
-    ''' Cuts snap to relevant particles and parameters based on a flat cut in snap 
+    """ Cuts snap to relevant particles and parameters based on a flat cut in snap 
         Since 2018, we apply a flat cut based on the Mach-number of the particles.
-    '''
+    """
 
     if snap.rdow.shape != procsnap.radi.shape:
         print('Something went wrong with the array! ..., snap.shape, procsnap.shape', snap.rdow.shape, procsnap.radi.shape)
@@ -165,7 +165,7 @@ def PiggyBagSnap_cut( snap, procsnap, cutradio=None, cutmask=None):
     cutsnap.udow       = snap.udow[cutmask]
     cutsnap.pos        = snap.pos[cutmask]
     
-    '''DEVELOPMENT II  Because in CreateMockOps, cuts are set due to the density and temperature of the projectile'''
+    """DEVELOPMENT II  Because in CreateMockOps, cuts are set due to the density and temperature of the projectile"""
     cutsnap.rho    = snap.rho[cutmask]
     cutsnap.u      = snap.u[cutmask]
 
@@ -174,13 +174,13 @@ def PiggyBagSnap_cut( snap, procsnap, cutradio=None, cutmask=None):
   
 
 def CreateRadioCube( snapred, Rmodel, z,  nuobs=1.4, logging = True):
-    ''' The returned radio luminousity is the radio luminousity in the restframe; Compare Nuza+ 2012 Equ (1)
+    """ The returned radio luminousity is the radio luminousity in the restframe; Compare Nuza+ 2012 Equ (1)
         Also see Section 5 Araya-Melo 2012 et al.  
      Please mind that the density (-->B) estimate is set to the redshift of the cluster snap, but Bcmb and observing frequency to the redshift of the mockobs
      
      
      
-    '''
+    """
     compress = Rmodel.compress
     kappa    = Rmodel.kappa
     B0       = Rmodel.B0
@@ -206,11 +206,11 @@ def CreateRadioCube( snapred, Rmodel, z,  nuobs=1.4, logging = True):
         R          = np.divide(snap.rdow[MF],snap.rup[MF])**compress  # Compress of 1 would show the same behavior like the Nuza model, just for an lower magnetic field
         rho_e      = rho_conv*snap.rup[MF]        # Upstream density
 
-        ''' DEVELOPMENT '''
+        """ DEVELOPMENT """
         if Rmodel.B_para == 'press': 
             B  = B0*np.power(rho_e*snap.u[MF]/1e6, kappa)*R  # in [muG] - using formula for B-field strength  and compression
         elif Rmodel.B_para == 'dens': 
-            ''' Nuza+2017 parametrisation '''
+            """ Nuza+2017 parametrisation """
             B  = B0*np.power(rho_e, kappa)*R  # in [muG] - using formula for B-field strength  and compression
         else:
             print('Parametrization of the magnetic field is unknown. Choose BFieldModel.B_para.') 
@@ -226,13 +226,13 @@ def CreateRadioCube( snapred, Rmodel, z,  nuobs=1.4, logging = True):
     factor_fudge =   (f_cor)**3/(f_cor)**2 / (1+z)**0.0    #3.5             # First time for density factor, second term for area third term is just to make it fit ... It is set to 1 (no correction) as I interpret the radio emissivity in sebastians cube as the one for the observers frequency
 
     f_boost     = np.array(snap.rdow*0,dtype='float64')     
-    '''Is based on the idea of a boosting-factor, and is related to more recent discussion of our working group.
+    """Is based on the idea of a boosting-factor, and is related to more recent discussion of our working group.
        The presumption is that an additional CR population exists. In the following model it is assumed that
        it steems from accretion shocks. M.Hoeft deriffed a boosting factor 'f_boosed' based on this assumption.
        
        remark:
        Some authours say, that merger shocks put more energy (and even more highly relativistic particles) in the cluster. This model is not considered here
-    '''
+    """
     if Rmodel.pre:
         
         if isinstance(Rmodel, cbclass.PreModel_Hoeft):
@@ -246,12 +246,12 @@ def CreateRadioCube( snapred, Rmodel, z,  nuobs=1.4, logging = True):
         
         elif isinstance(Rmodel, cbclass.PreModel_Gelszinnis):
 
-            '''modify xhi,
+            """modify xhi,
                  #add a certain fraction (due to amount of preexisting electrons) to emission
                  #Add exponential term to emissivity of xhi --> strengthens the emission of low mach number shocks
                  #Also (log?)normal normalization of plasma --> should saturate at a certain fraction
                  #Influence for high mach number shocks should roughly add the same amount of emission as the thermal pool in average.
-            '''
+            """
             f_expid = expit(  (Rmodel.sigmoid_0-np.log10(snap.rdow[MF]*snap.u[MF]*(rho_conv*T_conv)))/Rmodel.sigmoid_width  )
             s       = 1     
             if Rmodel.p_sigma  > 0:
@@ -274,18 +274,18 @@ def CreateRadioCube( snapred, Rmodel, z,  nuobs=1.4, logging = True):
 
 
 def PlotParticleFilter(snap, iL, savefile, particleW=lambda x: x.mach**2, labels=False,summed=True):
-    ''' Plots filtered and unfiltered particle due to a given mask iL of a snapshot and 
+    """ Plots filtered and unfiltered particle due to a given mask iL of a snapshot and 
         compares it to another weight
         
         It was added to facilitate a reasonable cut of particles in the phase space (density- u)
-    '''
+    """
     fac   = loadsnap.conversion_fact_gadget_rho_to_nb( snap.head )*loadsnap.conversion_fact_ne_per_nb()
     facU  = loadsnap.conversion_fact_gadget_U_to_keV(  snap.head )/8.61732814974056e-08  # to K
     import matplotlib.pyplot as plt
     import matplotlib as mpl
     
 
-    ''' I couldnt come up with omething better to take the inverse '''
+    """ I couldnt come up with omething better to take the inverse """
     mask = np.ones(snap.rho.shape,dtype=bool)
     mask[iL]=0
     
@@ -295,21 +295,21 @@ def PlotParticleFilter(snap, iL, savefile, particleW=lambda x: x.mach**2, labels
     plotrange = [[-10,2], [2.0,10]]
     bins      = (90,60)  #(30,30)
     
-    '''Image 1 excluded'''
+    """Image 1 excluded"""
     H_mass_full, xedges, yedges = np.histogram2d ( np.log10(snap.rho*fac), np.log10(snap.u*facU), range=plotrange, bins=bins) #weights=np.ones( (iL.shape[0])), 
     H_mass_full = H_mass_full.T  # Let each row list bins with common y range.
     plt.imshow(H_mass_full, interpolation='nearest', origin='low',extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], norm=mpl.colors.LogNorm(),alpha=0.65)
     ax1.set_ylabel('$\\log_{10}\\left(T/\mathrm{K}\\right)$')
     ax1.set_xlabel('$\\log_{10}\\left(n_e/\mathrm{cm^{3}}\\right)$')
     
-    '''Image 1 '''
+    """Image 1 """
     H_mass, xedges, yedges = np.histogram2d ( np.log10(snap.rho[iL]*fac), np.log10(snap.u[iL]*facU), range=plotrange, bins=bins) #weights=np.ones( (iL.shape[0])), 
     H_mass = H_mass.T  # Let each row list bins with common y range.
     plt.imshow(H_mass, interpolation='nearest', origin='low'    ,extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], norm=mpl.colors.LogNorm())
     
 
     ax2 = fig.add_subplot(122, title='particles weighted')
-    '''Image 2'''
+    """Image 2"""
     H_weighted, xedges, yedges = np.histogram2d ( np.log10(snap.rho*fac), np.log10(snap.u*facU), weights=particleW(snap), range=plotrange, bins=bins) #weights=np.ones( (iL.shape[0])), 
     H_weighted = H_weighted.T  # Let each row list bins with common y range.
 
@@ -384,7 +384,7 @@ def PlotParticleFilter(snap, iL, savefile, particleW=lambda x: x.mach**2, labels
                 Hadd          = np.load(outfile+'_particles.npy')
                 Hadd_mach     = np.load(outfile+'_mach.npy')
                 Hadd_weighted = np.load(outfile+'_weighted.npy')
-                print('__________',np.sum(Hadd),np.sum(Hadd_weighted))
+                print('__________', np.sum(Hadd), np.sum(Hadd_weighted))
                 break
             except:
                 attempts += 1
@@ -412,7 +412,7 @@ def PlotParticleFilter(snap, iL, savefile, particleW=lambda x: x.mach**2, labels
         y3 =   6.6 + 0.5*x
         y  = np.maximum(np.maximum(y1,y2),y3)
         
-        '''Image 1 excluded'''
+        """Image 1 excluded"""
         fig = plt.figure(figsize=(8, 3))
         ax1 = fig.add_subplot(131, title='a)') #particles
         plt.imshow(Hadd, interpolation='nearest', origin='low',extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], norm=mpl.colors.LogNorm())
@@ -433,7 +433,7 @@ def PlotParticleFilter(snap, iL, savefile, particleW=lambda x: x.mach**2, labels
         ax3 = fig.add_subplot(133, title='c)') #summed flux
         kwargs = {}
         if labels: 
-            kwargs = {'norm':mpl.colors.LogNorm()}
+            kwargs = {'norm': mpl.colors.LogNorm()}
 #        print('__',np.mean(np.log10(Hadd_weighted)))
         plt.imshow(Hadd_weighted, interpolation='nearest', origin='low',extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], norm=mpl.colors.LogNorm(), vmin=1e25, vmax=2e30, **kwargs) #, norm=mpl.colors.LogNorm()
         ax3.set_xlabel('$\\log_{10}\\left(n_e/\mathrm{cm^{-3}}\\right)$')
@@ -467,7 +467,7 @@ def PlotParticleFilter(snap, iL, savefile, particleW=lambda x: x.mach**2, labels
         
         
         
-'''DEVELOPMENT PHD'''    
+"""DEVELOPMENT PHD"""    
 
 if __name__ == "__main__":
     import clusterbuster.IOutil                    as iout
@@ -475,4 +475,4 @@ if __name__ == "__main__":
     iL      = np.where(snap.rup > 0)
     PlotParticleFilter(snap, iL, '', summed=True)            
                 
-'''          '''
+"""          """

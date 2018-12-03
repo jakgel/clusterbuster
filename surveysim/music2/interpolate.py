@@ -2,9 +2,9 @@ import numpy                  as np
 import scipy.interpolate      as interpolate
 import matplotlib.pyplot      as plt
 import clusterbuster.mathut   as math
-'''
-    Start with e.g. InterpolateRadio2D(psiFile = '../Analysis_MUSIC2/Hoeft_radio/mach_psi_tablefine(10,3).txt',  inter=(10,6)) 
-'''
+"""
+Start with e.g. InterpolateRadio2D(psiFile = '../Analysis_MUSIC2/Hoeft_radio/mach_psi_tablefine(10,3).txt',  inter=(10,6)) 
+"""
 
 
 
@@ -32,7 +32,7 @@ def my_interp(X, Y, Z, x, y, spn=3):
 # from here on: done by myself
 
 def LoadFile_psi(psiFile):
-    ''' Just gives the Mach number and Temeprature values '''
+    """ Just gives the Mach number and Temperature values """
     #=== FILE A ===#
     # read first line .... split it and convert sstring to float science float('1.31E+01') or for a list:map(float, ['3.76E+00', '1.31E+01', '1.14E+01'])
 
@@ -51,7 +51,7 @@ def InterpolateRadio2D(psiFile='../Analysis_MUSIC2/Hoeft_radio/mach_psi_table.tx
 # I suspect an double-exponential function for mach (both efficiency dependency stepsize)  
   
     # Note that the original grid given in 'Hoeft_radio/mach_psi_table.txt' is (quite) regular in log-loglog space, which makes it very simple to invoke an interpolation function!
-    # Irregular data points would make it nececcairy to use functions like scipy.interpolate.griddata(points, values, (grid_x, grid_y), method='cubic')
+    # Irregular data points would make it nececcary to use functions like scipy.interpolate.griddata(points, values, (grid_x, grid_y), method='cubic')
   
     plot_old = False
     plot_new = False
@@ -77,7 +77,6 @@ def InterpolateRadio2D(psiFile='../Analysis_MUSIC2/Hoeft_radio/mach_psi_table.tx
     keV2K = 1.16e7 # Translates keV to Kelvin
     
     if plot_old:
-        print '!!!'
         plt.plot( np.arange(0, len(psi_x), 1 ), psi_x )
         plt.plot( np.arange(0, len(psi_y), 1 ), psi_y )
         plt.savefig(saveplot + '_linearity.png')
@@ -127,7 +126,7 @@ def InterpolateRadio2D(psiFile='../Analysis_MUSIC2/Hoeft_radio/mach_psi_table.tx
         ax1.set_ylabel('$M$ ')
         
         y_ticks = [np.log10(np.log10(m)) for m in [1.7,2.5,4,10]]
-        print ['%.2e' % (y) for y  in y_ticks], [10**(10**y) for y in y_ticks]
+        print( ['%.2e' % (y) for y  in y_ticks], [10**(10**y) for y in y_ticks] )
         ax1.set_yticklabels([10**(10**y) for y in y_ticks])
         plt.yticks(y_ticks)
     
@@ -151,7 +150,7 @@ def InterpolateRadio2D(psiFile='../Analysis_MUSIC2/Hoeft_radio/mach_psi_table.tx
         fig = plt.figure()
         
         temp = np.linspace(2,20,20)
-        print temp
+        print(temp)
         mach = np.linspace(2,7,300)
         psi_x,psi_y = LoadFile_psi(psiFile)
         import itertools
@@ -201,13 +200,11 @@ def InterpolateRadio2D(psiFile='../Analysis_MUSIC2/Hoeft_radio/mach_psi_table.tx
     Y_new    = np.empty( (1,1) )
     for ii,h in  enumerate(H_mach.T):
        interp_spline = interpolate.interp1d( 10**psi_y , h, kind='cubic') 
-       #print np.expand_dims(interp_spline( 10**ynew ), axis=1).shape
-       
+
        if Y_new.shape[0] > 1:
           Y_new         = np.hstack( (Y_new, np.expand_dims(interp_spline( 10**ynew ), axis=1) )   )
        else:
           Y_new         = np.expand_dims(interp_spline( 10**ynew ), axis=1)
-       #print Y_new.shape
        
     # Save File B
     if machFileNew:

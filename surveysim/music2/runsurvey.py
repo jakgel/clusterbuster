@@ -167,7 +167,7 @@ def RadioAndMock_loaded(val, verbose=True):
         (radiocube, subsmt, Rmodel) = stage1_out.get()
         stage1_list.append( ( radiocube, Rmodel, survey) )
     """
-    radiocube =  [radiosnap,Rmodel,survey] #Rmodel is added to the tuple
+    radiocube =  [radiosnap, Rmodel, survey] #Rmodel is added to the tuple
     ##=== Stage II - DoMockObs
     if verbose: print('Start compiling MockObservations for further models of cluster #%5i and amigos with in total %i realisations with %i efficiencies each.' % (realisations[0].mockobs.clid , len(realisations), len(Rmodel.effList)))  
 
@@ -227,7 +227,7 @@ def RadioAndMock(val, verbose=True):
     (pase, realisations, survey) = val
     Rmodel = survey.Rmodel
 
-    PreSnap, smt_add = LoadSnap_multiprocessing(pase,realisations,Rmodel)
+    PreSnap, smt_add = LoadSnap_multiprocessing(pase, realisations, Rmodel)
 
     if len(PreSnap) > 0:
         snapMF = PreSnap
@@ -245,7 +245,7 @@ def RadioAndMock(val, verbose=True):
         (radiocube, subsmt, Rmodel) = stage1_out.get()
         stage1_list.append( ( radiocube, Rmodel, survey) )
     """
-    radiocube =  (radiosnap,Rmodel,survey) #Rmodel is added to the tuple
+    radiocube = (radiosnap, Rmodel, survey) #Rmodel is added to the tuple
 
 
     ##=== Stage II - DoMockObs
@@ -272,32 +272,26 @@ def RadioAndMock(val, verbose=True):
     radiosum_R200 = np.sum(radiocube[0].radi[whereR200])
     
     for kk,real in enumerate(realisations):                     # update information on the total radio power (at the rest frame frequency) in the simulational volume
-             realisations[kk].P_rest.value     = radiosum       # This is for a frequency differing from 1.4 GHz and an efficiency of 1, in PostProcessing.py we apply a further correction   
-             realisations[kk].Prest_vol.value  = radiosum_R200  # This is for a frequency differing from 1.4 GHz and an efficiency of 1, in PostProcessing.py we apply a further correction  
+         realisations[kk].P_rest.value     = radiosum       # This is for a frequency differing from 1.4 GHz and an efficiency of 1, in PostProcessing.py we apply a further correction
+         realisations[kk].Prest_vol.value  = radiosum_R200  # This is for a frequency differing from 1.4 GHz and an efficiency of 1, in PostProcessing.py we apply a further correction
    
                 
     smt(task='Shed_DoMockObs_misc')
-    locations  = [survey.outfolder]  
+    locations = [survey.outfolder]
     
     if not suut.TestPar(pase['cutradio']):
         radiocubeUse = radiocube
     else:  
         print('Beware, This is slow and should not be paralised!!!! This part is not implemented')
         radiocubeUse = None #radiomodel.PiggyBagSnap_cut(snap, radiocube[0], float(pase['cutradio'])),Rmodel,survey)]  
-    (nouse, subsmt, GClrealisations_used,  Rmodel) = mockobs.Run_MockObs(radiocubeUse, realisations, locations, saveFITS=survey.saveFITS, savewodetect=survey.savewodetect, writeClusters=True) #Mach=pase['Mach'], Dens=pase['Dens'], 
+    (nouse, subsmt, GClrealisations_used, Rmodel) = mockobs.Run_MockObs(radiocubeUse, realisations, locations, saveFITS=survey.saveFITS, savewodetect=survey.savewodetect, writeClusters=True) #Mach=pase['Mach'], Dens=pase['Dens'],
 #            print '____ 4 ____' + strftime("%Y-%m-%d %H:%M:%S", gmtime())  # DEBUGGING       
     smt.MergeSMT_simple(subsmt, silent=True)
-    
-#    """DEBUGGING"""
-#    for gcl in GClrealisations_used:
-#        print('...DEBUGGING',gcl.mockobs.snap, len(gcl.relics))
-#    """DEBUGGING END"""
 
     return ((GClrealisations_used,  Rmodel), smt)  
 
 
 def RadioCuts(val, compradio=False):
-#    from time import gmtime, strftime  
     smt = iom.SmartTiming(); 
     smt(task='RadioAndMock_initialization')
     
@@ -326,8 +320,8 @@ def RadioCuts(val, compradio=False):
         
         
         for kk,real in enumerate(realisations):                     # update information on the total radio power (at the rest frame frequency) in the simulational volume
-                 realisations[kk].P_rest.value     = radiosum       # This is for a frequency differing from 1.4 GHz and an efficiency of 1, in PostProcessing.py we apply a further correction   
-                 realisations[kk].Prest_vol.value  = radiosum_R200  # This is for a frequency differing from 1.4 GHz and an efficiency of 1, in PostProcessing.py we apply a further correction  
+             realisations[kk].P_rest.value     = radiosum       # This is for a frequency differing from 1.4 GHz and an efficiency of 1, in PostProcessing.py we apply a further correction
+             realisations[kk].Prest_vol.value  = radiosum_R200  # This is for a frequency differing from 1.4 GHz and an efficiency of 1, in PostProcessing.py we apply a further correction
     else:
         (snap, MF) = snapMF
     
@@ -547,21 +541,7 @@ def SheduleTasks(inputs, smt, ABC=False, verbose=False):
     #=== Reload data
     Taskcube =   np.load(survey.logfolder + '/TaskCube.npy')
     
-    """ execute Taskcube
-       list for Radio_models  --> needs to be stored
-       list for Clusters      --> needs to be computed every time? No, one can also load it
-       !!! from here on load data cube and distribute it over cores, if all clusters of one model are loaded, then proceede
-       list for efficencies   --> should be scaled from up to down, so that certain cubes would be excluded
-       list for modifications --> random seeds for higher efficiencies, fossil plasma etc. Should be added latter
-       A taskplan (taskcube)  is created which tells your process which simu to start what 
-       loadCubes() is done once per cluster snapshot
-       !!! same for binRadio
-       !!! If there is no detection at high efficency exclude all lower efficency processes
-       !!! Create subfolders for the  output 
-       !!! image fits are saved for just for one efficency
-       !!! Pickle the cluster objects (seperated in per snapshot) at the end
-    """
-    
+
     # now that the processes are running and waiting for their queues
     # let's give them some work to do by iterating
     # over our data and putting them into the queues
@@ -590,46 +570,6 @@ def SheduleTasks(inputs, smt, ABC=False, verbose=False):
     realisations_list.append(realisations)       
 
     for realisations in realisations_list:
-        #if verbose: print('Recognized ID %5i, snap %3i, #%i in cluster file' % (gcl.mockobs.clid, gcl.mockobs.snap, gcl.mockobs.id) )
-    
-        """ Outdated
-        countRC    = 0
-        scippedRC  = 0
-        if np.sum(Taskcube[ClID_ii-1,:]) == Taskcube.shape[1]:
-            scip          = Taskcube.shape[1]*len(realisations)
-            scippedRC    += scip
-            scippedTotal += scip
-            continue
-        """
-         
-        
-        """Outdated
-        iom.check_mkdir(survey.outfolder + '/tmp/' )
-        PreSnapfile = survey.outfolder + '/tmp/' +  '%05i.snap.%03i.shocks' % (gcl.mockobs.clid, gcl.mockobs.snap)
-        tmplist.append(PreSnapfile)
-        iom.pickleObject_old( PreSnap, PreSnapfile )   
-        """
-        
-        """ DEVELOPMENT, outdated
-        global FILEMA
-        FILEMA.add(PreSnapfile,PreSnap)
-#            FILEMA[PreSnapfile]
-        DEVELOPMENT """
-   
-        
-        #===  Initialize the set of magnetic models for one snapshot
-        #Taskcube[ClID_ii-len(realisations):ClID_ii,B0_ii,kappa_ii,0] = 1 
-
-        #===
-#        if status: 
-#            scip          = len(realisations)
-#            scippedRC    += scip
-#            scippedTotal += scip
-#            continue
-#        elif scippedRC > 0:
-#            print('#=====  ... Restarted computation after skipping %i entries' % (scippedRC))
-#            scippedRC = 0
-           
         realisations_use = copy.deepcopy(realisations)
         
 
@@ -1004,7 +944,7 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
         
         """ Create survey """
         outfolder = '%s_%05i/' % (logfolder,RModelID)
-        survey    = cbclass.Survey(GClList,survey='%s' % (parfile.replace('.parset','')), emi_max=float(pase['RMSnoise'])*1e-3*200, 
+        survey = cbclass.Survey(GClList,survey='%s' % (parfile.replace('.parset','')), emi_max=float(pase['RMSnoise'])*1e-3*200,
                                    cnt_levels=[float(pase['RMSnoise'])*2**i for i in [1,2,3,4,5,6,7,8,9,10]],saveFITS=(ABC is None),savewodetect=suut.TestPar(pase['savewodetect']),
                                                surshort='MUSIC2',Rmodel=RModel, outfolder=outfolder, logfolder=logfolder)
 #        survey.saveFITS = True
@@ -1042,13 +982,13 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
     while processTasks:
       restarted  += 1
       if ABC is None:
-          processTasks, smt = SheduleTasks( (pase, survey, RModel)  , smt, verbose=verbose)  # This is the most important task!
+          processTasks, smt = SheduleTasks((pase, survey, RModel), smt, verbose=verbose)  # This is the most important task!
       else:
-          processTasks, smt =        DoRun( (pase, survey)          , smt, verbose=verbose)     # This is the most important task!                        
+          processTasks, smt = DoRun((pase, survey), smt, verbose=verbose)     # This is the most important task!
         
     if verbose: print("main('%s') program terminated. Sub-routine was restarted %i times." % (surveyN, restarted))
     
-    print('RModelID %i of run %s finished' %(RModelID,surveyN))
+    print('RModelID %i of run %s finished' %(RModelID, surveyN))
     
     return survey  #(pase['outf'], '%s_%05i' % (surveyN,RModelID) )
 
@@ -1265,22 +1205,8 @@ def ReloadSurvey(survey=None,parfrom='MUSIC2COOL_NVSS_SSD.parset', parto='MUSIC2
     survey.Rmodel.n1      = 1e-2   # Number density of 'core'
     survey.Rmodel.ratio   = 0.05   # Initial normalisation PRE and thermal at shockfront
     """
-    
-    
-#    survey.compress       =  0.7  #float(pase['compress']), 
-    """ DEVELOPMENT  GELSZINNIS_model"""
-#    survey.Rmodel.pre           = False
-#    survey.Rmodel.p0            = 4e-9      
-#    survey.Rmodel.p_sigma       = 0  
-#    survey.Rmodel.sigmoid_0     = 4.1  
-#    survey.Rmodel.sigmoid_width = .25  #8 
-#      
-#    gcls = []
-#    for gcl in survey.GCls[::100]:
-#            gcls.append(gcl)
-#    survey.GCls = gcls        
 
-    survey =  main(parfile, workdir=None, ABC=None, verbose=False, survey=survey)
+    survey = main(parfile, workdir=None, ABC=None, verbose=False, survey=survey)
     time.sleep(16)
     suut.AddFilesToSurvey(survey, savefolder=survey.outfolder, verbose=False,clusterwise=True) 
 

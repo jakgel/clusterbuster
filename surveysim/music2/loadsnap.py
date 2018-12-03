@@ -2,12 +2,12 @@
 
 # Modified by Jakob Gelszinnis
 
-'''
+"""
 
  What is the standard of this data format anyhow. If we have a load function, do we also have save function other than .pickle 
  ... the issue of pickling is that it leads to very strong coupling.
 
-'''
+"""
 
 
 
@@ -20,9 +20,9 @@ import sys
 import numpy as np
 import clusterbuster.constants as cgsconst
 
-const = cgsconst.ConstantsCGS ()
+const = cgsconst.ConstantsCGS()
 
-def get_identi ( f, end, verbose = False ) :
+def get_identi (f, end, verbose = False ) :
    bytes  = f.read( 4 )
    if len(bytes) != 4 :
       if verbose: print(' get_identi: no further valid identifier found')
@@ -34,8 +34,8 @@ def get_identi ( f, end, verbose = False ) :
 def Loadsnap(strSn, transform=True, headerc='Mpc'):
   
   #====  Hoeft_radio/q_mach_machr_table.txt for spectral index 
-    snap = Snapshot( strSn, transform=transform, headerc=headerc)  #, radio_name = strRa 
-    snap.loaddata () 
+    snap = Snapshot(strSn, transform=transform, headerc=headerc)  #, radio_name = strRa
+    snap.loaddata()
     snap.head['gamma'] = 5./3.  # add adiabatic expansion factor
 
     #==== psiFile   for psi factor; machfile for mach-numbers conversion factors
@@ -43,11 +43,11 @@ def Loadsnap(strSn, transform=True, headerc='Mpc'):
 
 def savesnap(strSn, savefolder, transform=True, headerc='Mpc'):
   
-    snap = Snapshot( strSn, transform=transform, headerc=headerc)  #, radio_name = strRa 
+    snap = Snapshot(strSn, transform=transform, headerc=headerc)  #, radio_name = strRa
     snap.savedata(savefolder) 
 
 
-def load_snap ( snap, verbose=False) :
+def load_snap(snap, verbose=False):
     
    if verbose:
      print(' load snapshot <%s> :' % snap.name)
@@ -71,7 +71,7 @@ def load_snap ( snap, verbose=False) :
       
    # read header
    NumPart, Mvir, Rvir, Xc, Yc, Zc, aexpan, hubble = struct.unpack( end+'lfffffff', f.read( 8*4 ) )
-   '''DEVELOPMENT, allows to use data that were already transformed'''
+   """DEVELOPMENT, allows to use data that were already transformed"""
    if snap.headerc == 'Mpc':
        Xc *= 1e3   #  Mpc -> kpc
        Yc *= 1e3   #  Mpc -> kpc
@@ -102,9 +102,8 @@ def load_snap ( snap, verbose=False) :
       if verbose: print(' following identifer found: <%s>' % identi)
    
 #      print('_',identi)
-      if   identi == 'POS ' :
-         snap.pos  =  np.fromfile( f, dtype=end+'f', count=3*NumPart ).reshape( (NumPart, 3 ) )
-         '''DEBUGGING'''
+      if identi == 'POS ':
+         snap.pos  =  np.fromfile(f, dtype=end+'f', count=3*NumPart ).reshape( (NumPart, 3 ) )
          if snap.transform:
              snap.pos[:,0] -= Xc
              snap.pos[:,1] -= Yc
@@ -144,61 +143,7 @@ def load_snap ( snap, verbose=False) :
    f.close()
    if verbose:
       print(' load snapshot ... done')
-   
-#   
-#   if snap.radio_name!='' :
-#   
-#      if verbose: print(' load radio data from <%s> :' % snap.radio_name)
-#   
-#      try :
-#         f = open( snap.radio_name, 'rb' )
-#      except IOError:
-#         print('Error: apparently file does not exist')
-#         print('... I better stop now !!!')
-#         sys.exit()
-#         
-#      end = '<' # args.endian
-#      
-#      # check FileInit
-#      FileInit = struct.unpack( end+'II',  f.read( 2*4 ) )
-#      if FileInit != (1,2) :
-#         print('Fatal Error: FileInit != (1,2)'        )
-#         print('(possibly something wrong with endian)')
-#         print('... I better stop now !!!'             )
-#         sys.exit()
-#         
-#      # read header
-#      NumPart, Mvir, Rvir, Xc, Yc, Zc, aexpan, hubble = struct.unpack( end+'lfffffff', f.read( 8*4 ) )
-#      if verbose:
-#        print('   NumPart = %6i'         % NumPart )
-#        print('   Mvir    = %.3e Msun/h' % Mvir    )
-#        print('   Rvir    = %.3e kpc/h'  % Rvir    )
-#        print('   Xc      = %.3e kpc/h'  % Xc      )
-#        print('   Yc      = %.3e kpc/h'  % Yc      )
-#        print('   Zc      = %.3e kpc/h'  % Zc      )
-#        print('   axpan   = %.3f      '  % aexpan  )
-#        print('   hubble  = %.3f    '    % hubble  )
-#      f.read( 512 - 10*4 )
-#   
-#      while True:
-#      
-#         identi = get_identi ( f, end )
-#         if identi == None :
-#            break
-#
-#         if verbose: print(' following identifer found: <%s>' % identi  )
-#       
-#         if   identi == 'RADI' :
-#            snap.radi  =  np.fromfile( f, dtype=end+'f', count=NumPart )
-#         elif identi == 'XRAY' :
-#            snap.xray  =  np.fromfile( f, dtype=end+'f', count=NumPart )
-#         else :
-#            print('Identifier is not recognized')
-#            break
-#
-#      if verbose:        
-#        print(' load radio data ... done')   
-      
+
    return 
 
 
@@ -217,13 +162,11 @@ def save_snap ( snap, filename, verbose=False) :
             if exc.errno != errno.EEXIST:
                 raise
    fwrite = open( filename, 'w' )
-   end = '<' # args.endian
-      
-   # rite FileInit
-#   print(struct.pack( end+'II',  1,2 ))
+   end = '<'
+
    fwrite.write(struct.pack( end+'II',  1,2 ))
       
-   ''' The snapshot is altered, i.e. this is smelly codeas it should just save a snapshot. In our case only not of relevance because, we either save the snapshots or create radio maps.'''
+   """ The snapshot is altered, i.e. this is smelly codeas it should just save a snapshot. In our case only not of relevance because, we either save the snapshots or create radio maps."""
    if snap.transform:
          snap.pos[:,0] += snap.head['Xc']
          snap.pos[:,1] += snap.head['Yc']
@@ -280,15 +223,6 @@ def save_snap ( snap, filename, verbose=False) :
        except:
            print('save_snap:',ident,'not found')
 
-
-       
-#   pairs =  [ ['ID  ',lambda x:x.id], ]
-#       
-#   for ident,lambd in pairs:
-#       fwrite.write( struct.pack( end+'s', ident))
-#       fwrite.write( lambd(snap).astype('f').tostring()  )#end+f
-##       fwrite.write( struct.pack( end+'I' , lambd(snap))) #.flatten()
-       
    fwrite.close()
    
    if verbose:

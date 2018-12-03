@@ -1115,6 +1115,7 @@ def create_Test( SurveySamples, symbolsism, R200exp=False, markers = np.asarray(
 """========================================="""
 import seaborn as sns;
 from itertools import cycle
+from pandas.tools.plotting import scatter_matrix
 
 def joinpandas(pdframes):
     pdframe_combined = None
@@ -1131,16 +1132,15 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
     sns.set(style="ticks", color_codes=True)
 
     """ Creates a scatter matrix, off a list of quantities ... nice! 
-    Input: SurveySamples ... there is currently no differnciation between different Survey Samples (symbolwise or else)
-    """ 
-    from pandas.tools.plotting import scatter_matrix
+    Input: SurveySamples ... there is currently no differnciation between different Survey Samples (symbol-wise or else)
+    """
 
-    pdframes = [survey.fetchpandas(plotmeasures, logs=logs, vkwargs_FilterCluster={"zborder":0.05}) for survey in SurveySamples]
+    pdframes = [survey.fetch_pandas(plotmeasures, logs=logs, vkwargs_FilterCluster={"zborder":0.05}) for survey in SurveySamples]
     pdframe_combined = joinpandas(pdframes)                    
 
     print(len(SurveySamples))    
-           
-            
+
+
     """ Examples of additional plots 
     def hexbin(x, y, color, **kwargs):
          cmap = sns.light_palette(color, as_cmap=True)
@@ -1161,7 +1161,7 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
 
 
     pdframe_combined.Survey.unique()
-    colorsmaps = ('BuGn','Oranges', 'Red') 
+    colorsmaps = ('BuGn', 'Oranges', 'Red')
         
     make_kde.cmap_cycle = cycle(colorsmaps[0:len(pdframe_combined.Survey.unique())])    #, 'Reds_r'
         
@@ -1171,17 +1171,11 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
     
     #== Save file
     nowfile = 'Scattermatrix'
-    #                fig2,ax1,proxyB, lockedaxis = create_Samples_A_histo( SurveySamples, parB, (zrange,colors), **addargs)
-    #                fig.add_subplot(1,1,1)
-    #                fig.add_subplot(1,1,1)
-    #        plt.figure(fig)
-    # ask for the surveys model
-    # nowfolder  = Survey.outfolder + '/PostProcessing/%s_%s' % ( parA(meas).dic, parB(meas).dic )   #parA(meas).name, parB(meas).name)
-    nowfolder  = SurveySamples[-1].outfolder + '/PostProcessing/'  
+    nowfolder = SurveySamples[-1].outfolder + '/PostProcessing/'
     iom.check_mkdir(nowfolder)
     print('Gonna save:  %s' % (nowfolder + nowfile)  )                         
-    plt.savefig('%s%s%s.png' % (nowfolder,nowfile,suffix),dpi=400) #filename
-    plt.savefig('%s%s%s.pdf' % (nowfolder,nowfile,suffix)) #filename	    #fig.clf()
+    plt.savefig('%s%s%s.png' % (nowfolder, nowfile, suffix), dpi=400)
+    plt.savefig('%s%s%s.pdf' % (nowfolder, nowfile, suffix))
 
     plt.clf()
 
@@ -1189,70 +1183,3 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
 # Taken from https://stackoverflow.com/questions/40726733/plotting-multiple-datasets-on-a-seaborn-pairgrid-as-kdeplots-with-different-colo
 def make_kde(*args, **kwargs):
     sns.kdeplot(*args, cmap=next(make_kde.cmap_cycle), **kwargs)
-
-#    fig.clf() 
-            
-
-#
-#def oldscattermatrix(R200exp=False, markers = np.asarray(['.','s']), log=[False,False], logplot=[True,True], lockedaxis=False, minrel=1):
-#    """    
-#        if 1 == 2:
-#            
-#            if cc == 0:    
-#                fig, axes = scatter_matrix(pdframe, alpha=0.65, figsize=(12, 12), c=col, cmap=massmap, edgecolors=(0,0,0,0.3)) #    ps=6,  , diagonal='kde', , **{'scale':'log'}
-#        
-#                if masscolor:
-#                    cbarplot = plt.scatter(cvalues_mass, cvalues_mass, c=cvalues_mass, cmap=massmap, vmin=0.0, vmax=1.0) #viridis
-#                    colorbar_ax = fig.add_axes([0.11, 0.03, 0.80, 0.03])  # [left, bottom, width, height]
-#                    cb =  fig.colorbar(cbarplot, cax=colorbar_ax, orientation="horizontal") 
-#                    cb.set_label('$\log_{10} (M_\mathrm{cl}/M_\odot)$' )
-#            
-#                a = np.linspace(0.0,1.0,0.1, endpoint=True)
-#                b = np.ones_like(a)
-#                cbarplot2 = plt.scatter(a, a,  c=b, cmap=cormap, vmin=0.0, vmax=1.0)
-#                colorbar_ax2 = fig.add_axes([0.11, 0.93, 0.80, 0.03])  # [left, bottom, width, height]
-#                cb =  fig.colorbar(cbarplot2, cax=colorbar_ax2, orientation="horizontal")
-#                cb.set_label('Correlation strength')
-#            else:
-#                scatter_matrix(pdframe, alpha=0.65, figsize=(12, 12), c=col, cmap=massmap, edgecolors=(0,0,0,0.3))
-#
-#            plt.subplot_tool()
-#            plt.show()
-#    """
-#    cm = plt.cm #.get_cmap('RdYlBu')
-##     titlepost = ''
-#    
-#    colList = ['b','r','g','greyy','yellow']
-#
-#    """======= New style (begin)"""   
-#    masscolor = False
-#    
-#    if masscolor:
-#        col =  cvalues_mass #cm.plasma    
-#    else: 
-#        col       = colList[cc]
-#    
-#    cormap    = cm.magma #cm.viridis
-#    massmap   = cm.plasma #cm.magma    #cm.viridis
-#
-#     
-#    """ A workaround, you optionally could initialize the scatterplot with the log argument """
-#    for i, axs in enumerate(axes):
-#        for j, ax in enumerate(axs):
-#            if i < j and cc==0:  # only the scatter plots
-##                    ax.set_xscale('log')
-##                    ax.set_yscale('log')
-#
-##                    fig.delaxes(ax)
-#
-#                ax.clear()
-#                """ Plot correlation """
-#                ax.imshow([[np.abs(pdframe.corr().iloc[i,j])]], vmin=0.0, vmax=1.0, cmap=cormap)
-#                ax.text(0.5, 0.5,'%.2f' % (np.abs(pdframe.corr().iloc[i,j])), horizontalalignment='center',verticalalignment='center',transform=ax.transAxes, fontsize=30, color='white')
-#
-#            if i == j and cc>0:  # only the scatter plots
-#                ax.hist(pdframe[pdframe.index == i], normed=1, facecolor=colList[cc], alpha=0.6)
-#                
-#            if i > j and cc >0:       
-#                ax.scatter(pdframe[pdframe.index == i], pdframe[pdframe.index == j], color=colList[cc], alpha=0.6)
-
