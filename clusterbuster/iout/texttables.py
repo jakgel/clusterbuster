@@ -186,9 +186,9 @@ def RList2table_paper_new(location, survey, longtab=False):
                    [lambda x: x.RA , '%5.2f' , 'r'],
                    [lambda x: x.Dec, '%+7.2f', 'r'],
                    #[lambda x: x.Mach, '%.1f', 'r'],
-                   [lambda x: x.alpha, '%.1f', 'r'],
-                   [[lambda x: x.flux(), lambda x: x.flux.std[0]], '$%7.1f\pm%5.1f$' , 'r', '$S_{1.4}$', '\mathrm{[mJy]}'],
-                   [[lambda x: np.log10(x.P_rest()), lambda x: np.log10((x.P_rest()+x.P_rest.std[0])/x.P_rest()), lambda x:np.log10((x.P_rest()-x.P_rest.std[0])/x.P_rest())], '$%5.2f^{+%4.2f}_{%4.2f}$', 'r', 'log$_{10}(P_{1.4})$' , '\mathrm{[W/Hz$^{-1}$]}'],
+                   [lambda x: x.alpha, '%.2f', 'r'],
+                   [[lambda x: x.flux(), lambda x: x.flux.std[0]], '$%7.1f\pm%5.1f$', 'r', '$S_{1.4}$', '[mJy]'],
+                   [[lambda x: np.log10(x.P_rest()), lambda x: np.log10((x.P_rest()+x.P_rest.std[0])/x.P_rest()), lambda x:np.log10((x.P_rest()-x.P_rest.std[0])/x.P_rest())], '$%5.2f^{+%4.2f}_{%4.2f}$', 'r', 'log$_{10}(P_{1.4})$', '$\mathrm{[W/Hz^{-1}]}$'],
                    [lambda x: x.LAS, '%5.2f', 'r'], #add error if you like
                    [lambda x: x.LLS, '%5.0f', 'r'], #add error if you like
                    #[Omega not needed],

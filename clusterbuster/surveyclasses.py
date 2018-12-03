@@ -1213,12 +1213,12 @@ class Relic:
                     
                     
         #=== Literature values
-        self.flux_lit    =  dbc.measurand( F_lit  , 'F_lit'  , label='$F_\\mathrm{lit}$', un = 'mJy', std = 0.10*F_ps)  #F_lit  #Flux at 1.4 GHz
-        self.LLS_lit     =  dbc.measurand( LLS_lit, 'LLS_lit', label='LLS', un = 'kpc'  , std = max(0.1*LLS_lit,100.))    #sLLS_lit*1000  #to get kpc   
+        self.flux_lit    =  dbc.measurand( F_lit  , 'F_lit'  , label='$F_\\mathrm{lit}$', un='mJy', std = 0.10*F_ps)  #F_lit  #Flux at 1.4 GHz
+        self.LLS_lit     =  dbc.measurand( LLS_lit, 'LLS_lit', label='LLS', un='kpc', std=max(0.1*LLS_lit,100.))    #sLLS_lit*1000  #to get kpc
           
         #=== spectral index and k corection
         # For radio rleics should be inbeetween -1.2 and -1.0, hence negative!
-        self.alpha       = dbc.measurand(alpha, 'alpha', '$\\alpha_\mathrm{int}$', std = alpha_err)
+        self.alpha       = dbc.measurand(alpha, 'alpha', '$\\alpha_\mathrm{int}$', un=None, std=alpha_err)
         self.alphaFLAG   = alphaFLAG
         #self.kcor        = (1.+GCl.z)**(1-self.alpha)
         
@@ -1235,8 +1235,8 @@ class Relic:
         eigvals, eigvecs = np.linalg.eigh(cov)
         self.eigvecs     = np.sort(eigvecs, axis=1)[::-1]   #not yet workung perfectly! I think there is a bug inside, you could test by multiplying eigvecs with egvalues to see if the covariance matrix is reproduced!
         self.eigvals     = np.sort(eigvals)[::-1]
-        self.iner_rat    = dbc.measurand(self.eigvals[1]/self.eigvals[0], 'iner_rat'  , label='$v_\\mathrm{PC2}/v_\\mathrm{PC1}$',un=None, vmax=1)
-        self.iner_rat_n  = dbc.measurand(self.eigvals[1]/self.eigvals[0], 'iner_rat_n', label='$v_\\mathrm{PC1}/v_\\mathrm{PC2}$',un=None, vmin=1)
+        self.iner_rat    = dbc.measurand(self.eigvals[1]/self.eigvals[0], 'iner_rat'  , label='$v_\\mathrm{PC2}/v_\\mathrm{PC1}$', un=None, vmax=1)
+        self.iner_rat_n  = dbc.measurand(self.eigvals[1]/self.eigvals[0], 'iner_rat_n', label='$v_\\mathrm{PC1}/v_\\mathrm{PC2}$', un=None, vmin=1)
         self.ecc         = np.sqrt(1-self.iner_rat())  # BUG shoud work with out ()
 
            

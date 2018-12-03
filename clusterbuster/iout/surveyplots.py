@@ -38,7 +38,7 @@ from PyPDF2 import PdfFileMerger
 def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=True, additive=False,
                              aligned=False, cbar=True, addinfo=False, mirrored=False, minrel=1,eff=None,
                              zborder=0.05, plottype='flux', title="Polar binned radio relic flux",
-                             dpi=None, add_pi=1/2, Histo=dbc.Histogram2D()):
+                             dpi=None, add_pi=1/2, Histo=dbc.Histogram2D(), suffix=''):
     """ posible inprovements: http://stackoverflow.com/questions/22562364/circular-histogram-for-python 
     minrel : minimal number of relics to be consided for the histogramm
 
@@ -122,7 +122,7 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
                         ax.grid(True)
                         if title is not None: ax.set_title(title, va='bottom')
                         for ftype in ['pdf','png']:
-                            plt.savefig('%s%s-polar.%s' % (nowfolder,GCl.name, ftype))
+                            plt.savefig('%s%s-polar%s.%s' % (nowfolder,GCl.name, suffix, ftype))
 
                         fig.clf()
 
@@ -148,7 +148,7 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
                 if cbar:  fig.colorbar(meshed)
                 if title is not None: ax.set_title(title, va='bottom')
                 for ftype in ['pdf','png']: #,'jpg'
-                    plt.savefig('%s/%s%.2f-polar.%s' % (nowfolder,survey.name, np.log10(eff), ftype))
+                    plt.savefig('%s/%s-polar%s.%s' % (nowfolder,survey.name, suffix, ftype))
                 fig.clf()
 
 
@@ -225,8 +225,8 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
     #            ax2.set_yscale('log')
 
         for ftype in ['pdf','png']: #,'jpg'
-            plt.savefig('%s/%s%.2f-sumprofile.%s' % (   nowfolder,survey.name, np.log10(eff), ftype))
-            plt.savefig('%s/%s%.2f-sumprofile.%s' % (buckedfolder,survey.name, np.log10(eff), ftype))
+            plt.savefig('%s/%s-sumprofile%s.%s' % (   nowfolder,survey.name, suffix, ftype))
+            plt.savefig('%s/%s-sumprofile%s.%s' % (buckedfolder,survey.name, suffix, ftype))
 
         
         # Statistics, contribution
@@ -236,8 +236,8 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
             statistic = np.divide(stat,np.sum(stat))
             ax1.hist(statistic, color='b', alpha=1/len(stats), bins='auto')  # arguments are passed to np.histogram
         for ftype in ['pdf','png']: #,'jpg'
-            plt.savefig('%s/%s%.2f-sumsstats.%s' % (   nowfolder, survey.name, np.log10(eff), ftype))
-            plt.savefig('%s/%s%.2f-sumsstats.%s' % (buckedfolder, survey.name, np.log10(eff), ftype))
+            plt.savefig('%s/%s-sumsstats%s.%s' % (   nowfolder, survey.name, suffix, ftype))
+            plt.savefig('%s/%s-sumsstats%s.%s' % (buckedfolder, survey.name, suffix, ftype))
             
         
         """ Polar plot"""
@@ -261,8 +261,8 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
         if cbar:  fig.colorbar(meshed)
         if title is not None: ax.set_title(title, va='bottom')
         for ftype in ['pdf','png']: #,'jpg'
-            plt.savefig('%s/%s%.2f-polar-sums.%s' % (   nowfolder,survey.name, np.log10(eff), ftype))
-            plt.savefig('%s/%s%.2f-polar-sums.%s' % (buckedfolder,survey.name, np.log10(eff), ftype))
+            plt.savefig('%s/%s-polar-sums%s.%s' % (   nowfolder,survey.name, suffix, ftype))
+            plt.savefig('%s/%s-polar-sums%s.%s' % (buckedfolder,survey.name, suffix, ftype))
 
         fig.clf()   
 
