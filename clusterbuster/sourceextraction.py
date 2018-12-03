@@ -100,7 +100,7 @@ def RelicExtraction(image, z, contourMask = [], Imcenter=False, GCl=False, dinfo
 
         relic = cbclass.Relic(rinfo, dinfo, RA, Dec, LAS, area, GCl=GCl, alpha=rinfo.alpha, alphaFLAG=rinfo.alphaFLAG, theta_elong=theta_elong,
                                     cov=cov, cnt=cnt, F=flux, F_ps=flux_ps, Dproj_pix = Dproj_pix,
-                                    sparseD=distance, sparseW=angle_hist, sparseA=weights, pmask=rel)
+                                    sparseD=distance, sparseW=weights, sparseA=angle_hist, pmask=rel)
         relics.append(relic)
 
     

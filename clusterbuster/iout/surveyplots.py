@@ -35,6 +35,38 @@ import matplotlib.patches as patches
 import surveysim.music2.mockobsxray as Xray
 from PyPDF2 import PdfFileMerger
 
+
+# ============== Reads relic information out of an ds9 region file
+def readDS9relics(regfile, spixel, center, pixref, Test=False):
+    contours, contourinfos = iom.readDS9regions(regfile, spixel, center, pixref)
+    contoursWCS, _ = iom.readDS9regions(regfile, spixel, center, pixref, pixelcoords=False)
+
+    rinfo = []
+    for ii, info in enumerate(contourinfos):
+        # info       =  info.split(', ')
+
+        try:
+            info = info.split(', ')  # get infolist
+            info[2] = info[2].replace('alpha ', '')  # remove this alpha string
+            split = info[2].split(' ')  # split alpha into substrings
+            if len(split) > 1:
+                alpha = split[0]
+                alpha_err = split[1]
+            else:
+                alpha = split[0]
+                alpha_err = 0
+
+            reg = cbclass.RelicRegion(name=info[0], cnt=[contours[ii]], cnt_WCS=[contoursWCS[ii]], rtype=int(info[1]),
+                                      alpha=alpha, alphaFLAG=('false' not in alpha.lower()), alpha_err=alpha_err)
+        except:
+            reg = cbclass.RelicRegion(name='', cnt=[contours[ii]], cnt_WCS=[contoursWCS[ii]], rtype=-1, alphaFLAG=False)
+
+        if ('test' not in info[0].lower()) or not Test:
+            rinfo.append(reg)
+
+    return rinfo
+
+
 def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=True, additive=False,
                              aligned=False, cbar=True, addinfo=False, mirrored=False, minrel=1,
                              zborder=0.05, plottype='flux', title="Polar binned radio relic flux",
@@ -327,7 +359,7 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
 
         if recenter:
             print('Recentering', GCl.name, GCl.RA(),GCl.Dec(),diam)
-            f.recenter(GCl.RA(),GCl.Dec(),width=diam,height=diam) # radius is also possible!
+            f.recenter(GCl.RA(), GCl.Dec(), width=diam, height=diam) # radius is also possible!
 
         if survey.Rmodel.simu:
 #            f.tick_labels.set_xformat("dd:mm:ss")
@@ -534,37 +566,7 @@ def circular_cutout(f, savefile):
     ax.axis('off')
     f.save(savefile+'_circular.png')
 
-#============== Reads relic information out of an ds9 region file
-def readDS9relics(regfile, spixel, center, pixref, Test=False): 
 
-   contours   , contourinfos = iom.readDS9regions(regfile, spixel, center, pixref)     
-   contoursWCS, _            = iom.readDS9regions(regfile, spixel, center, pixref, pixelcoords=False)    
-
-   rinfo =   []
-   for ii,info in enumerate(contourinfos):
-     #info       =  info.split(', ')
-    
-     try:
-       info       =  info.split(', ')             # get infolist
-       info[2]    =  info[2].replace('alpha ', '') #remove this alpha string
-       split      =  info[2].split(' ')           #split alpha into substrings
-       if len(split) > 1:
-          alpha      = split[0]
-          alpha_err  = split[1]
-       else:
-          alpha      = split[0]
-          alpha_err  = 0
-
-       reg        =  cbclass.RelicRegion(name = info[0], cnt=[contours[ii]], cnt_WCS=[contoursWCS[ii]], rtype=int(info[1]), alpha=alpha, alphaFLAG=('false'  not in alpha.lower()), alpha_err=alpha_err)
-     except:
-       reg        =  cbclass.RelicRegion(name =  '',  cnt=[contours[ii]], cnt_WCS=[contoursWCS[ii]], rtype=-1, alphaFLAG=False )  
-       
-     if ('test'  not in info[0].lower() ) or not Test:
-        rinfo.append( reg )
-     
-   return rinfo
-
-   
 
 def PlotDistribution_FluxRatioLAS(location, ClList, RList):
 #=== Test the deviation of the  literatur evalue and measured fluxes of the brightest objects in a cluster

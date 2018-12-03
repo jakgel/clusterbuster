@@ -18,8 +18,6 @@ except ImportError:
     import _pickle as pickle
 
 #============== Smart timing to subject classes
-
-
 class SmartTiming():
     """
     Class to allow timing of specific task blocks within the code. with 
@@ -345,7 +343,7 @@ def J2000ToCoordinate(J2000):
   return COO
 
   
-  
+
 def readDS9regions(regfile, spixel, center, pixref, pixelcoords=True):
 
    contours     = []
@@ -354,19 +352,19 @@ def readDS9regions(regfile, spixel, center, pixref, pixelcoords=True):
      for l in line:
        if 'polygon' in l:
 
-         textpos     =   l.find('text={') 
-         if textpos > -1: 
-           contourinfo =   (l[textpos+6:].replace('}\n','')).replace(" dash=1","") 
+         textpos     =   l.find('text={')
+         if textpos > -1:
+           contourinfo =   (l[textpos+6:].replace('}\n','')).replace(" dash=1","")
          else:
            contourinfo    = ('')
 
          l       = l.split(' ')
          l_clear = (((l[0].replace("polygon(", "")).replace("\n","")).replace(")","")).replace("dash=1","")
-         contours.append( ContourToList(l_clear, spixel, center, pixref, pixels = pixelcoords) )  
+         contours.append( ContourToList(l_clear, spixel, center, pixref, pixels = pixelcoords) )
          contourinfos.append(contourinfo)
    return (contours, contourinfos) #Contour list of numpy arrays(Npoints, 1, 2)
-   
-   
+
+
    
 def plot_smt(folder, smtlog,log=False, rel=False):
   import re

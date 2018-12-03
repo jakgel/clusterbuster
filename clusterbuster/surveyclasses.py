@@ -150,7 +150,7 @@ class Survey(object):
         mesh = np.zeros_like( self.mainhist.hist.T)
         """DEVELOPMENT END"""
         
-        mainhist = np.zeros_like( self.mainhist.hist.T )
+        mainhist = np.zeros_like(self.mainhist.hist.T)
         sigstats = []
         
         if self.filteredClusters is None:
@@ -477,13 +477,13 @@ class Galaxycluster(object):
 
     def add_regions(self, regions, **filterargs):
        
-        if len(regions)>0:
+        if len(regions) > 0:
             self.regions = self.regions + regions
             self.updateInformation(**filterargs)
 
     def add_relics(self, relics, **filterargs):
         
-        if len(relics)>0:
+        if len(relics) > 0:
             self.relics = self.relics + relics
             self.updateInformation(**filterargs)
 #     
@@ -666,13 +666,11 @@ class Galaxycluster(object):
             fitarray_pro = [np.sum(np.multiply(np.power(collabsed, 1.0), np.abs(np.cos(histo.ticks[0]-shift)))) for shift in histo.ticks[0]]
             fitarray_anti = fitarray_pro
 
-            print(collabsed.shape, fitarray_pro)
 
             # Some values that would fit nicely into the cluster class
             # The value fitted would give the counterclockwise angle. This is why I subtract the from 2pi
             self.relic_pro_index = np.argmax(fitarray_pro)
             self.relic_pro_angle = histo.ticks[0][self.relic_pro_index]      # [0:2pi]
-            print(self.relic_pro_angle)
 
             self.relic_anti_index = np.argmin(fitarray_anti)
             self.relic_anti_angle = histo.ticks[0][self.relic_anti_index]   # [0:2pi]
@@ -1261,28 +1259,29 @@ class Relic:
                 alpha = -1.03
                 Mach = np.nan #np.sqrt( (-alpha+1) / (-alpha-1 ) )  #=
             else:
-                alpha = min(self.alpha.value,-1.03)
-                Mach = np.sqrt( (-alpha+1) / (-alpha-1 ) )
+                alpha = min(self.alpha.value, -1.03)
+                Mach = np.sqrt( (-alpha+1) / (-alpha-1) )
             self.Mach = dbc.measurand( Mach , '$\overline{M}$', un=None)
 
-
       
-    def create_Histo(self,GCl,normtype='R200'):
+    def create_Histo(self,GCl, normtype='R200'):
         """ Creates a PolarHistogram if the Histogram() type is set """
 
         if GCl.histo is not None:
 
-            Nexp     = GCl.histo.norm.Nexp
+            Nexp = GCl.histo.norm.Nexp
             normtype = GCl.histo.norm.ntype
 
-            if normtype == 'R200':  norm = GCl.R200() * (1500/GCl.R200())**(Nexp-1)
-            if normtype == 'Rvir':  norm = GCl.Rvir() * (1500/GCl.Rvir())**(Nexp-1)
-            if normtype == 'Dproj': norm = 1e3
+            if normtype == 'R200':
+                norm = GCl.R200() * (1500/GCl.R200())**(Nexp-1)
+            if normtype == 'Rvir':
+                norm = GCl.Rvir() * (1500/GCl.Rvir())**(Nexp-1)
+            if normtype == 'Dproj':
+                norm = 1e3
 
-            self.polHist =  sparse.csr_matrix(np.histogram2d(self.sparseA, self.sparseD/norm, bins=GCl.histo.bins,
-                                                             normed=False, weights=self.sparseW) [0] )
+            self.polHist = sparse.csr_matrix(np.histogram2d(self.sparseA, self.sparseD/norm, bins=GCl.histo.bins,
+                                                            normed=False, weights=self.sparseW)[0])
 
-      
     def shape_advanced(self):
         return dbc.measurand( self.iner_rat/ ( self.LAS / (self.dinfo.beam[0]/60.) ), 'shape_advanced', label= 'shape$_\mathrm{PC_1}$', un=None)
                   

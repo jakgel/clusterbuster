@@ -30,7 +30,7 @@ import clusterbuster.surveyclasses     as cbclass
 import clusterbuster.sourceextraction  as relex
 import clusterbuster.dbclasses         as cdb 
 import clusterbuster.iout.misc         as iom
-import clusterbuster.iout.survey       as ioclass
+import clusterbuster.iout.surveyplots  as ioclass
 import clusterbuster.maput             as maput
 import clusterbuster.fitsut            as fitsut
 
