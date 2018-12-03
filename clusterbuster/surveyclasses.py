@@ -645,19 +645,20 @@ class Galaxycluster(object):
     
     def relics_polarDistribution(self, histo=None, **kwargs):
 
-        """ This fun    ction identifies to axis of preferred radio emission in the galaxy cluster
+        """ This function identifies to axis of preferred radio emission in the galaxy cluster
             In the first step the dividing line that minimizes/maximizes an regression criterium.
             In the next step the fluxes within these regions are computed.
             
-            This procedure depends on gcl.histo, if flux is outside the given range it won't be put into consideration (radius etc!)"""
-        
+            This procedure depends on gcl.histo, if flux is outside the given range (radius etc)
+            it won't be put into consideration
+        """
 
-        eps = 1.e-15 #15  # 1  Femto Jy as offset ... hopefully this doesn't change the results
+        eps = 1.e-15  # 1  Femto Jy as offset ... hopefully this doesn't change the results
 
         if histo is None:
             histo = self.histo
         if histo is not None:
-            collabsed = np.sum(histo.hist, axis=1)   # Collabses along the distance axis
+            collabsed = np.sum(histo.hist, axis=1)   # Collapses along the distance axis
             N = collabsed.shape[0]
             
             # This is some simple form of regression!
@@ -675,8 +676,7 @@ class Galaxycluster(object):
 
             self.relic_anti_index = np.argmin(fitarray_anti)
             self.relic_anti_angle = histo.ticks[0][self.relic_anti_index]   # [0:2pi]
-            
-    
+
             self.pro1 = np.sum(maut.polar_from_to(collabsed, [int(self.relic_pro_index-1./4.*N), int(self.relic_pro_index + 1./4.*N)])) + eps
             self.pro2 = np.sum(collabsed) - self.pro1 + 2.*eps
     
@@ -701,12 +701,13 @@ class Galaxycluster(object):
             self.pro1, self.pro2, self.anti1, self.anti2 = eps, eps, eps, eps
             
         # Divide flux in up and downside emission
-        self.ratio_pro    =  dbc.measurand(self.pro2 / self.pro1, 'ratio_pro', label = 'ratio$_\mathrm{pro}$' ,  vrange = [2e-3,1] )
-        self.ratio_anti   =  dbc.measurand(self.anti2/ self.anti1, 'ratio_ant', label = 'ratio$_\mathrm{anti}$', vrange = [2e-3,1] )
+        self.ratio_pro    =  dbc.measurand(self.pro2 / self.pro1, 'ratio_pro', label='ratio$_\mathrm{pro}$',  vrange=[2e-3,1] )
+        self.ratio_anti   =  dbc.measurand(self.anti2/ self.anti1, 'ratio_ant', label='ratio$_\mathrm{anti}$', vrange=[2e-3,1] )
         ratio_val         =  mstats.gmean( [self.ratio_pro(),self.ratio_anti()] )
-        self.ratio_relics =  dbc.measurand(ratio_val, 'ratio_relics', label = 'ratio$_\mathrm{dipol}$', std = [abs(ratio_val-min(self.ratio_pro(),self.ratio_anti())), abs(max(self.ratio_pro(),self.ratio_anti())-ratio_val)] , vrange = [2e-3,1])
-
-        print()
+        self.ratio_relics =  dbc.measurand(ratio_val, 'ratio_relics', label='ratio$_\mathrm{dipol}$',
+                                           std=[abs(ratio_val-min(self.ratio_pro(),self.ratio_anti())),
+                                                  abs(max(self.ratio_pro(),self.ratio_anti())-ratio_val)],
+                                           vrange=[2e-3,1])
     
     
     def gettypestring(self, vec=False) :
