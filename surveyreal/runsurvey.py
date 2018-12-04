@@ -26,13 +26,13 @@ import argparse
 
     
 print( '###==== Step 0a: Executing self written .py subroutines ====###' )
-import clusterbuster.surveyclasses     as cbclass                
-import clusterbuster.sourceextraction  as relex
-import clusterbuster.dbclasses         as cdb 
-import clusterbuster.iout.misc         as iom
-import clusterbuster.iout.surveyplots  as ioclass
-import clusterbuster.maput             as maput
-import clusterbuster.fitsut            as fitsut
+import clusterbuster.surveyclasses    as cbclass
+import clusterbuster.sourceextraction as relex
+import clusterbuster.dbclasses        as cdb
+import clusterbuster.iout.misc        as iom
+import clusterbuster.iout.surveyplots as ioclass
+import clusterbuster.maput            as maput
+import clusterbuster.fitsut           as fitsut
 
 
 from astropy.io import fits
@@ -41,7 +41,7 @@ from astropy.convolution import Gaussian2DKernel
 from astropy.wcs import WCS
 from reproject import reproject_interp
                 
-def updateClusters_missingRegions(ClList,AddList):
+def updateClusters_missingRegions(ClList, AddList):
     """ This adds relic regions based on a .csv file to the cluster List 
     It is a workaround to have a fast update of the already existing datafiles with the soon to be standard file system,
     in this case  only for clusters without NVSS detections are updated via the identifiers.
@@ -49,8 +49,7 @@ def updateClusters_missingRegions(ClList,AddList):
     Later on this might be incorporated in the CB suite
     """
 
-    regions = pd.read_csv(AddList,comment='#')
-
+    regions = pd.read_csv(AddList, comment='#')
     """ FIX the classification by mapping"""    
     mapping = {'PHOENIX'          : 0, 
                'RELIC'            : 1,
@@ -63,8 +62,8 @@ def updateClusters_missingRegions(ClList,AddList):
     
     regions["CLASS_int"] = regions["FLAGS_CLASS"].map(mapping)
     regions["CLASS_int"] = regions["CLASS_int"].fillna(-1)
-    regions.loc[regions['FLAGS_CLASS'] == 1  &  regions['Counter'], 'FLAGS_CLASS'] =  2      ###Double Relic
-    regions.loc[regions['FLAGS_CLASS'] == 3  &  regions['Counter'], 'FLAGS_CLASS'] =  2      ###Double Relic              
+    regions.loc[regions['FLAGS_CLASS'] == 1 & regions['Counter'], 'FLAGS_CLASS'] = 2      # Double Relic
+    regions.loc[regions['FLAGS_CLASS'] == 3 & regions['Counter'], 'FLAGS_CLASS'] = 2      # Double Relic
      
 
     for index, row in regions.iterrows():
@@ -72,39 +71,32 @@ def updateClusters_missingRegions(ClList,AddList):
         for GCl in ClList:
             if GCl.status not in ['TRUE'] and GCl.name == row['Cluster']:  
 
-#                if GCl.name == row['Cluster']:
-                if int(row['CLASS_int']) == -2: continue  # For now exclude halos, just because they are currently a seperate entry in the clusters file
-#                    print( row['Cluster'], row['CLASS_int']           
-                rtype     = int(row['CLASS_int'])
-                """Development"""
-                alpha     = -1  #row['Alpha']
-                alpha_err =  0  #row['Alpha_error']
-                alphaFLAG =  False
-                candidate =  (row['FLAG_conf'] != True)
-                region = cbclass.RelicRegion( name = row['Identifier'], cnt=[], rtype=rtype, alpha=alpha, alpha_err=alpha_err, 
-                                              alphaFLAG=alphaFLAG, candidate=candidate)
-                                             
-
-                """ DEVELOPMENT WORKAROUND
-                GCl.regions.append(region) is not working!
-                """
-
+                if int(row['CLASS_int']) == -2:
+                    continue  # For now exclude halos, just because they are currently a seperate entry in the clusters file
+                rtype = int(row['CLASS_int'])
+                alpha = -1  #row['Alpha']
+                alpha_err = 0  #row['Alpha_error']
+                alphaFLAG = False
+                candidate = (row['FLAG_conf'] == False)
+                region = cbclass.RelicRegion(name=row['Identifier'], cnt=[], rtype=rtype, alpha=alpha, alpha_err=alpha_err,
+                                             alphaFLAG=alphaFLAG, candidate=candidate)
                 GCl.add_regions([region])
                 
     return ClList
 
-def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', plot=True):
+
+def survey_run(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', plot=True):
     """ Extracts survey relics from an real world survey
     """
     
     for survey in surveys:
-        print( '###==== Step 0b: Initialize internal variables/objects for survey: %s ====###' % (survey) )
-
-        ClList   = []
+        print('###==== Step 0b: Initialize internal variables/objects for survey: %s ====###' % survey)
+        smt = iom.SmartTiming()
+        
+        ClList = []
         Excluded = []
-        subtract    = ['slist','fits'] # im, fits, slist
+        subtract = ['slist', 'fits']  # im, fits, slist
 
-        smt      = iom.SmartTiming()
         Jy_SI    = 1e-26    # W/Hz/m^2
         outfolder = '%s%s' % (outfoldertop, survey)
         topfolder = os.getcwd() # '/home/jakobg/lib/ClusterBuster/Relics_Surveys/'
@@ -122,53 +114,57 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
         
         """ Part of development: rpelace nan values with values that can be handled by clustebruster """
         
-        for strings in ['REF_LX','REF_M200','REF_M500','REF_F']:
+        for strings in ['REF_LX', 'REF_M200', 'REF_M500', 'REF_F']:
             Clusters[strings] = Clusters[strings].replace(np.nan, '', regex=True)
 
-        for values in ['M200','M500','LX_500_0.2-2.4']:
-            Clusters[values]   = Clusters[values].replace(np.nan, 0, regex=True)
+        for values in ['M200', 'M500', 'LX_500_0.2-2.4']:
+            Clusters[values] = Clusters[values].replace(np.nan, 0, regex=True)
 
-        
-#        from numpy import nan
-#        Clusters.fillna(value=nan, inplace=True) 
-
-        n= 0
+        n = 0
         for index, CL in Clusters.iterrows():
-            if CL['Cluster'] and  CL['Cluster'] not in [o.name for o in ClList] and CL['Cluster'] not in ['']: 
+            if CL['Cluster'] and CL['Cluster'] not in [o.name for o in ClList] and CL['Cluster'] not in ['']:
+                """I did this to remove unfinished, but recent additions to the relic database"""
+                #print(type(CL['Discovery']))
+                #if math.isnan(CL['Discovery']):
+                #    pass
+                #elif int(CL['Discovery']) >= 2018:
+                #    continue
+
                 try:
                     """I did this to remove unfinished, but recent additions to the relic database"""
+                    if CL['Cluster'] == '#':
+                        continue
                     if int(CL['Discovery']) >= 2018:
                         continue
                 except:
                     pass
-                
+
+
                 n += 1
 #                if n > 5:
 #                     continue
-                print( CL['FLAG_INCLUDED'],  CL['Cluster'] )
                 Cl_name = CL['Cluster']
-                status   = CL['FLAG_INCLUDED']
+                status  = CL['FLAG_INCLUDED']
                 
-                
+
+                print(CL)
+
                 RA_host  = float(CL['RA'])    #float(CL[2])  
                 Dec_host = float(CL['Dec'])
                 
                 diff = np.sqrt((float(CL['RA_Xmax'])-RA_host)**2+(float(CL['Dec_Xmax'])-Dec_host)**2)*3600
                 if not math.isnan(diff) :           
                     print('Two different centre positions given for cluster %s. The offset was %.1f arcsec' % (Cl_name, diff) )
-                    RA_host    = float(CL['RA_Xmax']) 
-                    Dec_host   = float(CL['Dec_Xmax'])
+                    RA_host  = float(CL['RA_Xmax'])
+                    Dec_host = float(CL['Dec_Xmax'])
   
                 z    = float(CL['z'])
                 M200 = float(CL['M200'])*1e14
                 M500 = float(CL['M500'])*1e14
                 Lx   = float(CL['LX_500_0.2-2.4'])
-
+                flux_lit = float(CL['F_lit'])
                   
                 halo = CL['FLAG_Halo'] 
-              
-                flux_lit = float(CL['F_lit'])
-
               
                 try:
                   ClassFlag = ('true' in CL['Type_Flag'].lower())
@@ -176,7 +172,8 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
                   ClassFlag = False    
                   
                 #create Class object
-                GCl     = cbclass.Galaxycluster(name=Cl_name, RA=RA_host, Dec=Dec_host, z=z, M200=M200, M500=M500, Lx=Lx, Lx_lit=Lx, flux_lit=flux_lit, ClassFlag=ClassFlag, halo=halo, status=status)
+                GCl = cbclass.Galaxycluster(name=Cl_name, RA=RA_host, Dec=Dec_host, z=z, M200=M200, M500=M500, Lx=Lx, 
+                                            Lx_lit=Lx, flux_lit=flux_lit, ClassFlag=ClassFlag, halo=halo, status=status)
 
                 # add further references
                 GCl.Lx      .ref = cdb.reference(CL['REF_LX'  ], rtype='text', page=None              , nr=None)
@@ -194,28 +191,28 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
                 
                 
                 if survey == 'NVSS':
-                        s_pixel    = [spixel[1]*GCl.cosmoPS*3600,spixel[1]*3600]  
-                        NVSSbeam   = [ 45.,45./s_pixel[1] ]                  
-                        NVSS_rms   = 4.5e-4     # in Jy/beam
-                        NVSSlimit  = 2*NVSS_rms 
-                        NVSSnu     = 1.4
-                        telescope  = 'VLA-D'
-                        GCl.dinfo  = cbclass.DetInfo(beam= [NVSSbeam[0], NVSSbeam[0], 0],  
+                        s_pixel   = [spixel[1]*GCl.cosmoPS*3600, spixel[1]*3600]
+                        NVSSbeam  = [45., 45./s_pixel[1]]
+                        NVSS_rms  = 4.5e-4     # in Jy/beam
+                        NVSSlimit = 2*NVSS_rms
+                        NVSSnu    = 1.4
+                        telescope = 'VLA-D'
+                        GCl.dinfo = cbclass.DetInfo(beam=[NVSSbeam[0], NVSSbeam[0], 0],
                                                      spixel=s_pixel[1], rms=NVSS_rms, 
                                                      limit=NVSSlimit, telescope=telescope, 
-                                                     nucen = NVSSnu, center=center[0], pcenter=center[1])
+                                                     nucen=NVSSnu, center=center[0], pcenter=center[1])
                 if survey == 'TGSS':
-                        s_pixel    = [spixel[1]*GCl.cosmoPS*3600, spixel[1]*3600]  
-                        TGSSbeam   = [25., 25./s_pixel[1]]  
-                        TGSS_rms   = 3.0e-3     # in Jy/beam
-                        TGSSlimit  = 2*TGSS_rms 
-                        beamrec    = 1. if GCl.Dec>19 else 1. / np.cos( np.radians(GCl.Dec - 19 ) ) 
-                        TGSSnu     = 0.1475
-                        telescope  = 'GMRT'
-                        GCl.dinfo  = cbclass.DetInfo(beam= [TGSSbeam[0]*beamrec, TGSSbeam[0], 0],  
+                        s_pixel   = [spixel[1]*GCl.cosmoPS*3600, spixel[1]*3600]
+                        TGSSbeam  = [25., 25./s_pixel[1]]
+                        TGSS_rms  = 3.0e-3     # in Jy/beam
+                        TGSSlimit = 2*TGSS_rms
+                        beamrec   = 1. if GCl.Dec > 19 else 1. / np.cos(np.radians(GCl.Dec - 19))
+                        TGSSnu    = 0.1475
+                        telescope = 'GMRT'
+                        GCl.dinfo = cbclass.DetInfo(beam=[TGSSbeam[0]*beamrec, TGSSbeam[0], 0],
                                                      spixel=s_pixel[1], rms=TGSS_rms, 
                                                      limit=TGSSlimit, telescope=telescope, 
-                                                     nucen = TGSSnu, center=center[0], pcenter=center[1])
+                                                     nucen=TGSSnu, center=center[0], pcenter=center[1])
 
                 #============= Load relic search region  =============#
                 # Make in np.image
@@ -231,28 +228,28 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
                 #pybdsm.catalog_type
                 #--< create .fits image ut of that, which you subtract from your image ....
                 smt(task='subtraction')
-                model                =  np.zeros((image.shape))  
-                model_conv           =  np.zeros((image.shape))      
-                use_list, use_im     = (False, False)
+                model            = np.zeros((image.shape))
+                model_conv       = np.zeros((image.shape))
+                use_list, use_im = (False, False)
                 if 'slist' in subtract:
-                    slist =  infolder + 'Sources/slist/%s.slist' % (Cl_name)
+                    slist = infolder + 'Sources/slist/%s.slist' % Cl_name
                     if os.path.isfile(slist):
-                      scL = iom.read_para_list( slist )
+                        scL = iom.read_para_list( slist )
 
-                      for sc in scL:
+                        for sc in scL:
 
-                         if sc['shape'] == 'Gaussian':
-                             g_size = [float(sc['majoraxis'])/s_pixel[1]*60,float(sc['minoraxis'])/s_pixel[1]*60]
-                         else:
-                             g_size      = [GCl.dinfo.beam[0]/GCl.dinfo.spixel,GCl.dinfo.beam[1]/GCl.dinfo.spixel] 
-                         freq_factor = (GCl.dinfo.nucen/1.4)**(-0.7)
-                         COOp = iom.CoordinateToPixel(iom.J2000ToCoordinate(sc['dir']), spixel, center[0], center[1]) 
-                         
-                         #This is not good --> better create an unconcolved model and convolve it with the desired beam
-                         model       +=  maput.ImageGaussian_inv(model     .shape, sc['flux']*1e-3*freq_factor, g_size, [COOp[0]-1.,COOp[1]-1], theta = sc['theta'], FWHM=True)  #*gaussian_area
-                         #model_conv  +=  maput.ImageGaussian_inv(model_conv.shape, sc['flux']*1e-3*freq_factor, g_size, [COOp[0]-1.,COOp[1]-1], theta = sc['theta'], FWHM=True)  #*gaussian_area
-                      model_conv = model   
-                      use_list  = True
+                            if sc['shape'] == 'Gaussian':
+                                g_size = [float(sc['majoraxis'])/s_pixel[1]*60, float(sc['minoraxis'])/s_pixel[1]*60]
+                            else:
+                                g_size = [GCl.dinfo.beam[0]/GCl.dinfo.spixel, GCl.dinfo.beam[1]/GCl.dinfo.spixel]
+                            freq_factor = (GCl.dinfo.nucen/1.4)**(-0.7)
+                            COOp = iom.CoordinateToPixel(iom.J2000ToCoordinate(sc['dir']), spixel, center[0], center[1])
+
+                            #This is not good --> better create an unconcolved model and convolve it with the desired beam
+                            model += maput.ImageGaussian_inv(model.shape, sc['flux']*1e-3*freq_factor, g_size, [COOp[0]-1.,COOp[1]-1], theta = sc['theta'], FWHM=True)  #*gaussian_area
+                            #model_conv += maput.ImageGaussian_inv(model_conv.shape, sc['flux']*1e-3*freq_factor, g_size, [COOp[0]-1.,COOp[1]-1], theta = sc['theta'], FWHM=True)  #*gaussian_area
+                        model_conv = model
+                        use_list = True
 
                 if 'fits' in subtract:
                     highres_image = infolder + 'Images_%s/%s-%s.fits' % ("FIRST", "FIRST", Cl_name)
@@ -378,34 +375,34 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
           
             #============= Report why certain clusters are excluded  =============#
             else:
-                  RL_name = CL['Cluster']
-                  if CL['Identifier']:
-                      RL_name += '_' + CL['Identifier']
-                      
-                  if CL['FLAG_INCLUDED'] in ['noMAP']:    
-                      string = RL_name + ' excluded because the corresponding region is not mapped by the survey.'
-                  else:
-                      string = RL_name + ' excluded because of: ' + CL['FLAG_INCLUDED']
-                  
-                  Excluded.append(string)
+                RL_name = CL['Cluster']
+                if CL['Identifier']:
+                    RL_name += '_' + CL['Identifier']
 
-            mf        = open("%s/Excluded.dat" % (outfolder),"w")
+                if CL['FLAG_INCLUDED'] in ['noMAP']:
+                    string = RL_name + ' excluded because the corresponding region is not mapped by the survey.'
+                else:
+                    string = RL_name + ' excluded because of: ' + CL['FLAG_INCLUDED']
+
+                Excluded.append(string)
+
+            mf = open("%s/Excluded.dat" % outfolder, "w")
             for ex in Excluded:
                 mf.write(ex + '\n')
                  
-        ClList = sorted(ClList, key= iom.Object_natural_keys )  
+        ClList = sorted(ClList, key=iom.Object_natural_keys)
 
     
         print('#=====  Last Step: Output is produced ====#'); smt(task='output') 
         
         """ This is an intervening step: Update and ... the missing clusters, in the future this might done at the beginning at an first step """
-        ClList = updateClusters_missingRegions(ClList, RegionFile) # topfolder+RegionFile
+        ClList = updateClusters_missingRegions(ClList, RegionFile)  # topfolder+RegionFile
         
 
-        print( '#=====  A: Pickle Objects ====#' )
+        print('#=====  A: Pickle Objects ====#' )
         iom.pickleObject(ClList, outfolder+'pickled/', 'ClList')
         
-        print( '#=====  B: Create the Survey and pickle it ====#' )
+        print('#=====  B: Create the Survey and pickle it ====#')
         cnt_levels = [9e-4, 1.8e-3, 3.6e-3, 7.2e-3, 1.44e-2]
 
         synonyms = [('1RXS J060313.4+421231', '1RXS J06+42'),
@@ -439,20 +436,20 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
 #        synonyms_lit = [('2017A&A...597A..15D', '2017A+A_deGasperin+Intema+'),
 #                        ('2017arXiv170801718K', '2017arXiv_Kale+Wik+')]
         for GCl in ClList:
+
             for syn in synonyms:
-                if GCl.name.replace('_',' ') == syn[0] or GCl.name == syn[0]:
-                    print( '! Name replacement:', syn )
+                if GCl.name.replace('_', ' ') == syn[0] or GCl.name == syn[0]:
+                    print( '! Name replacement:', syn)
                     GCl.name = syn[1]
             GCl.name = GCl.name.replace('_', ' ')
             GCl.updateInformation()
-         
 
-        norm = cdb.norm('R200',Nexp=1)
-        Histo = cdb.Histogram2D(nbins=(64,46), fromto= [[0,2.*np.pi],[0,1.5]], norm=norm )     # angle_projected(rad), D_proj(R200)
-        Survey = cbclass.Survey(ClList, survey, cnt_levels = cnt_levels, synonyms=synonyms, dinfo=GCl.dinfo, mainhist=Histo, surshort=survey)  # 'NVSS' should be replaced with a real survey class
+        norm = cdb.norm('R200', Nexp=1)
+        Histo = cdb.Histogram2D(nbins=(64, 46), fromto=[[0, 2.*np.pi], [0, 1.5]], norm=norm)     # angle_projected(rad), D_proj(R200)
+        Survey = cbclass.Survey(ClList, survey, cnt_levels=cnt_levels, synonyms=synonyms, dinfo=GCl.dinfo, hist_main=Histo, surshort=survey)  # 'NVSS' should be replaced with a real survey class
         Survey.emi_max = 2e-2
-        Survey.scatterkwargs = {"alpha":0.7,"fmt":"o","markersize":10}   
-        Survey.histkwargs = {"alpha":0.4}   
+        Survey.scatterkwargs = {"alpha": 0.7, "fmt": "o", "markersize": 10}
+        Survey.histkwargs = {"alpha": 0.4}
         iom.pickleObject(Survey, outfolder+'/pickled/', 'Survey')
 
         for GCl in Survey.GCls:
@@ -461,12 +458,13 @@ def runsurvey(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/', 
     smt(forced=True)
     return True
 
+
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description='Extracts survey relics from an real world survey')
     parser.add_argument('-surveys', dest='surveys', nargs='+', action='store', default=['NVSS'],  type=str, help='Survey names that are to be used')
-    parser.add_argument('-infolder', dest='infolder'  , action='store', default='', type=str,help='filepath for data arrays to be loaded (folder of NVSS paths etc.)')
-    parser.add_argument('-outputfolder', dest='outputfolder'  , action='store', default='/data/ClusterBuster-Output/', type=str,help='filepath for data arrays to store')
+    parser.add_argument('-infolder', dest='infolder', action='store', default='', type=str, help='filepath for data arrays to be loaded (folder of NVSS paths etc.)')
+    parser.add_argument('-outputfolder', dest='outputfolder', action='store', default='/data/ClusterBuster-Output/', type=str, help='filepath for data arrays to store')
     args = parser.parse_args()
 
-    runsurvey(surveys=args.surveys, infolder=args.infolder, outfoldertop=args.outputfolder, plot=False)
+    survey_run(surveys=args.surveys, infolder=args.infolder, outfoldertop=args.outputfolder, plot=False)

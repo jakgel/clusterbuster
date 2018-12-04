@@ -19,13 +19,13 @@ import warnings
 import aplpy # check https://aplpy.readthedocs.io/en/v0.9.9/_generated/aplpy.aplpy.FITSFigure.html  for comands
 
 import clusterbuster.surveyclasses as cbclass
-import clusterbuster.dbclasses     as dbc 
-import clusterbuster.iout.misc     as iom
-import clusterbuster.maput         as maput
-import matplotlib.pyplot           as plt
-import matplotlib.colors           as colors
-import math                        as math
-import numpy                       as np
+import clusterbuster.dbclasses as dbc
+import clusterbuster.iout.misc as iom
+import clusterbuster.maput as maput
+import matplotlib.pyplot as plt
+import matplotlib.colors as colors
+import math as math
+import numpy as np
 
 from matplotlib import cm
 from matplotlib.ticker import NullFormatter
@@ -81,8 +81,8 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=T
     import collections  # to assert if we deal with an list of surveys or a single object
     if not isinstance(surveys, collections.Iterable):   surveys = [surveys]
 
-    if surveys[0].mainhist is not None:
-        Histo = surveys[0].mainhist
+    if surveys[0].hist_main is not None:
+        Histo = surveys[0].hist_main
 
     """ Plotting and normalization of combined histogram"""
     expPlot  = 0.45   # 0.25
@@ -456,14 +456,14 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
         # The Jakobs circle OR (virial) radius
         f.show_circles(GCl.RA(), GCl.Dec(), radius, linestyle='--', **ciargs)
         if sectors:
-            GCl.relics_polarDistribution(histo=survey.mainhist)
-            P1   = [GCl.RA() - np.cos(GCl.relic_pro_angle)*radius*1.05/np.cos(np.radians(GCl.Dec())),GCl.Dec() + np.sin(GCl.relic_pro_angle)*radius*1.0]
-            P2   = [GCl.RA() + np.cos(GCl.relic_pro_angle)*radius*1.05/np.cos(np.radians(GCl.Dec())),GCl.Dec() - np.sin(GCl.relic_pro_angle)*radius*1.0]
+            GCl.relics_polarDistribution(histo=survey.hist_main)
+            P1 = [GCl.RA() - np.cos(GCl.relic_pro_angle)*radius*1.05/np.cos(np.radians(GCl.Dec())), GCl.Dec() + np.sin(GCl.relic_pro_angle)*radius*1.0]
+            P2 = [GCl.RA() + np.cos(GCl.relic_pro_angle)*radius*1.05/np.cos(np.radians(GCl.Dec())), GCl.Dec() - np.sin(GCl.relic_pro_angle)*radius*1.0]
             
-            P1b   = [GCl.RA() - np.cos(GCl.relic_anti_angle)*radius*1.0/np.cos(np.radians(GCl.Dec())),GCl.Dec() + np.sin(GCl.relic_anti_angle)*radius*1.0]
-            P2b   = [GCl.RA() + np.cos(GCl.relic_anti_angle)*radius*1.0/np.cos(np.radians(GCl.Dec())),GCl.Dec() - np.sin(GCl.relic_anti_angle)*radius*1.0]
-            f.show_lines( [ np.array(zip(P1,P2)) ]  , color='w', lw=2., linestyle=':')
-            f.show_lines( [ np.array(zip(P1b,P2b)) ], color='r', lw=2., linestyle=':') 
+            P1b = [GCl.RA() - np.cos(GCl.relic_anti_angle)*radius*1.0/np.cos(np.radians(GCl.Dec())), GCl.Dec() + np.sin(GCl.relic_anti_angle)*radius*1.0]
+            P2b = [GCl.RA() + np.cos(GCl.relic_anti_angle)*radius*1.0/np.cos(np.radians(GCl.Dec())), GCl.Dec() - np.sin(GCl.relic_anti_angle)*radius*1.0]
+            f.show_lines([np.array(zip(P1, P2))], color='w', lw=2., linestyle=':')
+            f.show_lines([np.array(zip(P1b, P2b))], color='r', lw=2., linestyle=':')
             
             if GCl.ratio_relics() > GCl.ratio_relics.vrange[0]:  # Plot if multiple relic
                 f.add_label(P1[0],P1[1],  'ratio= %.1e' % (GCl.ratio_relics()), size='x-large', **ciargs)

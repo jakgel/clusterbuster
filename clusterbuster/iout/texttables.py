@@ -182,8 +182,8 @@ def RList2table_paper(location, survey, longtab=False):
     
 #'', r/ö/, .label, .unit, rrrr}  
 #lambda x: cbclass.measurand( x.R200/1000       , '$R_{200}$', un = 'Mpc' )  
-    dictionary = [ [lambda x: x.name.replace('_',' '), '%25s', 'l' , 'Identifier', ''],
-                   [lambda x: x.RA , '%5.2f' , 'r'],
+    dictionary = [ [lambda x: x.name.replace('_', ' '), '%25s', 'l', 'Identifier', ''],
+                   [lambda x: x.RA , '%5.2f', 'r'],
                    [lambda x: x.Dec, '%+7.2f', 'r'],
                    #[lambda x: x.Mach, '%.1f', 'r'],
                    [lambda x: x.alpha, '%.2f', 'r'],
