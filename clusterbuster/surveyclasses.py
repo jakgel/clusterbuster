@@ -76,8 +76,6 @@ class Survey(object):
         self.DetInfo   = DetInfo   # A specified DetInfo as proxy for an homogeneous survey; Detinfo include a beam, and a noiseMAP --> properties should be taken from the neirest entry
         self.dinfo     = dinfo
         self.mainhist  = mainhist  # Histogram of all binned objects/ without any initialization, works as an proxy
-        """ In this case Histo would become a simulation"""
-
 
         self.filteredClusters = None
         
@@ -107,19 +105,20 @@ class Survey(object):
         
         # plot Relics & Clusters: Scatterplots & Histogram
         self.scatter_backgr   = False
-        self.scatterkwargs    = scatterkwargs #  A list of kwargs for the scatter plots
-        self.histokwargs      = histokwargs   #  A list of kwargs for the histogramm plots
+        self.scatterkwargs    = scatterkwargs  # A list of kwargs for the scatter plots
+        self.histokwargs      = histokwargs    # A list of kwargs for the histogram plots
         
         # Plot olar
         self.expScale   = 0.75
         self.expA       = 1.
         self.dropseed   = None
         
-    def set_binning(self, Histo=None):
+    def set_binning(self, histo=None):
           
-          if Histo is None: Histo = self.histo
+          if histo is None:
+              histo = self.histo
           for GCl in self.GCls:
-              GCl.histo = Histo
+              GCl.histo = histo
         
     def polar(self, aligned=True, normalize=True, minrel=1,  positive=False,  mirrored=False, mode='flux', zborder=0,
               ztype='>', **kwargs):
@@ -147,7 +146,7 @@ class Survey(object):
         ndist = 35    #-->deprecated! but a better umber (nicer looking then the raw grid)
         distmax = 3500  # very important, should somehow be part of the histogramm class
         # This is a design desicion ... in the standart case, the histogramm should ourient itself on the histogram variable of the Survey class
-        mesh = np.zeros_like( self.mainhist.hist.T)
+        mesh = np.zeros_like(self.mainhist.hist.T)
         """DEVELOPMENT END"""
         
         mainhist = np.zeros_like(self.mainhist.hist.T)
@@ -234,20 +233,14 @@ class Survey(object):
 
         GCls = [GCl.updateInformation(Filter=True) for GCl in self.GCls]
 
-        results = [(ii,GCl) for ii,GCl in enumerate(GCls) if len(GCl.filterRelics(**kwargs))>=minrel and  get_truth(GCl.z, ztype, zborder) and
-                     GCl.largestLAS() >=  minimumLAS and GCl.flux() >= GClflux and GCl.stoch_drop(self.dropseed)]
-
-
-        """ and get_truth(GCl.z, ztype, zborder) and 
-                 GCl.largestLAS() >  minimumLAS and GCl.flux() > GClflux and GCl.stoch_drop(self.dropseed) """
-
+        results = [(ii,GCl) for ii,GCl in enumerate(GCls) if len(GCl.filterRelics(**kwargs)) >= minrel and get_truth(GCl.z, ztype, zborder) and
+                   GCl.largestLAS() >= minimumLAS and GCl.flux() >= GClflux and GCl.stoch_drop(self.dropseed)]
 
         """ Should also give an result, if no cluster fullfills the criterion """
         if len(results) > 0:
             indices, self.filteredClusters = map(list,zip(*results))
         else:
             indices, self.filteredClusters = [], []
-
 
         if verbose:
             print('____ # FilterCluster:', len(indices))
@@ -263,11 +256,11 @@ class Survey(object):
          return [GCl.relicRegions for GCl in self.GCls]
          
     def fetch_totalRelics(self, **kwargs):
-        relicList = []
+        relics_list = []
         for GCl in self.filteredClusters:
-            relicList += GCl.filterRelics(**kwargs)
+            relics_list += GCl.filterRelics(**kwargs)
 
-        return relicList
+        return relics_list
          
          
     def fetch_totalHisto(self):
@@ -294,7 +287,7 @@ class Survey(object):
         if logs is None:
             logs = [True for measure in plotmeasures] # a stub, you should be able to specify this
     
-        List_full = []
+        list_full = []
         datalist = []
     
         """ This very ugly steps just creates a List of (relic,GCL) from the survey
@@ -302,11 +295,11 @@ class Survey(object):
         
         for GCl in survey.FilterCluster(**vkwargs_FilterCluster):
                 GCl.updateInformation()
-                List_full.append(  [ (GCl,relic)  for relic in GCl.filterRelics()]  )
+                list_full.append([(GCl,relic) for relic in GCl.filterRelics()])
                 
-        List_full = [item for sublist in List_full for item in sublist]
+        list_full = [item for sublist in list_full for item in sublist]
             
-        for GCl, relic in List_full:
+        for GCl, relic in list_full:
     
             relic.asign_cluster(GCl)
             datavalues = []
@@ -662,7 +655,6 @@ class Galaxycluster(object):
             N = collabsed.shape[0]
             
             # This is some simple form of regression!
-            #fitarray_pro = [np.sum(np.multiply(np.power(collabsed, 0.25), np.abs(np.cos(histo.ticks[0]-shift)))) for shift in histo.ticks[0]]
             fitarray_pro = [np.sum(np.multiply(np.power(collabsed, 1.0), np.abs(np.cos(histo.ticks[0]-shift)))) for shift in histo.ticks[0]]
             fitarray_anti = fitarray_pro
 
@@ -699,10 +691,10 @@ class Galaxycluster(object):
             self.pro1, self.pro2, self.anti1, self.anti2 = eps, eps, eps, eps
             
         # Divide flux in up and downside emission
-        self.ratio_pro    =  dbc.measurand(self.pro2 / self.pro1, 'ratio_pro', label='ratio$_\mathrm{pro}$',  vrange=[2e-3,1] )
-        self.ratio_anti   =  dbc.measurand(self.anti2/ self.anti1, 'ratio_ant', label='ratio$_\mathrm{anti}$', vrange=[2e-3,1] )
-        ratio_val         =  mstats.gmean( [self.ratio_pro(),self.ratio_anti()] )
-        self.ratio_relics =  dbc.measurand(ratio_val, 'ratio_relics', label='ratio$_\mathrm{dipol}$',
+        self.ratio_pro    = dbc.measurand(self.pro2 / self.pro1, 'ratio_pro', label='ratio$_\mathrm{pro}$',  vrange=[2e-3,1])
+        self.ratio_anti   = dbc.measurand(self.anti2/ self.anti1, 'ratio_ant', label='ratio$_\mathrm{anti}$', vrange=[2e-3,1])
+        ratio_val         = mstats.gmean( [self.ratio_pro(),self.ratio_anti()] )
+        self.ratio_relics = dbc.measurand(ratio_val, 'ratio_relics', label='ratio$_\mathrm{dipol}$',
                                            std=[abs(ratio_val-min(self.ratio_pro(),self.ratio_anti())),
                                                   abs(max(self.ratio_pro(),self.ratio_anti())-ratio_val)],
                                            vrange=[2e-3,1])

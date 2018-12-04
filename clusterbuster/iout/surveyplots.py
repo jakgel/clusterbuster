@@ -31,6 +31,7 @@ from matplotlib import cm
 from matplotlib.ticker import NullFormatter
 from scipy import stats
 import matplotlib.patches as patches
+from matplotlib import transforms as mtransforms
 
 import surveysim.music2.mockobsxray as Xray
 from PyPDF2 import PdfFileMerger
@@ -67,40 +68,33 @@ def readDS9relics(regfile, spixel, center, pixref, Test=False):
     return rinfo
 
 
-def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=True, additive=False,
+def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=True, additive=False,
                              aligned=False, cbar=True, addinfo=False, mirrored=False, minrel=1,
-                             zborder=0.05, plottype='flux', title="Polar binned radio relic flux",
+                             zborder=0.05, ztype = '>', plottype='flux', title="Polar binned radio relic flux",
                              dpi=None, add_pi=1/2, Histo=dbc.Histogram2D(), suffix=''):
-    """ posible inprovements: http://stackoverflow.com/questions/22562364/circular-histogram-for-python 
-    minrel : minimal number of relics to be consided for the histogramm
+    """ possible inprovements: http://stackoverflow.com/questions/22562364/circular-histogram-for-python
+    minrel : minimal number of relics to be consided for the histogram
 
     if surveys is a list of surveys this function will plot averaged quantities
 
     """
-    development = True  # Some features in development
-
-    
     import collections  # to assert if we deal with an list of surveys or a single object
     if not isinstance(surveys, collections.Iterable):   surveys = [surveys]
-    
 
     if surveys[0].mainhist is not None:
         Histo = surveys[0].mainhist
 
-    
-    
-    """ Plotting and normalization of combined histogramm"""
+    """ Plotting and normalization of combined histogram"""
     expPlot  = 0.45   # 0.25
     dist_text_params = 0.08
     cmap     = cm.viridis # ; cm.afmhot none
-    ztype    = '>'
-    
     yticks   = [0.4, 0.8, 1.2]
     addangle = int(aligned)*np.pi*add_pi # Additional Rotation;  added anticlockwise! We want to turn by 90 degree anticlockwise
 
     halfHists = []
     radials   = []
     stats     = []
+    outformats = ['pdf', 'png']
       
     if compsurvey is not None:
         _ , comprad, comppol, _ , _= compsurvey.polar(zborder = zborder, ztype=ztype)
@@ -110,90 +104,87 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
     for survey in surveys:
 
         survey.set_binning(Histo)
-        
-        nowfolder = '%s/Relics_polar/' % (survey.outfolder) 
+        nowfolder = '%s/Relics_polar/' % survey.outfolder
         iom.check_mkdir(nowfolder)
 
         buckedfolder = os.path.abspath(os.path.join(survey.outfolder, '..', 'bucket'))
-    #    buckedfolder = '../%s' % (survey.outfolder) 
         iom.check_mkdir(buckedfolder)
-        if 1 == 2:
-            for ii, GCl in enumerate(survey.FilterCluster(minrel=minrel,zborder=zborder,ztype='>')):
+        if single:
+            for ii, GCl in enumerate(survey.FilterCluster(minrel=minrel, zborder=zborder, ztype='>')):
 
-
-                """ Deriving the Histogramm should be a functionality of the survey or the relic cluster, so this should become outdated """
+                """ Deriving the histogram should be a functionality of the survey or the relic cluster, so this should become outdated """
                 GCl.updateInformation(Filter=True)
                 if GCl.histo is not None and np.sum(GCl.histo.hist) != 0:
-                    inner  = Histo.bins[1][0:-1]
-                    outer  = Histo.bins[1][1::]
-                    angle  = Histo.ticks[0]
-                    angles, innerZ = np.meshgrid(angle, inner, sparse=True)
-                    angles, outerZ = np.meshgrid(angle, outer, sparse=True)
-                    AreaHist  = 2*np.pi*(2*np.pi)/len(angle)*(outerZ**2-innerZ**2)
-                    shiftHist  = np.roll(Histo.hist.T, -int(aligned*(GCl.relic_pro_index)), axis=1) / AreaHist**(survey.expA)  #+1e-10
+                    inner = Histo.bins[1][0:-1]
+                    outer = Histo.bins[1][1::]
+                    angle = Histo.ticks[0]
+                    angles, z_inner = np.meshgrid(angle, inner, sparse=True)
+                    angles, z_outer = np.meshgrid(angle, outer, sparse=True)
+                    AreaHist = 2*np.pi*(2*np.pi)/len(angle)*(z_outer**2-z_inner**2)
+                    shiftHist = np.roll(Histo.hist.T, -int(aligned*(GCl.relic_pro_index)), axis=1) / AreaHist**(survey.expA)  #+1e-10
 
                     # Plots the single clusters
                     if single:
-                        fig, ax    = plt.subplots(figsize=(14,14),subplot_kw=dict(projection='polar'), dpi=dpi)  #,subplot_kw=dict(projection='polar')
+                        fig, ax = plt.subplots(figsize=(14,14), subplot_kw=dict(projection='polar'), dpi=dpi)  #,subplot_kw=dict(projection='polar')
                         ax.pcolormesh(Histo.bins[0], Histo.bins[1],  shiftHist, cmap=cmap)
                         ax.set_theta_offset(addangle)
                         ax.annotate("", xy=(int(not aligned)*(GCl.relic_pro_angle), 1.5), xytext=(0, 0), arrowprops=dict(arrowstyle="->"))
-                        from matplotlib import transforms as mtransforms
-                        ax.arrow(0, 0, 0, 0.5, linewidth=3, width=0.005, transform=mtransforms.Affine2D().translate( int(not aligned)*(GCl.relic_pro_angle), 0) + ax.transData)
-
-
-                        ax.text(0.01, 1.05, '%s' %(GCl.name.replace('_',' ')), fontsize=20, transform=ax.transAxes)
+                        ax.arrow(0, 0, 0, 0.5, linewidth=3, width=0.005, transform=mtransforms.Affine2D().translate(int(not aligned)*(GCl.relic_pro_angle), 0) + ax.transData)
+                        ax.text(0.01, 1.05, '%s' % (GCl.name.replace('_',' ')), fontsize=20, transform=ax.transAxes)
                         if addinfo:
                             ax.text(0.3, 0.9, 'Summed relic flux: %.2e Jy' %(np.sum(Histo.hist)), fontsize=20, transform=ax.transAxes, color='w')
                             ax.text(0.3, 0.87, 'Ratio pro: %.2e  anti: %.2e' %(GCl.ratio_pro(), GCl.ratio_anti()), fontsize=20, transform=ax.transAxes, color='w')
+                        if title is not None: 
+                            ax.set_title(title, va='bottom')
                         ax.set_yticks(yticks)
-                        ax.tick_params(axis='x'                , labelsize=25)
+                        ax.tick_params(axis='x', labelsize=25)
                         ax.tick_params(axis='y', colors='white', labelsize=25)
                         ax.grid(True)
-                        if title is not None: ax.set_title(title, va='bottom')
-                        for ftype in ['pdf','png']:
-                            plt.savefig('%s%s-polar%s.%s' % (nowfolder,GCl.name, suffix, ftype))
+                        for ftype in outformats:
+                            plt.savefig('%s%s-polar%s.%s' % (nowfolder, GCl.name, suffix, ftype))
 
                         fig.clf()
 
-
-
         if additive:
-            _, (radial,radial_tickz), halfHist, stat, mesh = survey.polar(aligned=True, minrel=minrel,  mirrored=mirrored, mode=plottype, zborder = zborder, ztype = ztype)
+            _, (radial, radial_tickz), halfHist, stat, mesh = survey.polar(aligned=True, minrel=minrel, mirrored=mirrored, mode=plottype, zborder=zborder, ztype=ztype)
 
             if halfHist is not None:
                 fig, ax = plt.subplots(figsize=(14, 14), subplot_kw=dict(projection='polar'), dpi=dpi)  #,subplot_kw=dict(projection='polar')
-                if not mirrored:
-                    meshed = ax.pcolormesh(Histo.bins[0][0:int(len(Histo.bins[0])/2)+1], Histo.bins[1],  halfHist, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot)  ) #, norm=colors.SymLogNorm(linthresh=0.03, linscale=0.03, vmin=-1.0, vmax=1.0),cmap='RdBu_r'
-                    if compsurvey: ax.pcolormesh(Histo.bins[0][int(len(Histo.bins[0])/2):], Histo.bins[1],  comppol, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot)  )
+                near_max = np.percentile(halfHist, 99)
+                if mirrored:
+                    meshed = ax.pcolormesh(Histo.bins[0][int(len(Histo.bins[0])/2):], Histo.bins[1], halfHist, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot), vmax=near_max)
+                    if compsurvey:
+                        ax.pcolormesh(Histo.bins[0][0:int(len(Histo.bins[0])/2)+1], Histo.bins[1], comppol, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot), vmax=near_max)
                 else:
-                    meshed = ax.pcolormesh(Histo.bins[0][int(len(Histo.bins[0])/2):], Histo.bins[1],  halfHist, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot)  )
-                    if compsurvey: ax.pcolormesh(Histo.bins[0][0:int(len(Histo.bins[0])/2)+1], Histo.bins[1],  comppol, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot)  )
+                    meshed = ax.pcolormesh(Histo.bins[0][0:int(len(Histo.bins[0])/2)+1], Histo.bins[1], halfHist, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot), vmax=near_max) #, norm=colors.SymLogNorm(linthresh=0.03, linscale=0.03, vmin=-1.0, vmax=1.0),cmap='RdBu_r'
+                    if compsurvey:
+                        ax.pcolormesh(Histo.bins[0][int(len(Histo.bins[0])/2):], Histo.bins[1], comppol, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot), vmax=near_max)
                 ax.set_theta_offset(addangle)
-                if addinfo: ax.text(0.3, 0.9,  'Summed relic flux: %.2e Jy (all cluster)' %(stat), fontsize=20, transform=ax.transAxes, color='w')
                 ax.set_yticks(yticks)
                 ax.tick_params(axis='x',                 labelsize=25)
                 ax.tick_params(axis='y', colors='white', labelsize=25)
                 ax.grid(True)
-                if cbar:  fig.colorbar(meshed)
-                if title is not None: ax.set_title(title, va='bottom')
-                for ftype in ['pdf','png']: #,'jpg'
-                    plt.savefig('%s/%s-polar%s.%s' % (nowfolder,survey.name, suffix, ftype))
+                if addinfo:
+                    ax.text(0.3, 0.9, 'Summed relic flux: %.2e Jy (all cluster)' % stat, fontsize=20, transform=ax.transAxes, color='w')
+                if cbar:
+                    fig.colorbar(meshed)
+                if title is not None:
+                    ax.set_title(title, va='bottom')
+                for ftype in ['pdf', 'jpg']:
+                    plt.savefig('%s/%s-polar%s.%s' % (nowfolder, survey.name, suffix, ftype))
                 fig.clf()
-
 
             halfHists.append(halfHist)
             radials.append(radial)
             stats.append(stat)
-            if compsurvey is not None: deviations.append(np.sum(np.abs(radial-comprad)))
+            if compsurvey is not None:
+                deviations.append(np.sum(np.abs(radial-comprad)))
 
             # plot ratio of relics flux,
             # plot average/median pro relic distance
             # plot sigma pro rleic distnace
             # plot skew
 
-                
-    
     """ Colorsheme from seaborn """
 #    cmap = ListedColormap(sns.color_palette('deep'))
     if len(radials) > 0:
@@ -208,8 +199,10 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
             
         for radial in radials:
             ax1.plot(radial_tickz, radial, alpha=np.sqrt(1/len(radials)), c='grey')   # color=cmap(0.0)
-        
-        
+
+        ax1.fill_between(radial_tickz, radial, color="red", alpha=0.3)
+
+
         # Made up confidence intervals (I'm too lazy to do the math...); math comes later
 #        variance = radials
         """ Development """
@@ -231,14 +224,14 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
         if modeltext and survey.Rmodel.simu:
             mod = survey.Rmodel 
             kwargs = {'verticalalignment':'bottom', 'horizontalalignment':'right', 'transform':ax1.transAxes, 'color':'black', 'fontsize':15, 'alpha':0.8}
-            ax1.text(0.40, 0.90       , '$\log_{10}(eff) =%+.2f$,' % ( np.log10(mod.effList[0])),   **kwargs)
-            ax1.text(0.40, 0.90-1*dist_text_params, '$\log_{10}(B_0) =%+.2f$,' % ( np.log10(mod.B0)),**kwargs)
-            ax1.text(0.40, 0.90-2*dist_text_params, '$\kappa       = %+0.2f$ ' % ( mod.kappa),       **kwargs)
-            if compsurvey  is not None: 
-                ax1.text(0.40, 0.90-3*dist, '$\Delta\\,\\mathrm{signal}  = %0.2f$ '% ( np.average(deviations)),       **kwargs)
+            ax1.text(0.40, 0.90, '$\log_{10}(eff) =%+.2f$,' % (np.log10(mod.effList[0])),   **kwargs)
+            ax1.text(0.40, 0.90-1*dist_text_params, '$\log_{10}(B_0) =%+.2f$,' % (np.log10(mod.B0)),**kwargs)
+            ax1.text(0.40, 0.90-2*dist_text_params, '$\kappa       = %+0.2f$ ' % (mod.kappa),       **kwargs)
+            if compsurvey is not None: 
+                ax1.text(0.40, 0.90-3*dist_text_params, '$\Delta\\,\\mathrm{signal}  = %0.2f$ ' % (np.average(deviations)), **kwargs)
             if isinstance(mod, cbclass.PreModel_Hoeft):
-                ax1.text(0.40, 0.90-4*dist_text_params, '$t_{1;2}  = %0.3f\,;\,%0.3f$ '% ( mod.t0, mod.t1) ,       **kwargs)
-                ax1.text(0.40, 0.90-5*dist_text_params, 'ratio$\\mathrm{_{pre}}  = %0.2f$ '% ( mod.ratio ),       **kwargs)
+                ax1.text(0.40, 0.90-4*dist_text_params, '$t_{1;2}  = %0.3f\,;\,%0.3f$ '% (mod.t0, mod.t1), **kwargs)
+                ax1.text(0.40, 0.90-5*dist_text_params, 'ratio$\\mathrm{_{pre}}  = %0.2f$ '% mod.ratio, **kwargs)
     
             
             if survey.Rmodel.pre:
@@ -246,51 +239,55 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=True, modeltext=Tr
 #                print( p0, pre, p_sigma, sigmoid_0, sigmoid_width )        
     #            ax2.set_yscale('log')
 
-        for ftype in ['pdf','png']: #,'jpg'
-            plt.savefig('%s/%s-sumprofile%s.%s' % (   nowfolder,survey.name, suffix, ftype))
-            plt.savefig('%s/%s-sumprofile%s.%s' % (buckedfolder,survey.name, suffix, ftype))
+        for ftype in outformats:
+            plt.savefig('%s/%s-sumprofile%s.%s' % (nowfolder, survey.name, suffix, ftype))
+            plt.savefig('%s/%s-sumprofile%s.%s' % (buckedfolder, survey.name, suffix, ftype))
 
         
         # Statistics, contribution
         fig, (ax1) = plt.subplots(1, 1, figsize=(7, 4), dpi=dpi)
         
         for stat in stats:
-            statistic = np.divide(stat,np.sum(stat))
+            statistic = np.divide(stat, np.sum(stat))
             ax1.hist(statistic, color='b', alpha=1/len(stats), bins='auto')  # arguments are passed to np.histogram
-        for ftype in ['pdf','png']: #,'jpg'
-            plt.savefig('%s/%s-sumsstats%s.%s' % (   nowfolder, survey.name, suffix, ftype))
+        for ftype in outformats:
+            plt.savefig('%s/%s-sumsstats%s.%s' % (nowfolder, survey.name, suffix, ftype))
             plt.savefig('%s/%s-sumsstats%s.%s' % (buckedfolder, survey.name, suffix, ftype))
             
         
         """ Polar plot"""
-        halfHist = np.sum(halfHists,axis=0)/len(halfHists)
-        fig, ax    = plt.subplots(figsize=(14,14),subplot_kw=dict(projection='polar'), dpi=dpi)  #,subplot_kw=dict(projection='polar')
-        nearmax    = np.partition(halfHist.flatten(), -2)[-2]
+        halfHist = np.sum(halfHists, axis=0)/len(halfHists)
+        fig, ax = plt.subplots(figsize=(14,14), subplot_kw=dict(projection='polar'), dpi=dpi)  #,subplot_kw=dict(projection='polar')
+        near_max = np.percentile(halfHist, 99)
         if not mirrored:
-            meshed = ax.pcolormesh(Histo.bins[0][0:int(len(Histo.bins[0])/2)+1], Histo.bins[1],  halfHist, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot), vmax=nearmax  ) #, norm=colors.SymLogNorm(linthresh=0.03, linscale=0.03, vmin=-1.0, vmax=1.0),cmap='RdBu_r'                         
+            meshed = ax.pcolormesh(Histo.bins[0][0:int(len(Histo.bins[0])/2)+1], Histo.bins[1], halfHist, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot), vmax=near_max) #, norm=colors.SymLogNorm(linthresh=0.03, linscale=0.03, vmin=-1.0, vmax=1.0),cmap='RdBu_r'
             if compsurvey is not None: 
-                     ax.pcolormesh(Histo.bins[0][int(len(Histo.bins[0])/2):], Histo.bins[1],   comppol, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot), vmax=nearmax  )                 
+                ax.pcolormesh(Histo.bins[0][int(len(Histo.bins[0])/2):], Histo.bins[1], comppol, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot), vmax=near_max)
         else:   
-            meshed = ax.pcolormesh(Histo.bins[0][int(len(Histo.bins[0])/2):], Histo.bins[1],  halfHist, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot), vmax=nearmax  )
+            meshed = ax.pcolormesh(Histo.bins[0][int(len(Histo.bins[0])/2):], Histo.bins[1], halfHist, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot), vmax=near_max)
             if compsurvey is not None: 
-                     ax.pcolormesh(Histo.bins[0][0:int(len(Histo.bins[0])/2)+1], Histo.bins[1], comppol, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot), vmax=nearmax  )
+                ax.pcolormesh(Histo.bins[0][0:int(len(Histo.bins[0])/2)+1], Histo.bins[1], comppol, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot), vmax=near_max)
         ax.set_theta_offset(addangle)
-        if addinfo: ax.text(0.3, 0.9,  'Summed relic flux: %.2e Jy (all cluster)' %(stat), fontsize=20, transform=ax.transAxes, color='w')
         ax.set_yticks(yticks)
         ax.tick_params(axis='x',                 labelsize=25)
         ax.tick_params(axis='y', colors='white', labelsize=25)
-        ax.grid(False)
-        if cbar:  fig.colorbar(meshed)
-        if title is not None: ax.set_title(title, va='bottom')
-        for ftype in ['pdf','png']: #,'jpg'
-            plt.savefig('%s/%s-polar-sums%s.%s' % (   nowfolder,survey.name, suffix, ftype))
-            plt.savefig('%s/%s-polar-sums%s.%s' % (buckedfolder,survey.name, suffix, ftype))
+        ax.grid(True)
+        if addinfo:
+            ax.text(0.3, 0.9,  'Summed relic flux: %.2e Jy (all cluster)' % stat, fontsize=20, transform=ax.transAxes, color='w')
+        if cbar:
+            fig.colorbar(meshed)
+        if title is not None:
+            ax.set_title(title, va='bottom')
+        for ftype in outformats:
+            plt.savefig('%s/%s-polar-sums%s.%s' % (nowfolder, survey.name, suffix, ftype))
+            plt.savefig('%s/%s-polar-sums%s.%s' % (buckedfolder, survey.name, suffix, ftype))
 
         fig.clf()   
 
 
 
-    """From https://stackoverflow.com/questions/51871420/matplotlib-polar-histogram-has-shifted-bins/51876418"""
+    """From https://stackoverflow.com/questions/51871420/matplotlib-polar-histogram-has-shifted-bins/51876418
+    Includes the binning and rotation of pixelized images"""
     if 1 == 2:
         plt.clf()
         bins_number = 10
