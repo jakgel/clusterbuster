@@ -37,6 +37,45 @@ from astropy.coordinates import SkyCoord
 from astropy.cosmology import FlatLambdaCDM   # from astropy.cosmology import WMAP9 as cosmo
 from scipy import sparse
 
+def compute_moments(sparseA, sparseD, sparseW, xy_swapped = True):
+
+    if len(sparseD) > 0:
+        sparseD = [1 for a in sparseA] # DEBUGGING
+
+        if xy_swapped:
+            x = np.cos(sparseA)*sparseD # * -1 next test
+            y = np.sin(sparseA)*sparseD
+        else:
+            x = np.sin(sparseA)*sparseD
+            y = np.cos(sparseA)*sparseD
+
+        moment_00 = np.sum(sparseW)
+        moment_10 = np.sum(sparseW*x)  # x*x
+        moment_01 = np.sum(sparseW*y)  # y*y
+        moment_11 = np.sum(sparseW*x*y)
+        moment_20 = np.sum(sparseW*x*x)
+        moment_02 = np.sum(sparseW*y*y)
+
+        _xm = moment_10/moment_00
+        _ym = moment_01/moment_00
+
+        moment_central_11 = moment_11/moment_00 - _xm*_ym
+        moment_central_20 = moment_20/moment_00 - _xm*_xm
+        moment_central_02 = moment_02/moment_00 - _ym*_ym
+        moment_angle = .5*np.arctan2(2*moment_central_11, moment_central_20-moment_central_02)
+        #moment_angle = np.arctan(moment_central_11,moment_central_20-moment_central_02)
+        #print('Moments:', moment_00, moment_10, moment_01, moment_11, moment_20, moment_02)
+        #print('Central:', moment_central_11, moment_central_20, moment_central_02)
+        #print('Derived', moment_angle)
+
+        #if xy_swapped:
+        #    moment_angle + np.pi/2
+
+    else:
+        moment_angle = 0
+
+
+    return moment_angle
 
 def get_truth(inp, relate, cut):
     ops = {'>': operator.gt,
@@ -333,7 +372,7 @@ class Galaxycluster(object):
       ... In add information: Roundish relics should e kept, with the notion that their are roundish
     """             
 
-    def __init__(self, name, RA, Dec, z, M200=0, M500=0, M100=0, Mvir = 0, Lx=0, Lx_lit=0, flux_ps=0, flux_lit=0,
+    def __init__(self, name, RA, Dec, z, M200=1e14, M500=0, M100=0, Mvir = 0, Lx=0, Lx_lit=0, flux_ps=0, flux_lit=0,
                  Prest100=0, relics=[], regions=[], halo=False, compacts=[], dinfo=None, ClassFlag=False, mockobs=None,
                                       Image=np.zeros((2,2)), status=None, Histo=None, reference=None, mapdic=dict()):
       
@@ -521,9 +560,10 @@ class Galaxycluster(object):
 
 
         """ relics """
-        self.moment_x = 0
-        self.moment_y = 0
-        self.pol_angle = dbc.measurand(0, 'pol_angle', un='mJy', label='$F_\mathrm{ps}$')
+        self.sparseA = np.empty(0)
+        self.sparseD = np.empty(0)
+        self.sparseW = np.empty(0)
+        self.moment_angle = dbc.measurand(0, 'moment_angle', un='', label='$moment_\mathrm{angle}$')
         self.flux      = dbc.measurand(0, 'F', un='mJy')
         self.flux_ps   = dbc.measurand(0, 'F_ps', un='mJy', label='$F_\mathrm{ps}$')
         self.P_rest    = dbc.measurand(0, 'P_rest', un='W/Hz', label='$P_\mathrm{rest}$')
@@ -551,14 +591,11 @@ class Galaxycluster(object):
             self.flux_ps += relic.flux_ps
             self.flux_ps.std_add(relic.flux_ps.std)
             self.largestLAS.value = max(self.largestLAS(), relic.LAS())
-    #            self.regions.append(relic.region) """Created BUG; update needed? 
+            #self.regions.append(relic.region) """Created BUG; update needed? 
             self.area.std += [0.2*np.sqrt(relic.area/self.dinfo.Abeam[1])]*2                 # arcmin^2
             self.area100kpc.std += [area*(self.cosmoPS*60/100)**2 for area in relic.area.std]   # in (100kpc)^2
             self.accumHisto(relic.polHist)
-
-            if relic.moment_x is not None:
-                self.moment_x += relic.moment_x
-                self.moment_y += relic.moment_y
+            self.accumPixels(relic)
 
         self.relics_polarDistribution()
         return self
@@ -569,6 +606,10 @@ class Galaxycluster(object):
         if self.histo is not None and Hist is not None:
             self.histo.hist += Hist.A
 
+    def accumPixels(self, relic):
+        self.sparseA = np.concatenate((self.sparseA, relic.sparseA), axis=0)  # self.sparseA.extend(relic.sparseA)
+        self.sparseD = np.concatenate((self.sparseD, relic.sparseD), axis=0)  # self.sparseD.extend(relic.sparseD)
+        self.sparseW = np.concatenate((self.sparseW, relic.sparseW), axis=0)  # self.sparseW.extend(relic.sparseW)
 
     def comp_LX_M200(self, M=0):
         """ Boehringer+Chon+2014 , Equ. 10 """
@@ -650,11 +691,11 @@ class Galaxycluster(object):
         if histo is not None:
             collabsed = np.sum(histo.hist, axis=1)   # Collapses along the distance axis
             N = collabsed.shape[0]
-            
+
             # This is some simple form of regression!
             fitarray_pro = [np.sum(np.multiply(np.power(collabsed, 1.0), np.abs(np.cos(histo.ticks[0]-shift)))) for shift in histo.ticks[0]]
             fitarray_anti = fitarray_pro
-
+            self.fitarray_pro = fitarray_pro
 
             # The value fitted would give the counterclockwise angle. This is why I subtract them from 2pi
             self.relic_pro_index = np.argmax(fitarray_pro)
@@ -665,10 +706,12 @@ class Galaxycluster(object):
                 idx = (np.abs(array - value)).argmin()
                 return idx
 
-            #self.pol_angle.value = np.pi/2 #-np.arctan2(-self.moment_y, self.moment_x) + 2*np.pi % (2*np.pi)
-            #self.relic_pro_index = find_nearest_index(histo.ticks[0], self.pol_angle)
-            #print('____________', self.pol_angle*180/np.pi, self.relic_pro_angle*180/np.pi,  min(self.pol_angle.value-self.relic_pro_angle,  self.pol_angle.value-self.relic_pro_angle)*180/np.pi)
-            #self.relic_pro_angle = self.pol_angle
+            #self.moment_angle.value = compute_moments(self.sparseA, self.sparseD, self.sparseW)
+            #self.relic_pro_index = find_nearest_index(histo.ticks[0], self.moment_angle)
+            #print('____________', self.moment_angle*180/np.pi, self.relic_pro_angle*180/np.pi,
+            #      min(self.moment_angle.value-self.relic_pro_angle,  self.moment_angle.value-self.relic_pro_angle)*180/np.pi)
+            #print('\n\n')
+            #self.relic_pro_angle = self.moment_angle
 
             self.relic_anti_index = np.argmin(fitarray_anti)
             self.relic_anti_angle = histo.ticks[0][self.relic_anti_index]   # [0:2pi]
@@ -701,7 +744,7 @@ class Galaxycluster(object):
         ratio_val = mstats.gmean([self.ratio_pro(), self.ratio_anti()])
         self.ratio_relics = dbc.measurand(ratio_val, 'ratio_relics', label='ratio$_\mathrm{dipol}$',
                                            std=[abs(ratio_val-min(self.ratio_pro(),self.ratio_anti())),
-                                                  abs(max(self.ratio_pro(),self.ratio_anti())-ratio_val)],
+                                                abs(max(self.ratio_pro(),self.ratio_anti())-ratio_val)],
                                            vrange=[2e-3,1])
     
     
@@ -1149,9 +1192,6 @@ class Relic:
         
         #===  Hist
         self.polHist     = polHist  # a sparse numpy array
-        self.moment_x = None
-        self.moment_y = None
-
 
         ##===  Averaged: Position and coordiantes
         self.RA          = dbc.measurand(RA, 'RA', un='deg')
@@ -1267,16 +1307,8 @@ class Relic:
             if normtype == 'Dproj':
                 norm = 1e3
 
-            self.polHist = sparse.csr_matrix(np.histogram2d(self.sparseA, self.sparseD/norm, bins=GCl.histo.bins,
+            self.polHist = sparse.csr_matrix(np.histogram2d(self.sparseA, self.sparseD / norm, bins=GCl.histo.bins,
                                                             normed=False, weights=self.sparseW)[0])
-
-            self.x = np.cos(self.sparseA)
-            self.y = np.sin(self.sparseA)
-
-            self.moment_x = np.sum(self.x*self.sparseW*self.sparseD)  # self.x*self.x
-            self.moment_y = np.sum(self.y*self.sparseW*self.sparseD)  # self.y*self.y
-            self.mom_both = np.sum(self.x*self.y*self.sparseW*self.sparseD**2)
-            self.pol_angle = np.arctan2(-self.moment_y, self.moment_x)
 
     def shape_advanced(self):
         return dbc.measurand(self.iner_rat/ (self.LAS / (self.dinfo.beam[0]/60.)), 'shape_advanced',
@@ -1308,7 +1340,6 @@ class Relic:
     def asign_cluster(self, GCl):
         self.GCl = GCl
         self.create_Histo(GCl)
-
         if self.region.name == '':
             self.name = GCl.name
         else:
@@ -1323,13 +1354,13 @@ class Relic:
         self.bw_cor     = 1./(1.+GCl.z.value)                               # Bandwidth quenching not covered by Luminosity Distancre
         P               = self.bw_cor * self.flux.value*GCl.flux2power_woRedening()
         self.P          = dbc.measurand(P, 'P', label='$P_\\mathrm{obs}$', un="W/Hz",
-                                      std=P*np.sqrt( (self.flux.std/self.flux.value)**2 + ( self.region.alpha_err*np.log(1+GCl.z.value)*(1+GCl.z.value)**self.alpha_z() )**2) )  # include z error
+                                      std=P*np.sqrt( (self.flux.std[0]/self.flux.value)**2 + ( self.region.alpha_err*np.log(1+GCl.z.value)*(1+GCl.z.value)**self.alpha_z() )**2) )  # include z error
         self.P_rest     = dbc.measurand( self.P.value*self.speccor(GCl), 'P_rest', label='$P_\\mathrm{rest}$', un = "W/Hz",
-                                      std=[std*self.speccor(GCl) for std in self.P.std] )   #!!! generall alpha;
-        self.P_lit      = dbc.measurand( self.flux_lit()*1e-29*(4* np.pi*np.power(GCl.cosmoDL *1e-2,2)), 'Plit', label='$P_\\mathrm{lit}$', un = "W/Hz")
+                                      std=[std*self.speccor(GCl) for std in self.P.std])   #!!! generall alpha;
+        self.P_lit      = dbc.measurand( self.flux_lit()*1e-29*(4* np.pi*np.power(GCl.cosmoDL * 1e-2, 2)), 'Plit', label='$P_\\mathrm{lit}$', un = "W/Hz")
 
         self.vec_GCl    = [(GCl.RA.value-self.RA())*np.cos(self.Dec()*np.pi/180), self.Dec.value-GCl.Dec.value]       # corrected for spherical coordiante system
-        self.theta_GCl  = (np.angle(self.vec_GCl[0]+self.vec_GCl[1]*1j, deg=True)+360)%360 # in deg;  The complex number form  allows for np.angle. Theta increases counterclockwise
+        self.theta_GCl  = (np.angle(self.vec_GCl[0]+self.vec_GCl[1]*1j, deg=True)+360) % 360  # in deg;  The complex number form  allows for np.angle. Theta increases counterclockwise
 
         self.Dproj      = dbc.measurand( np.linalg.norm(self.vec_GCl)*3600*GCl.cosmoPS, 'Dproj', label='$D_\\mathrm{proj}$', un='kpc')
         self.Dproj_rel  = dbc.measurand( np.linalg.norm(self.vec_GCl)*3600*GCl.cosmoPS, 'Dproj', label='$D_\\mathrm{proj}$', un='kpc')

@@ -106,5 +106,4 @@ def RelicExtraction(image, z, contourMask = [], Imcenter=False, GCl=False, dinfo
                               sparseD=distance, sparseW=weights, sparseA=angle, pmask=rel)
         relics.append(relic)
 
-    
     return relics

@@ -40,6 +40,7 @@ from astropy.convolution import convolve
 from astropy.convolution import Gaussian2DKernel
 from astropy.wcs import WCS
 from reproject import reproject_interp
+from copy import copy, deepcopy
                 
 def updateClusters_missingRegions(ClList, AddList):
     """ This adds relic regions based on a .csv file to the cluster List 
@@ -252,60 +253,66 @@ def survey_run(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/',
                         use_list = True
 
                 if 'fits' in subtract:
-                    highres_image = infolder + 'Images_%s/%s-%s.fits' % ("FIRST", "FIRST", Cl_name)
-                    if os.path.isfile(highres_image):
+                    highres_image_path = infolder + 'Images_%s/%s-%s.fits' % ("FIRST", "FIRST", Cl_name)
+                    if os.path.isfile(highres_image_path):
     
                         # regridd
        
                         # http://reproject.readthedocs.io/en/stable/  --> works on fits files
-                        hdu1 = fits.open(fitsimage)[0]
-                        image_2, center_2, spixel_2 = fitsut.fits2numpy(highres_image)
-                        s_pixel_2    = [spixel_2[1]*GCl.cosmoPS*3600,spixel_2[1]*3600]  
-                        fitsut.numpy2fits ( image_2 ,  infolder + 'Images_%s/%s-%s_test.fits' % ("FIRST", "FIRST", Cl_name), s_pixel_2[1], center_2[0], center_2[1]) 
-                        hdu2 = fits.open(infolder + 'Images_%s/%s-%s_test.fits' % ("FIRST", "FIRST", Cl_name))[0]      
-                        hdu2.data = hdu2.data.squeeze()
-                        hdu2.data[np.isnan(hdu2.data)]      = 0.     # For contour masked  NVSS images I encountered the isue that some values where nan
-                        hdu2.data[np.where(hdu2.data<6e-4)] = 0.
+                        hdu_raw = fits.open(fitsimage)[0]
+                        image_HR, center_HR, spixel_HR = fitsut.fits2numpy(highres_image_path)
+                        s_pixel_HR = [spixel_HR[1]*GCl.cosmoPS*3600, spixel_HR[1]*3600]
+                        fitsut.numpy2fits(image_HR,  infolder + 'Images_%s/%s-%s_test.fits' % ("FIRST", "FIRST", Cl_name), s_pixel_HR[1], center_HR[0], center_HR[1])
+                        hdu_HR = fits.open(infolder + 'Images_%s/%s-%s_test.fits' % ("FIRST", "FIRST", Cl_name))[0]
+                        hdu_HR.data = hdu_HR.data.squeeze()
+                        hdu_HR.data[np.isnan(hdu_HR.data)] = 0.     # For contour masked  NVSS images I encountered the issue that some values where nan
+                        hdu_HR.data[np.where(hdu_HR.data < 6e-4)] = 0.
                                   
                         pad = 50
-                        hdu2.data = np.lib.pad(hdu2.data, pad, maput.padwithtens)         
+                        hdu_HR.data = np.lib.pad(hdu_HR.data, pad, maput.padwithtens)
                         
-                        FWHM2sigma     =  1/2.354 
-                        FWHM_FIRST     =  5.4
+                        FWHM2sigma     = 1/2.354
+                        FWHM_FIRST     = 5.4
                         FWHM_conv      = np.sqrt(GCl.dinfo.beam[0]**2-FWHM_FIRST**2)
-                        gaussian_2D_kernel = Gaussian2DKernel(FWHM_conv/s_pixel_2[1]*FWHM2sigma)  
-                        A_beam_old     =  1.133*((FWHM_FIRST/s_pixel_2[1])**2)  # FIRST-beam
-                        A_beam         =  1.133*((GCl.dinfo.beam[0]/s_pixel_2[1])**2)
-                        from copy import copy
-                        hdu2_conv      =  copy(hdu2)                 
-                        hdu2_conv.data = A_beam/A_beam_old*convolve(hdu2.data, gaussian_2D_kernel, normalize_kernel=True) 
-                        for hdu in [hdu2, hdu2_conv]:
+                        gaussian_2D_kernel = Gaussian2DKernel(FWHM_conv/s_pixel_HR[1]*FWHM2sigma)
+                        A_beam_old     = 1.133*((FWHM_FIRST/s_pixel_HR[1])**2)  # FIRST-beam
+                        A_beam         = 1.133*((GCl.dinfo.beam[0]/s_pixel_HR[1])**2)
+
+                        """
+                        The copy action is very dangerous, because the corresponding .header object is cloned, so that
+                        any change in hdu_HR_conv.header also influences hdu_HR.header
+                        deepcopy() is not possible. Because of the we remove hdu_HR_conv from any changes in the header
+                        """
+                        hdu_HR_conv      = copy(hdu_HR)
+                        hdu_HR_conv.data = A_beam/A_beam_old*convolve(hdu_HR.data, gaussian_2D_kernel, normalize_kernel=True)
+                        for hdu in [hdu_HR]:
 #                            hdu.data = np.expand_dims(hdu.data, axis=0)
 #                            hdu.data = np.expand_dims(hdu.data, axis=0)
                             hdu.header['CRPIX1'] = hdu.header['CRPIX1'] + pad
                             hdu.header['CRPIX2'] = hdu.header['CRPIX2'] + pad
-
+                            hdu.header['NAXIS1'] = hdu.header['NAXIS1'] + pad*2
+                            hdu.header['NAXIS2'] = hdu.header['NAXIS2'] + pad*2
 #
 #                        from astropy.io import fits
 #                        from astropy.utils.data import get_pkg_data_filename
-#                        hdu1 = fits.open(get_pkg_data_filename('galactic_center/gc_2mass_k.fits'))[0]
+#                        hdu_raw = fits.open(get_pkg_data_filename('galactic_center/gc_2mass_k.fits'))[0]
 #                        hdu2 = fits.open(get_pkg_data_filename('galactic_center/gc_msx_e.fits'))[0]
 ###                      
-                        for hdu in [hdu1,hdu2_conv]:
+                        for hdu in [hdu_raw, hdu_HR]:
 #                            print(hdu.header)
                             try:
-                                hdu.data = hdu1.data[0,0,:,:]
+                                hdu.data = hdu_raw.data[0,0,:,:]
                             except:
                                 print('Test ... data dimensions are matching')
-                            hdu.header['NAXIS']      = 2
+                            hdu.header['NAXIS'] = 2
 
                             keylist = ['PC01_01', 'PC02_01', 'PC03_01', 'PC04_01',
                                        'PC01_02', 'PC02_02', 'PC03_02', 'PC04_02',
                                        'PC01_03', 'PC02_03', 'PC03_03', 'PC04_03',
                                        'PC01_04', 'PC02_04', 'PC03_04', 'PC04_04',
-                                       'NAXIS3','NAXIS4',
-                                       'CTYPE3','CRVAL3','CDELT3','CRPIX3','CUNIT3','CROTA3',
-                                       'CTYPE4','CRVAL4','CDELT4','CRPIX4','CUNIT4','CROTA4']
+                                       'NAXIS3', 'NAXIS4',
+                                       'CTYPE3', 'CRVAL3', 'CDELT3', 'CRPIX3', 'CUNIT3', 'CROTA3',
+                                       'CTYPE4', 'CRVAL4', 'CDELT4', 'CRPIX4', 'CUNIT4', 'CROTA4']
                             for key in keylist:     
                                 try: 
                                     del hdu.header[key]
@@ -313,45 +320,49 @@ def survey_run(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/',
                                 except:
                                     print('[%s] not found, so we cannot delete it from the .fits header' % (key))
                                     
-                            hdu.header['EPOCH']     = 3e3
-                            hdu.header['EQUINOX']   = 3e3
-                            print('====================') 
-                            
-                        fitsut.numpy2fits ( hdu2_conv.data.squeeze(),  infolder + 'Images_%s/%s-%s_test2.fits' % ("FIRST", "FIRST", Cl_name), s_pixel_2[1], center_2[0], [c+pad for c in center_2[1]])  
+                            hdu.header['EPOCH'] = 2e3 #3e3
+                            hdu.header['EQUINOX'] = 2e3 #3e3
+                            print('====================')
 
 
-                        print( 'WCS(hdu1.header).wcs.naxis, WCS(hdu2.header).wcs.naxis', WCS(hdu1.header).wcs.naxis, WCS(hdu2_conv.header).wcs.naxis )
+                        hdu_HR_conv.writeto(infolder + 'Images_%s/%s-%s_test2b.fits' % ("FIRST", "FIRST", Cl_name), overwrite=True)
+                        fitsut.numpy2fits(hdu_HR_conv.data.squeeze(),  infolder + 'Images_%s/%s-%s_test2.fits' % ("FIRST", "FIRST", Cl_name), s_pixel_HR[1], center_HR[0], [c+pad for c in center_HR[1]])
+
+
+                        print( 'WCS(hdu_raw.header).wcs.naxis, WCS(hdu2.header).wcs.naxis', WCS(hdu_raw.header).wcs.naxis, WCS(hdu_HR_conv.header).wcs.naxis )
     
-       
-#                        array, footprint = reproject_interp(hdu2, hdu1.header) #hdu 2 image and systm, hdu1--> just the system
-                        array, footprint = reproject_interp(hdu2_conv, hdu1.header) #hdu 2 image and systm, hdu1--> just the system 
-#                        array, footprint = reproject_exact(hdu2_conv, hdu1.header) #does not solve the problem                      
+                        #TODO: DEBUGGING
+                        #hdu_raw = fits.open(infolder + 'Images_%s/%s-%s_test2.fits' % ("FIRST", "FIRST", Cl_name))[0]
+                        #hdu_raw.data = hdu_raw.data.squeeze()
+                        array, footprint = reproject_interp(hdu_HR_conv, hdu_raw.header) #hdu 2 image and systm, hdu1--> just the system
+#                        array, footprint = reproject_exact(hdu_HR_conv, hdu_raw.header) #does not solve the problem
+                        # From here on the coordinate
+
                         print('_______', np.sum(array), footprint)
-                       
-
-                        print('_______________________________', array.shape, image.shape)  
+                        print('_______________________________', array.shape, image.shape)
                         array = array.squeeze() #could be removed
+                        array[np.isnan(array)] = 0.
 
-                        fitsut.map2fits(array , GCl.dinfo, infolder + 'Images_%s/%s-%s_test3.fits' % ("FIRST", "FIRST", Cl_name))    
-                        squeezed = array.squeeze() #could be removed
-                        squeezed[np.isnan(squeezed)]      = 0.
-                        print( 'fits_subtraction: np.sum(squeezed):', np.sum(squeezed), ', np.sum(array.squeeze()):', np.sum(array.squeeze()) )
+                        fitsut.map2fits(array, GCl.dinfo, infolder + 'Images_%s/%s-%s_test3.fits' % ("FIRST", "FIRST", Cl_name))
+                        squeezed = array.squeeze()  #could be removed
+
+                        print('fits_subtraction: np.sum(squeezed):', np.sum(squeezed), ', np.sum(array.squeeze()):', np.sum(array.squeeze()))
                         
-                        model_conv  = squeezed # add up  OR replace!   
-                        use_im      = True
+                        model_conv = squeezed  # add up  OR replace!
+                        use_im = True
 #                    except:
 #                      warnings.warn("No .fits specified for %s. Alternatively the format of the .fits file causes problems."  % (Cl_name))
 
-                residuum  = image-model_conv
+                residuum = image-model_conv
 
                 """ Development: Only get the flux within the search region """       
-                extreme_res =  True
-                residuum =  maput.ContourMasking(residuum,[region.cnt[0] for region in GCl.regions])
+                extreme_res = True
+                residuum = maput.ContourMasking(residuum, [region.cnt[0] for region in GCl.regions])
                 
 
                 
                 print( '%30s source subtraction;  list: %5r; image: %5r'   % (Cl_name , use_list, use_im) )
-                GCl.maps_update(residuum  , 'Diffuse'    , infolder + '%s/Images_%s/diffuse/%s-%s.fits'            % (topfolder, survey, survey, Cl_name))
+                GCl.maps_update(residuum, 'Diffuse', infolder + '%s/Images_%s/diffuse/%s-%s.fits'            % (topfolder, survey, survey, Cl_name))
                 if np.sum(model_conv) != 0 or extreme_res:      
                     GCl.maps_update(image     , 'Raw'       , infolder + '%s/Images_%s/raw/%s-%s_res.fits'         % (topfolder, survey, survey, Cl_name))
                     GCl.maps_update(model     , 'Modell'    , infolder + '%s/Images_%s/subtracted/%s-%s.fits'      % (topfolder, survey, survey, Cl_name))
@@ -359,7 +370,7 @@ def survey_run(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/',
                 smt()
                 
                 #============= impose relic.search  =============#
-                for ii,region in enumerate(GCl.regions):
+                for ii, region in enumerate(GCl.regions):
                   smt(task='RelicExtr')
                   relics = relex.RelicExtraction(residuum, z, GCl=GCl, dinfo=GCl.dinfo, rinfo = region, Imcenter=center, subtracted=model)[0:2]  # faintexcl=3.6
                   smt()                                
