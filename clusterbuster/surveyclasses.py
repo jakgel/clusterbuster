@@ -396,8 +396,8 @@ class Galaxycluster(object):
         self.sky_main   = SkyCoord(RA_m, Dec_m, frame='icrs', unit='deg')
 
         # Masses and mass proxies
-        self.Lx        = dbc.measurand(Lx, 'Lx', label='$L_{500,0.1-2.4}$', un='erg\\,s$^{-1}$') # X-Ray luminosity in 10^44 erg/s from 0.1-2.4 keV within R500
-        self.Lx_lit    = dbc.measurand(Lx_lit, 'Lx_lit', label='$L_{500,0.1-2.4}$', un='erg\\,s$^{-1}$') # X-Ray luminosity in 10^44 erg/s from 0.1-2.4 keV within R500
+        self.Lx        = dbc.measurand(Lx, 'Lx', label='$L_{500,0.1-2.4}$', un='erg\\,s$^{-1}$') # X-Ray luminosity in erg/s from 0.1-2.4 keV within R500
+        self.Lx_lit    = dbc.measurand(Lx_lit, 'Lx_lit', label='$L_{500,0.1-2.4}$', un='erg\\,s$^{-1}$') # X-Ray luminosity in erg/s from 0.1-2.4 keV within R500
          
         self.M200      = dbc.measurand(M200, 'M200', label='$M_{200}$', un='$M_\odot$')    # virial mass in solar masses
         self.M500      = dbc.measurand(M500, 'M500', label='$M_{500}$', un='$M_\odot$')    # M500   mass in solar masses
@@ -535,12 +535,12 @@ class Galaxycluster(object):
         self.cosmoPS = self.cosmoPara['PS_kpc']  # kpc/''
 
         # Computes M200 from other mass proxies if needed  
-        if massproxis:    
+        if massproxis:
             self.infer_M200_MX(self.M500, 500)
             self.infer_M200_MX(self.M100, 100)
             self.infer_M200_MX(self.Mvir, 178)
             self.infer_M200_LX()
-          
+
           
             #starts to compute all other quantities from this value
             self.infer_LX_M200()
@@ -617,7 +617,7 @@ class Galaxycluster(object):
         h100  = 0.70
         h70   = 1.0
         Ez = np.sqrt(self.cosmoPara['WM']*(1+self.z)**3 + self.cosmoPara['WV'])
-        return 0.1175*Ez**alpha/h100**(2-alpha) * (M*h70/1e14)**alpha * h70**2
+        return 1e44 * 0.1175*Ez**alpha/h100**(2-alpha) * (M*h70/1e14)**alpha * h70**2
 
 
     def comp_M(self, m, overdensity):
@@ -646,7 +646,7 @@ class Galaxycluster(object):
     def infer_M200_LX(self):
 
         if self.M200() == 0 and self.Lx() != 0:
-            masses_checked = [10**m for m in np.arange(13.5, 16, 0.05)]
+            masses_checked = [10**m for m in np.arange(13.5, 16, 0.01)]
             masses_tested = []
             for m in masses_checked: 
                 masses_tested.append( np.abs(np.log(self.comp_LX_M200(m)/self.Lx)) )
@@ -657,7 +657,7 @@ class Galaxycluster(object):
         """ This method is VERY slow, it takes around 2 seconds per computation """
 
         if self.M200() == 0 and Mx() != 0:
-            masses_checked = [10**m for m in np.arange(13.0, 16, 0.05)]
+            masses_checked = [10**m for m in np.arange(13.0, 16, 0.03)]
             masses_tested = []
             for m in masses_checked: 
                 masses_tested.append(np.abs(np.log(self.comp_M(m,x)/Mx)))
@@ -667,8 +667,9 @@ class Galaxycluster(object):
     # inspired by Boehringer et al 2014  (also see Nuza+2017)
     def infer_LX_M200(self):
 
-        if self.Lx() == 0 and  self.M200() != 0:
-            self.Lx.val  = self.comp_LX_M200(self.M200)
+        if self.Lx() == 0 and self.M200() != 0:
+            self.Lx.val = self.comp_LX_M200(self.M200)
+
 
     def flux2power_woRedening(self):
         # To factor for converting flux [Jy?] to power (erg/s)
@@ -1057,7 +1058,7 @@ class DetRegion(object):
      """ DEVELOPMENT END """
 
 
-class RelicRegion(DetRegion): # Define a new object: RelicRegion   
+class RelicRegion(DetRegion):  # Define a new object: RelicRegion
 
   """
   Simple class for representing a relic region in a FITS image.
@@ -1080,11 +1081,11 @@ class RelicRegion(DetRegion): # Define a new object: RelicRegion
                              
     if alpha_err:
       try:
-       self.alpha_err= float(alpha_err)
+       self.alpha_err = float(alpha_err)
       except: 
-       self.alpha_err= 0.3
+       self.alpha_err = 0.3
     else: 
-       self.alpha_err= 0.3   
+       self.alpha_err = 0.3
        
        
     """DEVELOPMENT
@@ -1129,28 +1130,28 @@ class RelicRegion(DetRegion): # Define a new object: RelicRegion
     
 class RelicTypes:  
 
-  def __init__(self, classi = -1):
+    def __init__(self, classi = -1):
+
+        # Add the plotting linestyles to them
+        # Make each type an own class that inherits from diffuse emission
+        self.classi         = classi
+        self.classes        = ['unspecified', 'Phoenix', 'gischt', 'double gischt', 'gischtlet'][self.classi+1]
+        self.classessimple  = ['-', 'PhX', 'RL', 'dRL', 'SL'][self.classi+1]
+        self.alpha          = [-1.25, -1.8, -1.25, -1.25, -1.25][self.classi+1]
     
-    # Add the plotting linestyles to them
-    # Make each type an own class that inherits from diffuse emission
-    self.classi         = classi
-    self.classes        = ['unspecified','Phoenix','gischt','double gischt','gischtlet'][self.classi+1]
-    self.classessimple  = ['-','PhX','RL','dRL','SL'][self.classi+1]
-    self.alpha          = [-1.25,-1.8,-1.25,-1.25,-1.25][self.classi+1]
-    
-  def __str__(self):
-    # return("The cluster %12s at dec=%6.2f and rec = %6.2f has an z of %5.3f" % (self.name, self.dec, self.rec, self.z))
-    return ( 'rtype(%i -> %s)' % (self.classi, self.classessimple) )
-    #return("The cluster %12s at dec=%11s and ra = %9s has an z of %5.3f" % (self.name, self.dec, self.ra, self.z))      
+    def __str__(self):
+        # return("The cluster %12s at dec=%6.2f and rec = %6.2f has an z of %5.3f" % (self.name, self.dec, self.rec, self.z))
+        return ( 'rtype(%i -> %s)' % (self.classi, self.classessimple) )
+        #return("The cluster %12s at dec=%11s and ra = %9s has an z of %5.3f" % (self.name, self.dec, self.ra, self.z))
       
 class ApperanceAtFrequ(patches.Ellipse):
-  """ REDUNTANT in current implementation"""
-  def __init__(self, flux=1, frequ=1.4, major=0, minor=0, posangle=0):
-      self.flux     = flux  # [mJy at 1.4 GHz]
-      self.frequ    = frequ #frequency
-      self._width   = major 
-      self._height  = minor
-      self._angle   = posangle
+    """ REDUNTANT in current implementation"""
+    def __init__(self, flux=1, frequ=1.4, major=0, minor=0, posangle=0):
+          self.flux     = flux  # [mJy at 1.4 GHz]
+          self.frequ    = frequ #frequency
+          self._width   = major
+          self._height  = minor
+          self._angle   = posangle
     
     
 class RadioSource(ephem.FixedBody):
@@ -1184,7 +1185,7 @@ class Relic:
         """
         parameters
         """
-        self.GCl         = None      # galaxycluster(Cl_name, Ra_host, Dec_host, z, Lx=0, Lx_lit=0)
+        self.GCl         = None      # galaxycluster
         self.name        = ''
         self.region      = region    # RelicRegion that defines an subarray of the detection region, as well as labels and  (as a proxy) spectral information
         self.dinfo       = dinfo     # Detection Info Class
@@ -1217,7 +1218,6 @@ class Relic:
         #=== spectral index and k correction
         self.alpha       = dbc.measurand(alpha, 'alpha', '$\\alpha_\mathrm{int}$', un=None, std=alpha_err)
         self.alphaFLAG   = alphaFLAG
-        #self.kcor        = (1.+GCl.z)**(1-self.alpha)
         self.spec_cor = None
         
         # Flux error needs area
@@ -1263,10 +1263,9 @@ class Relic:
             self.asign_cluster(GCl)
         else:
             'This relic has no galaxy cluster assigned!'
-        
 
     """
-    functions
+    FUNCTIONS
     """
 
     # Average mach number, from https://arxiv.org/pdf/1611.01273.pdf (2016) ; page 13, equ. 5; though they have an inconsistentdefinitionof alpha(assume alpha>0 in equation)
@@ -1348,10 +1347,10 @@ class Relic:
         self.LLS        = dbc.measurand(self.LAS * 60 * GCl.cosmoPS, 'LLS', un="kpc", std=[std*60*GCl.cosmoPS for std in self.LAS.std])
         self.area100kpc = dbc.measurand(self.area*(GCl.cosmoPS*60/100)**2, 'area100kpc', un="(100kpc)$^2$", std=[std*(GCl.cosmoPS*60/100)**2 for std in self.area.std])
 
-        # All radio Luminousities are in 10^24 W/Hz, factor 1e-29 -->  1e-3 Jy/mJy  *  (1e-26 W/(Hz m^2)) / Jy
-        # All radio Luminousities are in W/Hz
+        # All radio luminosities are in 10^24 W/Hz, factor 1e-29 -->  1e-3 Jy/mJy  *  (1e-26 W/(Hz m^2)) / Jy
+        # All radio luminosities are in W/Hz
         # See Nuza et all. 2012
-        self.bw_cor     = 1./(1.+GCl.z.value)                               # Bandwidth quenching not covered by Luminosity Distancre
+        self.bw_cor     = 1./(1.+GCl.z.value)     # Bandwidth quenching not covered by Luminosity distancre
         P               = self.bw_cor * self.flux.value*GCl.flux2power_woRedening()
         self.P          = dbc.measurand(P, 'P', label='$P_\\mathrm{obs}$', un="W/Hz",
                                       std=P*np.sqrt( (self.flux.std[0]/self.flux.value)**2 + ( self.region.alpha_err*np.log(1+GCl.z.value)*(1+GCl.z.value)**self.alpha_z() )**2) )  # include z error
@@ -1366,7 +1365,7 @@ class Relic:
         self.Dproj_rel  = dbc.measurand( np.linalg.norm(self.vec_GCl)*3600*GCl.cosmoPS, 'Dproj', label='$D_\\mathrm{proj}$', un='kpc')
     #            self.Dproj.std  = self.Dproj.std( min(max(0.1*self.Dproj(),100.),0.99*self.Dproj()) )
 
-        if self.Dproj>1e4:
+        if self.Dproj > 1e4:
             self.Dproj.value = 0
 
         if self.theta_elong:  # [ Ellipsecontours, Moment of Inertia, Ellipse moments ]

@@ -118,7 +118,7 @@ def survey_run(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/',
         for strings in ['REF_LX', 'REF_M200', 'REF_M500', 'REF_F']:
             Clusters[strings] = Clusters[strings].replace(np.nan, '', regex=True)
 
-        for values in ['M200', 'M500', 'LX_500_0.2-2.4']:
+        for values in ['M200', 'M500', 'LX_500_0.1-2.4']:
             Clusters[values] = Clusters[values].replace(np.nan, 0, regex=True)
 
         n = 0
@@ -162,7 +162,7 @@ def survey_run(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/',
                 z    = float(CL['z'])
                 M200 = float(CL['M200'])*1e14
                 M500 = float(CL['M500'])*1e14
-                Lx   = float(CL['LX_500_0.2-2.4'])
+                Lx   = float(CL['LX_500_0.1-2.4'])*1e44
                 flux_lit = float(CL['F_lit'])
                   
                 halo = CL['FLAG_Halo'] 

@@ -745,25 +745,21 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
     # TODO: workdir should be the same as pase['miscdir'] yet the issue is that it is unknown before miscdir is known.
 
     if survey is None:
-        surveyN     =  parfile.replace('.parset','')
-        savefolder  =  pase['outf'] +surveyN             
-        logfolder   =  pase['outf'] +surveyN    
+        surveyN     = parfile.replace('.parset', '')
+        savefolder  = pase['outf'] + surveyN
+        logfolder   = pase['outf'] + surveyN
     else:
         surveyN    = survey.name
         savefolder = survey.outfolder
         logfolder  = survey.logfolder
 
-
     # Constants
     #==== Cosmological Parameter - MUSIC-2
-    Omega_M     = 0.27                  # Matter density parameter
-    Omega_vac   = 1-Omega_M             # Dark energy density parameter
-#    Omega_L     = 1-Omega_M-Omega_b 
-    
-    restarted    = -1
+    Omega_M = 0.27                  # Matter density parameter
+    Omega_vac = 1-Omega_M             # Dark energy density parameter
+#    Omega_L     = 1-Omega_M-Omega_b
+    restarted = -1
 
-
-       
     #=== Create folder if needed
     iom.check_mkdir(savefolder)
     iom.check_mkdir(logfolder)
@@ -772,7 +768,8 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
     smt(task='Prepare_Clusters')
     
     #=== Create detection information
-    dinfo          = cbclass.DetInfo(beam=[float(pase['S_beam']),float(pase['S_beam']),0], spixel=float(pase['S_pixel']), rms=float(pase['RMSnoise'])*1e-6, limit=float(pase['RMSnoise'])*float(pase['Detthresh'])*1e-6)
+    dinfo = cbclass.DetInfo(beam=[float(pase['S_beam']), float(pase['S_beam']),0], spixel=float(pase['S_pixel']),
+                            rms=float(pase['RMSnoise'])*1e-6, limit=float(pase['RMSnoise'])*float(pase['Detthresh'])*1e-6)
 
     if survey is None:
         """Create all galaxy clusters:
@@ -785,29 +782,28 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
         all_clusters = pd.read_csv('%s%s_allclusters.csv' % (pase['miscdata'], Clfile))
         if verbose:
             all_clusters.info()
-        zsnap_list  = pd.Series(all_clusters['redshift'].unique())
+        zsnap_list = pd.Series(all_clusters['redshift'].unique())
         snapidlist = pd.Series(all_clusters['snapID'].unique())      
         clusterIDs = list(all_clusters['clID'].unique())   
-        NclusterIDs = [ len(all_clusters[all_clusters['redshift'] == z]) for z in zsnap_list ]
-
-        misslist     = np.loadtxt(pase['miscdata']+pase['missFile'])
+        NclusterIDs = [len(all_clusters[all_clusters['redshift'] == z]) for z in zsnap_list]
+        misslist = np.loadtxt(pase['miscdata']+pase['missFile'])
         """ e.g. cluster 10# was not (re)simulated, in neither of the MUSIC-2 simulations (also 7 has some issues?)"""
 
-        GClList     = []
+        GClList = []
         
         if pase['snaplistz'] != 'None':
             
             snaplistz  = [float(z) for z in iom.str2list(pase['snaplistz'])]
-            snapidlist = [float(z) for z in iom.str2list(pase['snapidlist'].replace(' ',''))]
+            snapidlist = [float(z) for z in iom.str2list(pase['snapidlist'].replace(' ', ''))]
        
             zsnap_list = (snaplistz[::-1])[0:11]   # 0:17 List of available sn [0:11]
             snapidlist = (snapidlist[::-1])[0:11]  # 0:17 [0:11]
 
-            NclusterIDs =  [len(all_clusters['clID'].unique().tolist())]*len(snaplistz)
-            if verbose: print( '[ len(lines)   for lines in  all_lines ]', NclusterIDs)
+            NclusterIDs = [len(all_clusters['clID'].unique().tolist())]*len(snaplistz)
+            if verbose: print('[ len(lines)   for lines in  all_lines ]', NclusterIDs)
 
-        use_list    = [True] * len(zsnap_list)  # Also put some False, you don't really want to use the z=4.0 snapshots!
-        Vsimu       = (1.0/(myu.H0/100.))**3    # Gpc**3 comoving volume
+        use_list = [True] * len(zsnap_list)  # Also put some False, you don't really want to use the z=4.0 snapshots!
+        Vsimu    = (1.0/(myu.H0/100.))**3    # Gpc**3 comoving volume
 
         """ Iterate trough each shell of your z-onion and attribute clsuters to them
             with z-range and percentage of covered sky, we have z=0.1
@@ -817,9 +813,8 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
         else:
             N_shells = float(pase['N_shells'])
 
-
-        shells_z, delta_z = np.linspace(Z[0],Z[1], num=N_shells+1, retstep=True)
-        DCMRs = [cosmocalc(z, H0=myu.H0, WM=Omega_M, WV=Omega_vac)['VCM']*1e3 for z in shells_z]    #Array if comoving distance  sampled onto z-array
+        shells_z, delta_z = np.linspace(Z[0], Z[1], num=N_shells+1, retstep=True)
+        DCMRs = [cosmocalc(z, H0=myu.H0, WM=Omega_M, WV=Omega_vac)['VCM_Gpc3'] for z in shells_z]    #Array if comoving distance  sampled onto z-array
         count = 0
 
         missing = False

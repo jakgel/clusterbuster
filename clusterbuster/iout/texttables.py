@@ -270,7 +270,7 @@ Cluster               &  z   &  $M_{200}$          &  $F_\mathrm{NVSS}$   &   $F
         	
     #        if m.P_rest() == 0:
     #              print '!!!!!!!! m.Prest == 0', m.name,  m.P_rest
-            string = "%25s & $%.3f$ &  %.2f & %s & $%5.1f$ &"   % (m.name, m.z.value, m.M200.value/1e14, m.getstatusstring()[1], m.flux_lit.value)  +   '%s' % (m.gettypestring())  + '& %s - %s\\\\' % (findshort(m.Lx.ref.ident, shortlist) , findshort(m.flux_lit.ref.ident, shortlist) )
+            string = "%25s & $%.3f$ &  %.1f & %s & $%5.1f$ &"   % (m.name, m.z.value, m.M200.value/1e14, m.getstatusstring()[1], m.flux_lit.value)  +   '%s' % (m.gettypestring())  + '& %s - %s\\\\' % (findshort(m.Lx.ref.ident, shortlist) , findshort(m.flux_lit.ref.ident, shortlist) )
             mf.write(string + '\n')
             n_clusters += 1
 
@@ -294,7 +294,7 @@ Cluster               &  z   &  $M_{200}$          &  $F_\mathrm{NVSS}$   &   $F
         	
     #        if m.P_rest() == 0:
     #              print '!!!!!!!! m.Prest == 0', m.name,  m.P_rest
-            string = "%25s & $%.3f$ &  %.2f & %s & $%5.1f$ &"   % (m.name, m.z.value, m.M200.value/1e14, m.getstatusstring()[1], m.flux_lit.value)  +   '%s' % (m.gettypestring())  + '& %s - %s\\\\' % (findshort(m.Lx.ref.ident, shortlist) , findshort(m.flux_lit.ref.ident, shortlist) )
+            string = "%25s & $%.3f$ &  %.1f & %s & $%5.1f$ &"   % (m.name, m.z.value, m.M200.value/1e14, m.getstatusstring()[1], m.flux_lit.value)  +   '%s' % (m.gettypestring())  + '& %s - %s\\\\' % (findshort(m.Lx.ref.ident, shortlist) , findshort(m.flux_lit.ref.ident, shortlist) )
             mf.write(string + '\n')
     
     mf.write( foot )

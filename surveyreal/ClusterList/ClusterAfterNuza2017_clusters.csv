@@ -1,4 +1,4 @@
-Cluster,Identifier,RA,Dec,RA_Xmax,Dec_Xmax,z,LX_500_0.2-2.4,REF_LX,Type,Type_Flag,NVSSregionfile,F_lit,REF_F,REFPAGE_F,Comments,FLAG_INCLUDED,FLAG_Halo,Subtract,M500,REF_M500,REFPAGE_M500,M200,REF_M200,REFPAGE_M200,Discovery
+Cluster,Identifier,RA,Dec,RA_Xmax,Dec_Xmax,z,LX_500_0.1-2.4,REF_LX,Type,Type_Flag,NVSSregionfile,F_lit,REF_F,REFPAGE_F,Comments,FLAG_INCLUDED,FLAG_Halo,Subtract,M500,REF_M500,REFPAGE_M500,M200,REF_M200,REFPAGE_M200,Discovery
 #,,deg,deg,deg,deg,,10^44 ergs/s,,,,,mJy,,,,,,,10^14 Msol,,,10^14 Msol,,,
 [KMA2007] 217.95869+13.53470,,217.9587,13.53469,,,0.16,1,,0,FALSE,NULL,NULL,,,"Can phoenix or lobe, http://adsabs.harvard.edu/abs/2011MNRAS.414.1175O, hard to measure , low luminosity, strong contaminating source",CLASSI,,,,,,,,,
 1RXS_J060313.4+421231,"N, SW_a, SW_b",90.81,42.21,90.833,42.1967,0.225,7.7,2013MNRAS.433..812O,1,TRUE,RR_1RXS_J060313.4+421231,364,2016ApJ...818..204V,,"Toothbrush relic! http://arxiv.org/pdf/1209.2196v2.pdf, Fluss von  Reinout gibt in 2016",TRUE,TRUE,,,,,,,,
@@ -55,7 +55,7 @@ ACT-CLJ0102-4915,,15.72,-49.25,,,0.87,64.6,2014ApJ...786...49L,2,TRUE,NULL,8.6,2
 CIZA_J0107.7+5408,"N,S",16.949,54.142,,,0.1066,3.9,2016ApJ...823...94R,2,FALSE,RR_CIZA_J0107.7+5408,30,2016ApJ...823...94R,,flux <36 if no point source subtraction,TRUE,,,,,,,,,
 CIZA_J0649.3+1801,"a, b",102.35,18.02,,,0.064,2.38,2011A+A...533A..35V,1,FALSE,RR_CIZA_J0649.3+1801,27.5,Rajpurohit et al. in prep.,,"http://arxiv.org/pdf/1107.5597.pdf, also Raj17",TRUE,,,,,,,,,
 CIZA_J2242.8+5301,N,340.72,53.02,,,0.192,6.8,2012A+ARv..20...54F,2,TRUE,RR_CIZA_J2242.8+5301,144,2013A+A...555A.110S,,"Sausage! Spectra from http://www.aanda.org/articles/aa/pdf/2013/07/aa21267-13.pdf, new paper https://arxiv.org/pdf/1706.09903.pdf",TRUE,TRUE,,,,,,,,
-CL 0217+70,"NW, SE",34.125,70.617,,,0.0655,0.63,2012A+ARv..20...54F,2,FALSE,NULL,NULL,2011ApJ...727L..25B,,S. Brown+_2010; Feretti_2012 : strongly confused with other source,CONF,TRUE,,,,,,,,
+CL 0217+70,"NW, SE",34.125,70.617,,,0.0655,0.63,2012A+ARv..20...54F,2,FALSE,NULL,NULL,2011ApJ...727L..25B,,S. Brown+_2010, Feretti_2012 : strongly confused with other source,CONF,TRUE,,,,,,,
 1E_0657-55,,104.623,-55.944,,,0.296,22.59,2009A+A...507.1257G,1,TRUE,NULL,82.6,2015MNRAS.449.1486S,,Bulletcluster,noMAP,TRUE,,,,,,,,
 MaxBCG_138.91895+25.19876,,98.79408,75.532055,,,0.324,NULL,,0,FALSE,NULL,24.7,2011A+A...527A.114V,,"Simbad creates problems, subtract pointsource with 0.8 mJy , http://www.aanda.org/articles/aa/pdf/2011/03/aa15991-10.pdf",CLASSI,,,,,,,,,
 MaxBCG_217.95869+13.53470,,217.9587,13.5347,,,0.16,1,2009A+A...508...75V,0,FALSE,NULL,14.6,2009A+A...508...75V,,(LOBE relic) http://www.aanda.org/articles/aa/pdf/2011/03/aa15991-10.pdf,"CONF,CLASSI",,,,,,,,,
