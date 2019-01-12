@@ -40,14 +40,12 @@ def SPH_binning(snap, posrot, dinf, iL, immask=1, HSize_z=1000, nbins=100, weigh
 
     
 
-def Run_MockObs( bulked, GClrealisations, locations, steps = [1,2,3,4,5,6,7], CASAmock=False, XRay=False, saveFITS = False, 
-                writeClusters = False, savewodetect=False, log=False, tPi=2, iii=0, sideEffects=False):
+def Run_MockObs(bulked, GClrealisations, CASAmock=False, XRay=False, saveFITS = False,
+                writeClusters = False, savewodetect=False, log=False, iii=0, side_effects=False):
     ''' Runs a mock observation
-        sideEffects: put True if you want the input galaxy clsuter to be changed, False if you want only a copy to be influenced '''
+        side_effects: put True if you want the input galaxy clsuter to be changed, False if you want only a copy to be influenced '''
     (snap, Rmodel, emptySurvey) = bulked    
-    efflist     = Rmodel.effList
-
-
+    efflist    = Rmodel.effList
     savefolder = emptySurvey.outfolder
     iom.check_mkdir(savefolder) 
 
@@ -65,57 +63,58 @@ def Run_MockObs( bulked, GClrealisations, locations, steps = [1,2,3,4,5,6,7], CA
         casa = drica.Casapy()
     
    
-    smt = iom.SmartTiming(rate=5e4) #, logf=outf+'smt.log'  #;  print( '###==== Step2a:  Loading configuration files ====###'  )
-  
-  
+    smt = iom.SmartTiming(rate=5e4)  # logf=outf+'smt.log'  #;  print( '###==== Step2a:  Loading configuration files ====###'  )
+
     #  Units, conversion factors, and input variables
-    fac_rho      =  loadsnap.conversion_fact_gadget_rho_to_nb( snap.head )*loadsnap.conversion_fact_ne_per_nb() #electrons/cm^-3
-    fac_T        =  loadsnap.conversion_fact_gadget_U_to_keV(  snap.head ) # in [keV]                   
-    fac_T2       =  loadsnap.conversion_fact_gadget_U_to_keV(  snap.head )/8.61732814974056e-08  # to K          
+    fac_rho = loadsnap.conversion_fact_gadget_rho_to_nb( snap.head)*loadsnap.conversion_fact_ne_per_nb()  #electrons/cm^-3
+    fac_T   = loadsnap.conversion_fact_gadget_U_to_keV(  snap.head)  # in [keV]
+    fac_T2  = loadsnap.conversion_fact_gadget_U_to_keV(  snap.head) / 8.61732814974056e-08  # to K
                            
     ''' determines if you want to change the galaxy cluster or not '''
-    if sideEffects:  GClrealisations_used =                GClrealisations       
-    else          :  GClrealisations_used =  copy.deepcopy(GClrealisations)           
+    if side_effects:  GClrealisations_used =               GClrealisations
+    else           :  GClrealisations_used = copy.deepcopy(GClrealisations)
+
     for jj, gcl in enumerate(GClrealisations_used):
-        mockobs    = gcl.mockobs
-        z          = gcl.z.value
-        hsize      = mockobs.hsize
-        dinf       = gcl.dinfo  #copy.deepcopy(gcl.dinfo) # A local realisation of dinfo. This is just because some parameters of dinfo could change, because of adaptive pixelsize etc.
-        fac_x      = loadsnap.comH_to_phys( snap.head, z )
+        mockobs = gcl.mockobs
+        z       = gcl.z.value
+        hsize   = mockobs.hsize
+        dinf    = gcl.dinfo  #copy.deepcopy(gcl.dinfo) # A local realisation of dinfo. This is just because some parameters of dinfo could change, because of adaptive pixelsize etc.
+        fac_x   = loadsnap.comH_to_phys(snap.head, z)
         
-        if log: print( '  Realisation #%i-%i for %i efficiencies. In total %i realisations' %(iii+1, jj+1, len(efflist), len(GClrealisations) ) )
+        if log: print('  Realisation #%i-%i for %i efficiencies. In total %i realisations' % (iii+1, jj+1, len(efflist),
+                                                                                              len(GClrealisations)))
         #  Load variables and setting survey parameters
-        for ii,eff in enumerate(efflist):
+        for ii, eff in enumerate(efflist):
        
-            if ii==0 and log:   
-                print( 'Begin with efficiency of %5.3e.' %(eff) )
-          
-    
+            if ii == 0 and log:
+                print('Begin with efficiency of %5.3e.' % eff)
+
             #  Units, conversion factors, and input variables
-            radiounit   = myu.radiounit_A*eff # erg/s/Hz    --- Unit of particle luminousity in .radio snaps
-            rot         = mathut.Kep3D_seb(Omega=mockobs.theta, i=mockobs.phi,omega=mockobs.psi)
-            posrot      = np.dot( snap.pos, rot ) * fac_x
-            #velrot      = np.dot( snap.vel, rot )  Taken out, as long as we don't need to plot the velocity vetors
+            radiounit = myu.radiounit_A*eff # erg/s/Hz    --- Unit of particle luminousity in .radio snaps
+            rot       = mathut.Kep3D_seb(Omega=mockobs.theta, i=mockobs.phi,omega=mockobs.psi)
+            posrot    = np.dot(snap.pos, rot) * fac_x
+            #velrot   = np.dot(snap.vel, rot)  Taken out, as long as we don't need to plot the velocity vetors
 
             
             smt(task='Bin_radio_[sub]'); #print( '###==== Step 3b:  Binning cluster data cube  (radio) ====###'
             # Parameters implied
             # See Nuza+ 2012 Equ (1)
-            relativistics  = (1+z)   # Term A: Bandwidth quenching  # Term B: Decreased Photon Emission Rate & Term C decreased photon energy both are included in gcl.cosmoDL
+            relativistics = (1+z)   # Term A: Bandwidth quenching  # Term B: Decreased Photon Emission Rate & Term C decreased photon energy both are included in gcl.cosmoDL
     #        s_radio     =  radiounit / Jy    / (4*np.pi* gcl.cosmoDL**2)      * relativistics   # radiounit*s_radio   is Jy/particle        #Umrechnung
-            s_radio_SI  =  radiounit / myu.Jy_SI / (4*np.pi*(gcl.cosmoDL*1e-2)**2)* relativistics   # radiounit*s_radioSI is Jy/particle        #Umrechnung
-            nbins       =  int(2 *hsize / (gcl.cosmoPS*dinf.spixel) )  
-            if nbins>mockobs.binmax and ii==0:
-                
+            s_radio_SI  = radiounit / myu.Jy_SI / (4*np.pi*(gcl.cosmoDL*1e-2)**2) * relativistics   # radiounit*s_radioSI is Jy/particle        #Umrechnung
+            nbins       = int(2 *hsize / (gcl.cosmoPS*dinf.spixel) )
+            if nbins > mockobs.binmax and ii == 0:
+
                 binsold       = nbins
                 spixelold     = dinf.spixel   
-                dinf.spixel   = dinf.spixel    * np.power(float(nbins)/float(mockobs.binmax), 0.5)
-                mockobs.hsize = mockobs.hsize  * np.power(float(nbins)/float(mockobs.binmax),-0.5)
+                dinf.spixel   = dinf.spixel   * np.power(float(nbins)/float(mockobs.binmax), 0.5)
+                mockobs.hsize = mockobs.hsize * np.power(float(nbins)/float(mockobs.binmax), -0.5)
                 dinf.update_Abeam()
                 nbins         = mockobs.binmax
-                if log: print( 'At z=%.3f with an pixel size of %.1f arcsec, the number of pixels per image is %i^2. Due to that the pixelscale was increased to %.1f arcsec and the binned boxsize decreased to %i kpc.' %  (z, spixelold, binsold, dinf.spixel, mockobs.hsize) )
-                hsize         = mockobs.hsize
-            dinf.pcenter = [nbins/2,nbins/2]
+                if log:
+                    print('At z=%.3f with an pixel size of %.1f arcsec, the number of pixels per image is %i^2. Due to that the pixelscale was increased to %.1f arcsec and the binned boxsize decreased to %i kpc.' %  (z, spixelold, binsold, dinf.spixel, mockobs.hsize) )
+                hsize = mockobs.hsize
+            dinf.pcenter = [nbins/2, nbins/2]
             
             ''' Initial: np.where( (snap.rdow < 5e-1/(loadsnap.conversion_fact_gadget_rho_to_nb( snap.head )*loadsnap.conversion_fact_ne_per_nb())) & 
                                    (snap.udow > 5e4) )[0] 
@@ -161,20 +160,18 @@ def Run_MockObs( bulked, GClrealisations, locations, steps = [1,2,3,4,5,6,7], CA
                 better to find a condition based on rho/u, because they describe the particle properties (i.e. galaxies)
             '''
         
-            iL     =  np.where(         
-#                            
-                            ( (8.9+  3.3 - np.log(snap.u*fac_T2) - 0.65*np.log10(snap.rho*fac_rho)) < 0) &
-                            ( (8.9- 11.0 - np.log(snap.u*fac_T2) - 3.5*np.log10(snap.rho*fac_rho))  < 0) &
-                            ( (8.9+  6.9 - np.log(snap.u*fac_T2) + 0.5*np.log10(snap.rho*fac_rho))  < 0) &
-                            (snap.mach   < 10)  &
-                            (np.sqrt(snap.pos[:,0]**2+snap.pos[:,1]**2+snap.pos[:,2]**2)*fac_x < 1.5*gcl.R200() ) 
+            iL = np.where(  ((8.9+  3.3 - np.log(snap.u*fac_T2) - 0.65*np.log10(snap.rho*fac_rho)) < 0) &
+                            ((8.9- 11.0 - np.log(snap.u*fac_T2) - 3.5*np.log10(snap.rho*fac_rho))  < 0) &
+                            ((8.9+  6.9 - np.log(snap.u*fac_T2) + 0.5*np.log10(snap.rho*fac_rho))  < 0) &
+                            (snap.mach   < 10) &
+                            (np.sqrt(snap.pos[:,0]**2+snap.pos[:,1]**2+snap.pos[:,2]**2)*fac_x < 1.5*gcl.R200())
                            )[0]
  
-            if hasattr(snap,'radiPre'):
+            if hasattr(snap, 'radiPre'):
                if log: print('Run_MockObs:: Ratio of PREs to total emission', ((np.sum(snap.radiPre[iL]))/(np.sum(snap.radi[iL])+np.sum(snap.radiPre[iL]))) )
                snap.radi += snap.radiPre
         
-            H1, xedges, yedges = np.histogram2d( -posrot[iL,0], -posrot[iL,1], weights=s_radio_SI*snap.radi[iL], range=[[-hsize,hsize], [-hsize,hsize]], bins=nbins) #norm=LogNorm(), ,  cmin=1e-3   
+            H1, xedges, yedges = np.histogram2d(-posrot[iL,0], -posrot[iL,1], weights=s_radio_SI*snap.radi[iL], range=[[-hsize,hsize], [-hsize,hsize]], bins=nbins) #norm=LogNorm(), ,  cmin=1e-3
             ''' DEVELOPMENT BEGIN
                 trying to manage a simple subtraction of compact sources'''   
     
@@ -196,19 +193,19 @@ def Run_MockObs( bulked, GClrealisations, locations, steps = [1,2,3,4,5,6,7], CA
             scale_2 = 300 #450
             
             DoG1_filter        = copy.deepcopy(dinf)
-            DoG1_filter.beam   = [scale_1/gcl.cosmoPS,scale_1/gcl.cosmoPS,0]        
+            DoG1_filter.beam   = [scale_1/gcl.cosmoPS, scale_1/gcl.cosmoPS, 0]
             DoG1_filter.update_Abeam()
             
             DoG2_filter        = copy.deepcopy(dinf)
-            DoG2_filter.beam   = [scale_2/gcl.cosmoPS,scale_2/gcl.cosmoPS,0]        
+            DoG2_filter.beam   = [scale_2/gcl.cosmoPS, scale_2/gcl.cosmoPS, 0]
             DoG2_filter.update_Abeam()
             
             DoG_mask           = np.ones_like(H1)
             for ii in range(3):
-                H2_first           = DoG1_filter.convolve_map(H1*DoG_mask)  ## gaussian convolution
-                H2_sec             = DoG2_filter.convolve_map(H1*DoG_mask)  ## gaussian convolution
+                H2_first       = DoG1_filter.convolve_map(H1*DoG_mask)  ## gaussian convolution
+                H2_sec         = DoG2_filter.convolve_map(H1*DoG_mask)  ## gaussian convolution
     #            with np.errstate(divide='ignore', invalid='ignore'):
-                DoG_rel            = np.divide(np.abs(H2_sec-H2_first)+1e-20,H2_sec+1e-20)
+                DoG_rel        = np.divide(np.abs(H2_sec-H2_first)+1e-20,H2_sec+1e-20)
                 DoG_mask[np.where(DoG_rel < thresh)] = 0          #0.03                                                   
             H2_first           = DoG1_filter.convolve_map(H1)  ## gaussian convolution
             H2_sec             = DoG2_filter.convolve_map(H1)  ## gaussian convolution                                
@@ -237,25 +234,22 @@ def Run_MockObs( bulked, GClrealisations, locations, steps = [1,2,3,4,5,6,7], CA
                 IM0 = H2  #(fits.open(simpleconv))[0].data 
                 
             smt(task='CreateMask_[sub]'); #print( '###==== Step 6:  Create masked .fits mock image ====###'
-            IM1  = np.squeeze(IM0)  #!!! Here unmasked! ... np.multiply(np.squeeze(IM0), mask) 
+            IM1 = np.squeeze(IM0)  #!!! Here unmasked! ... np.multiply(np.squeeze(IM0), mask)
             '''Outdated saveFITS, please update and put to end of procedure '''
             if saveFITS and CASAmock:
               maput.numpy2FITS (IM1,  'sim.vla.d.masked.fits', dinf.spixel) 
               
             smt(task='RelicExtr_[sub]'); #print( '###==== Step 7: Extract radio relics ====###'
     
-            relics = relex.RelicExtraction(IM1, z, GCl=gcl, dinfo=dinf, eff=eff, rinfo=cbclass.RelicRegion('',[],rtype=1)) #, faintexcl=0.4, Mach=Hmach, Dens=Hdens,
+            relics = relex.RelicExtraction(IM1, z, GCl=gcl, dinfo=dinf, rinfo=cbclass.RelicRegion('',[], rtype=1)) #, faintexcl=0.4, Mach=Hmach, Dens=Hdens,
     
             smt(task='RelicHandling_[sub]')
             relics          = sorted(relics, key=lambda x: x.flux, reverse=True)
             gcl.add_relics(relics) 
-            
 
-    
-    #        print(('... ... ...', eff, np.sum(snap.radi), np.sum(snap.radi[iL]), np.sum(H2))
+            #        print(('... ... ...', eff, np.sum(snap.radi), np.sum(snap.radi[iL]), np.sum(H2))
             if savewodetect or len(relics) > 0: 
-                
-            
+
                 if eff == efflist[0]:
                     if log: print( '  ++The brightest relic found has a flux density of %f mJy' % (relics[0].flux) )  #Could producese errors, once there is no relict in the list                       
                     iom.check_mkdir(savefolder + '/maps/z%04.f'  % (gcl.mockobs.z_snap*1000))
@@ -263,22 +257,22 @@ def Run_MockObs( bulked, GClrealisations, locations, steps = [1,2,3,4,5,6,7], CA
                
                
                     ''' I couldnt come up with something better to take the inverse '''
-                    mask = np.ones(snap.rho.shape,dtype=bool)
+                    mask = np.ones(snap.rho.shape, dtype=bool)
                
                
                     '''DEVELOPMENT ... if pixel in highres dominates its surroundings...(50 percent in 5*5 grid) ...add?'''
                
-                    mask[iL]=0
-                    Subtracted, xedges, yedges =  np.histogram2d( -posrot[mask,0], -posrot[mask,1], weights=s_radio_SI*snap.radi[mask], range=[[-hsize,hsize], [-hsize,hsize]], bins=nbins) #norm=LogNorm(), ,  cmin=1e-3   
-                    Subtracted                 +=  H1*(1-DoG_mask)
+                    mask[iL] = 0
+                    Subtracted, xedges, yedges = np.histogram2d( -posrot[mask,0], -posrot[mask,1], weights=s_radio_SI*snap.radi[mask], range=[[-hsize,hsize], [-hsize,hsize]], bins=nbins) #norm=LogNorm(), ,  cmin=1e-3
+                    Subtracted += H1*(1-DoG_mask)
                
-                    SubConv                    =  dinf.convolve_map(Subtracted)
+                    SubConv = dinf.convolve_map(Subtracted)
  
                 ''' New and cool part to derive additional relic information like average and  mach number and alpha, 
                 We also get the emission weighted density, as this works only on the bright parts it is fine to work with the subset of particles, yeah!
                 '''
 
-                Hmach,Hrho,Htemp,Harea,Halpha,Hmag,Hpre       = None,None,None,None,None,None,None
+                Hmach,Hrho,Htemp,Harea,Halpha,Hmag,Hpre = None,None,None,None,None,None,None
 #                Hrho_down,Hrho_up,Htemp_down,Htemp_up  = None,None,None,None,
                 alpha_help            =  (snap.mach[iL]**2+1)/(snap.mach[iL]**2-1)
             
@@ -324,18 +318,18 @@ def Run_MockObs( bulked, GClrealisations, locations, steps = [1,2,3,4,5,6,7], CA
                     if log: print( '###==== Step 4:  Preparing FITS file & folders ====###' )
                     
                     parlist = (savefolder, gcl.mockobs.z_snap*1000, gcl.name, Rmodel.id)
-                    gcl.maps_update(H1                                            , 'Raw'      , '%s/maps/z%04.f/%s-%04i_native.fits'          % parlist)
-                    gcl.maps_update(IM1                                           , 'Diffuse'  , '%s/maps/z%04.f/%s-%04i.fits'                 % parlist)
-                    gcl.maps_update(Subtracted                                    , 'CompModell','%s/maps/z%04.f/%s-%04i_compact.fits'         % parlist)
-                    gcl.maps_update(SubConv                                       , 'Subtrated', '%s/maps/z%04.f/%s-%04i_compactObserved.fits' % parlist)
+                    gcl.maps_update(H1          , 'Raw'      , '%s/maps/z%04.f/%s-%04i_native.fits'          % parlist)
+                    gcl.maps_update(IM1         , 'Diffuse'  , '%s/maps/z%04.f/%s-%04i.fits'                 % parlist)
+                    gcl.maps_update(Subtracted  , 'CompModell','%s/maps/z%04.f/%s-%04i_compact.fits'         % parlist)
+                    gcl.maps_update(SubConv     , 'Subtrated', '%s/maps/z%04.f/%s-%04i_compactObserved.fits' % parlist)
                     if(len(relics) > 0):
-                        gcl.maps_update(gcl.Mask_Map(Hmach,normalize=allflux,eff=eff) , 'Mach'     , '%s/maps/z%04.f/%s-%04i_mach.fits'            % parlist)
-                        gcl.maps_update(gcl.Mask_Map(Hrho ,normalize=allflux,eff=eff) , 'Rho'      , '%s/maps/z%04.f/%s-%04i_rho.fits'             % parlist)
-                        gcl.maps_update(gcl.Mask_Map(Htemp,normalize=allflux,eff=eff) , 'Temp'     , '%s/maps/z%04.f/%s-%04i_temp.fits'            % parlist)
-                        gcl.maps_update(gcl.Mask_Map(Hmag ,normalize=allflux,eff=eff) , 'B'        , '%s/maps/z%04.f/%s-%04i_B.fits'               % parlist)
-                        gcl.maps_update(gcl.Mask_Map(Hpre,normalize=allflux,eff=eff)  , 'PreRatio' , '%s/maps/z%04.f/%s-%04i_prerat.fits'          % parlist)
-                    gcl.maps_update(DoG_rel                                       , 'DoG_rel'  , '%s/maps/z%04.f/%s-%04i_DoG_rel.fits'         % parlist)
-                    gcl.maps_update(DoG_mask                                      , 'DoG_mask' , '%s/maps/z%04.f/%s-%04i_DoG_mask.fits'        % parlist)
+                        gcl.maps_update(gcl.Mask_Map(Hmach,normalize=allflux,eff=eff), 'Mach'     , '%s/maps/z%04.f/%s-%04i_mach.fits'            % parlist)
+                        gcl.maps_update(gcl.Mask_Map(Hrho ,normalize=allflux,eff=eff), 'Rho'      , '%s/maps/z%04.f/%s-%04i_rho.fits'             % parlist)
+                        gcl.maps_update(gcl.Mask_Map(Htemp,normalize=allflux,eff=eff), 'Temp'     , '%s/maps/z%04.f/%s-%04i_temp.fits'            % parlist)
+                        gcl.maps_update(gcl.Mask_Map(Hmag ,normalize=allflux,eff=eff), 'B'        , '%s/maps/z%04.f/%s-%04i_B.fits'               % parlist)
+                        gcl.maps_update(gcl.Mask_Map(Hpre,normalize=allflux,eff=eff) , 'PreRatio' , '%s/maps/z%04.f/%s-%04i_prerat.fits'          % parlist)
+                    gcl.maps_update(DoG_rel      , 'DoG_rel' , '%s/maps/z%04.f/%s-%04i_DoG_rel.fits'         % parlist)
+                    gcl.maps_update(DoG_mask     , 'DoG_mask', '%s/maps/z%04.f/%s-%04i_DoG_mask.fits'        % parlist)
 
 
                 ''' PhD feature --> plot the DoF images in a subplot

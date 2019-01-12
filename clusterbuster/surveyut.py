@@ -13,15 +13,15 @@ import numpy                   as np
 import clusterbuster.iout.misc as iom
 
 def AddFilesToSurvey(survey, savefolder, verbose = True, clusterwise=False):
-    '''
+    """
     Adds galaxy cluster in a specified folder to an survey.
     
     Currently clusterwise=True is the case for the normal Run() and clusterwise=False is the case for the ABC-routine.
     How about CW?
-    '''
+    """
     
     
-    ''' This replaces tha galaxy clusters of a survey object with all pickled galaxy clusters in an particular 'savefolder' '''
+    """ This replaces tha galaxy clusters of a survey object with all pickled galaxy clusters in an particular 'savefolder' """
     minsize        = 1
     location       = savefolder+'/pickled/'
     location       = location.replace('//','/')
@@ -99,7 +99,7 @@ def interpret_parset(parfile, repository='/parsets/', default='default.parset', 
 
     return returnargs
      
-''' former CW '''
+""" former CW """
 
 
 def brightestPixel(image):  # Runs into issues if there is more than one brightest pixel, this is also why a smoothed image is prefered
@@ -110,10 +110,10 @@ def brightestPixel(image):  # Runs into issues if there is more than one brighte
 
 
 def cmask(image,radius,center=None):
-    ''' takes the 2D-array and creates a mask with a radius of 'radius' elements
+    """ takes the 2D-array and creates a mask with a radius of 'radius' elements
     If not specified by index the center of the image is given as the center.
     inspired by http://stackoverflow.com/questions/8647024/how-to-apply-a-disc-shaped-mask-to-a-numpy-array 
-    Returns: ... '''
+    Returns: ... """
     
 
     
@@ -137,10 +137,10 @@ def gaussian_pseudo(x,x0,sigma):
   return  np.exp(-np.power((x - x0)/sigma, 2.)/2.)  #1./(np.sqrt(2.*np.pi)*sigma)*
 
 def Recenter(GCl, image, subp, image2mask=None, setto=0.): # a function of galaxy cluster?
-    ''' recenters the cluster centric coordinates basede on the mass proxy 
+    """ recenters the cluster centric coordinates basede on the mass proxy 
         WORK IN PROGRESS: Because It changes the GCl object it should be one of it's functionalities!
-        '''
-    # draw region of Mwir around current center '''
+        """
+    # draw region of Mwir around current center """
     # find maximum within Rvir ...
     radius = GCl.R200/(146.48/subp)
     mask      = cmask(image,radius)  #(1+GCl.z)
@@ -154,7 +154,7 @@ def Recenter(GCl, image, subp, image2mask=None, setto=0.): # a function of galax
     GCl.Dec.value      = GCl.Dec + off_x* 146.48/(subp*GCl.cosmoPS*3600)/(1+GCl.mockobs.z_snap)
     GCl.massproxy_mask = mask
     
-    ''' Masks relic emission outside R200 of the given cluster '''
+    """ Masks relic emission outside R200 of the given cluster """
     if image2mask is not None:
         masked_im, mask = Mask(image2mask, radius, (cen_x[0], cen_y[0]), setto=setto)
         return off_x, off_y, masked_im
@@ -163,7 +163,7 @@ def Recenter(GCl, image, subp, image2mask=None, setto=0.): # a function of galax
 
     
 def Mask(image, radius, center, setto=-10):
-    ''' masks in image outside the influence zone of a given cluster based on the mass '''
+    """ masks in image outside the influence zone of a given cluster based on the mass """
 
     # compare maximum with local maximum in Rvir --> is there a more massive component?
     # find minimal contour within rvir that divides both clusters
@@ -181,31 +181,32 @@ def Mask(image, radius, center, setto=-10):
 
 
 def weight_snap(snaplist_z, z, sigma_z=0.2, use_list=None, fake=False):
-    ''' Takes:
+    """ Takes:
         snaplist_z : A list of usable snaps  
                  z : The redshift of the assigned cluster
                  
         Returns: An numpy array of the weight for each snapshot
-    '''
+    """
     
     # Draws the gaussian distribution function
     if fake:
         return np.ones_like(snaplist_z)
     
-    vetted   = gaussian_pseudo( np.asarray([z-zz for zz in snaplist_z]), 0, sigma_z)
+    vetted = gaussian_pseudo(np.asarray([z-zz for zz in snaplist_z]), 0, sigma_z)
     
     if use_list is None: # If not specified, make all snapshots available
         use_list = [True] * len(snaplist_z)
     
     # Weights snaps according to their gaussian weight
-    weighted_snap  =  np.multiply(vetted,np.asarray(use_list))
+    weighted_snap = np.multiply(vetted, np.asarray(use_list))
     weighted_snap /= np.sum(weighted_snap)  
                       
     return weighted_snap
 
 
-def assign_snaps(snaplist_z, boundaries_z, VCM, snaps_Nclusters, sigma_z=0.2, use_list=None, skycoverage=1, Vsimu=0.1, rand=0, fake=False,logmode='short',verbose=False):
-    ''' Takes:
+def assign_snaps(snaplist_z, boundaries_z, VCM, snaps_Nclusters, sigma_z=0.2, use_list=None, skycoverage=1, Vsimu=0.1,
+                 fake=False, logmode='short', verbose=False):
+    """ Takes:
         snaplist_z     : A list of usable snaps  
         boundaries_z   : The cental redshift of the volume
         VCM            : The comoving volume within the shell [Gpc**3]
@@ -217,46 +218,49 @@ def assign_snaps(snaplist_z, boundaries_z, VCM, snaps_Nclusters, sigma_z=0.2, us
     
     Currently this is only done for one z value. The goal would be to create a list for an array of z values
     + initial randomization that then could be saved
-    '''
+    """
     
     clusterlist = []
-    z_central   = np.mean(boundaries_z)
+    z_central = np.mean(boundaries_z)
     weighted_snap = weight_snap(snaplist_z, z_central, sigma_z=sigma_z, use_list=use_list)     
-    weighting     = VCM * skycoverage * weighted_snap/ Vsimu
+    weighting = VCM * skycoverage * weighted_snap/Vsimu
     
     
     # Now do a poisson trial for each cluster in each snapshot
-    for kk, (weight, N_clusters) in enumerate(zip(weighting,snaps_Nclusters)):
+    #print(snaplist_z)
+    #print(weighting * snaps_Nclusters[0])
+    #return weighting * snaps_Nclusters[0]
+
+    for kk, (weight, N_clusters) in enumerate(zip(weighting, snaps_Nclusters)):
          if not fake:
-             trials =  np.random.poisson(weight,N_clusters)
+             trials = np.random.poisson(weight, N_clusters)
          else:
-             trials =  np.ones(N_clusters)
+             trials = np.ones(N_clusters)
          
          # do while there are clusters in the trial; exspected are natural number array
          while np.sum(trials) > 0:
-             positions            = np.where(trials > 0)
-             trials[positions]   -= 1
-             clusterlist         +=  zip([kk]*len(positions[0]), positions[0])
-             
+             positions          = np.where(trials > 0)
+             trials[positions] -= 1
+             clusterlist       += zip([kk]*len(positions[0]), positions[0])
 
     if verbose:
-        if logmode   == 'long':     
-            print('z_central %.4f' % (z_central), 'weighted_snap', weighted_snap, 'p_counts', ['%.1e' % (w*N) for w,N in zip(weighting,snaps_Nclusters)] )
+        if logmode == 'long':
+            print('z_central %.4f' % z_central, 'weighted_snap', weighted_snap, 'p_counts',
+                  ['%.1e' % (w*N) for w,N in zip(weighting,snaps_Nclusters)])
         elif logmode == 'short':
-            print('z_central %.4f' % (z_central), 'N_GCl', len(clusterlist) )
+            print('z_central %.4f' % z_central, 'N_GCl', len(clusterlist))
 
-    #    return all clusers within shell
-    return clusterlist
+    return clusterlist         # return all clusters within shell
 
 
 def discovery_prop(relics, a=3, b=0.10):
-    ''' Takes a list of relics and takes returns an array of they weighted discovery probabilities according 
+    """ Takes a list of relics and takes returns an array of they weighted discovery probabilities according 
     to their shape parameter and the discovery function 
     
     Input: relics a list of CLusterBuster relics
            a is the normalization of the strength
            b is the offset
-           '''
+           """
     from scipy.stats import logistic
     
     probs = logistic.cdf([np.log10(b/relic.shape_advanced().value)*a for relic in relics])

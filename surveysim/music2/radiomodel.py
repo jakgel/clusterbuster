@@ -59,7 +59,6 @@ def PrepareRadioCube(snap, psiFile='Hoeft_radio/mach_psi_table.txt', machFile='H
 
     s = H_mach[results_y, 4] # Electron energy distribution spectral index as function of mach number
      
-     
     # ... get an idea of the corresponding iluminated area  
     h         = snap.hsml[MF]*1e-3                     # com+h [kpc] --> com+h [Mpc]  Hydrodynamical smoothing length, i.e. Size of kernel, determined as a measure of density  IMPORTANT: The term h^-1*expansion factor (because of comoving frame) is added later in CreateRadioCube!
     factor_A  = loadsnap.comH_to_phys( snap.head )     # Smoothing kernel part B; 0.7 steems from h=0.7; 1/(1+z) is the expansion factor; second part of computing A_i
@@ -110,28 +109,28 @@ def PiggyBagSnap(snap, extended=True):
     
     """
 
-    cutsnap          = loadsnap.Snapshot(snap.name) 
-    cutsnap.head     = snap.head
-    cutsnap.rup      = snap.rup
-    cutsnap.rdow     = snap.rdow
-    cutsnap.mach     = snap.mach 
-    cutsnap.s        = snap.s
-    cutsnap.radi     = snap.radi
-    cutsnap.pos      = snap.pos
+    cutsnap      = loadsnap.Snapshot(snap.name)
+    cutsnap.head = snap.head
+    cutsnap.rup  = snap.rup
+    cutsnap.rdow = snap.rdow
+    cutsnap.mach = snap.mach
+    cutsnap.s    = snap.s
+    cutsnap.radi = snap.radi
+    cutsnap.pos  = snap.pos
       
     if extended:
-        cutsnap.udow   = snap.udow
+        cutsnap.udow = snap.udow
 #        cutsnap.rdow   = snap.rdow
-        cutsnap.mach   = snap.mach
-        cutsnap.area   = snap.area
+        cutsnap.mach = snap.mach
+        cutsnap.area = snap.area
         
         """DEVELOPMENT I --> this is needed, because it PiggyBagSnap is also used for Cutsnap in run survey, which leads to PiggyBagSnap_cut"""
-        cutsnap.hsml   = snap.hsml
-        cutsnap.uup    = snap.uup
+        cutsnap.hsml = snap.hsml
+        cutsnap.uup  = snap.uup
         
         """DEVELOPMENT II  Because in CreateMockOps, cuts are set due to the density and temperature of the projectile"""
-        cutsnap.rho    = snap.rho
-        cutsnap.u      = snap.u
+        cutsnap.rho = snap.rho
+        cutsnap.u   = snap.u
         
         """DEVELOPMENT III
         Because we create a model with PREs, where the Gelszinnis model uses a modification of this factor. If not used, this can be ommited"""

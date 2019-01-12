@@ -309,9 +309,9 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
 #    cmap  = 'afmhot'   #'BuPu'   #
 #    norm  = MPLcolors.PowerNorm(gamma=2) #CW uses a gamma of 2
     #cmap =plt.cm.get_cmap('RdYlBu')
-    laargs = {'color':'#BBBBBB'}      # line arguments
-    ciargs = {'color':'#BBBBBB'}      # arguments for the circle/centre area
-    baargs = {'color':'#BBBBBB'}      # argument for the scale bar
+    laargs = {'color':'#DDDDDD'}      # line arguments
+    ciargs = {'color':'#DDDDDD'}      # arguments for the circle/centre area
+    baargs = {'color':'#DDDDDD'}      # argument for the scale bar
     if label_sheme =='dark':
         laargs.update({'color':'black'})
         ciargs.update({'color':'#111111'})
@@ -357,6 +357,7 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
         if recenter:
             print('Recentering', GCl.name, GCl.RA(),GCl.Dec(),diam)
             f.recenter(GCl.RA(), GCl.Dec(), width=diam, height=diam) # radius is also possible!
+
 
         if survey.Rmodel.simu:
 #            f.tick_labels.set_xformat("dd:mm:ss")

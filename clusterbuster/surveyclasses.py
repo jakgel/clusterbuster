@@ -37,45 +37,6 @@ from astropy.coordinates import SkyCoord
 from astropy.cosmology import FlatLambdaCDM   # from astropy.cosmology import WMAP9 as cosmo
 from scipy import sparse
 
-def compute_moments(sparseA, sparseD, sparseW, xy_swapped = True):
-
-    if len(sparseD) > 0:
-        sparseD = [1 for a in sparseA] # DEBUGGING
-
-        if xy_swapped:
-            x = np.cos(sparseA)*sparseD # * -1 next test
-            y = np.sin(sparseA)*sparseD
-        else:
-            x = np.sin(sparseA)*sparseD
-            y = np.cos(sparseA)*sparseD
-
-        moment_00 = np.sum(sparseW)
-        moment_10 = np.sum(sparseW*x)  # x*x
-        moment_01 = np.sum(sparseW*y)  # y*y
-        moment_11 = np.sum(sparseW*x*y)
-        moment_20 = np.sum(sparseW*x*x)
-        moment_02 = np.sum(sparseW*y*y)
-
-        _xm = moment_10/moment_00
-        _ym = moment_01/moment_00
-
-        moment_central_11 = moment_11/moment_00 - _xm*_ym
-        moment_central_20 = moment_20/moment_00 - _xm*_xm
-        moment_central_02 = moment_02/moment_00 - _ym*_ym
-        moment_angle = .5*np.arctan2(2*moment_central_11, moment_central_20-moment_central_02)
-        #moment_angle = np.arctan(moment_central_11,moment_central_20-moment_central_02)
-        #print('Moments:', moment_00, moment_10, moment_01, moment_11, moment_20, moment_02)
-        #print('Central:', moment_central_11, moment_central_20, moment_central_02)
-        #print('Derived', moment_angle)
-
-        #if xy_swapped:
-        #    moment_angle + np.pi/2
-
-    else:
-        moment_angle = 0
-
-
-    return moment_angle
 
 def get_truth(inp, relate, cut):
     ops = {'>': operator.gt,
@@ -254,7 +215,8 @@ class Survey(object):
         else:
             self.seed_dropout = np.random.RandomState()
 
-    def FilterCluster(self, minrel=1, zborder=0, ztype='>', minimumLAS=0, GClflux=0, index=None, getindex=False, verbose=False,  **kwargs):
+    def FilterCluster(self, minrel=1, zborder=0, ztype='>', minimumLAS=0, GClflux=0, index=None, getindex=False,
+                      verbose=False,  **kwargs):
         """ Gives all the cluster with the relics that fullfill given criteria """
 
         if index is not None:
@@ -294,6 +256,11 @@ class Survey(object):
          
     def fetch_totalRelics(self, **kwargs):
         relics_list = []
+
+        zborder = 0.05
+        if self.filteredClusters is None:
+            self.FilterCluster(zborder=zborder)
+
         for GCl in self.filteredClusters:
             relics_list += GCl.filterRelics(**kwargs)
 
@@ -488,7 +455,7 @@ class Galaxycluster(object):
     def filterRelics(self, Filter=True, maxcomp=None, regard=[1,2,3]):
 
         if Filter:
-            minflux = self.dinfo.rms * 4 * 1000  #microjansky to millijansky
+            minflux = self.dinfo.rms * 8 * 1000  #microjansky to millijansky
             if maxcomp is None:
                 maxcomp = self.maxcomp
         else:

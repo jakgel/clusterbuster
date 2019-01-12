@@ -25,10 +25,8 @@ import seaborn as sns
 
 from functools import partial
 
-
-
 """=== Here starts the flesh and meet of the analysis done for my PhD ==="""
-def main_abcpmc_MUSIC2(conf, new_run=True, test=False):
+def main_abcpmc_MUSIC2(conf, test=False):
 
     """ 
     config should contain
@@ -38,49 +36,45 @@ def main_abcpmc_MUSIC2(conf, new_run=True, test=False):
     eps_start is actually important as the next iteration will only start if the number of computed trials within these boundaries will be Nw.
     So in one case I had to draw and compute twice as many particles than Nw.
     
-    
-    
-    About the treads: 14-16 treads are fine, as more treats wont be fully used and just stuff the taskqueue
+    About the treads: 14-16 treads are fine, as more treats wont be fully used and just sit in the taskqueue
     """
     
     
     # Loads the real data to compare with (and if neccessary also test data)
-    data   = iom.unpickleObject(conf['paths']['surveyreal'])
+    data = iom.unpickleObject(conf['paths']['surveyreal'])
     if test:
         dataMUSIC2 = iom.unpickleObject(conf['paths']['surveysim'])
-        surmet.abcpmc_dist_severalMetrices(dataMUSIC2, data, delal=False) 
-    
-    # Prepares the file for counting
-    with open(conf['paths']['abcpmc'] + 'count.txt', 'w') as f:
-        f.write('0')
-
-
+        surmet.abcpmc_dist_severalMetrices(dataMUSIC2, data, metrics=json.loads(conf['metrics']['used']),
+                                           delal=False, stochdrop=False)
+        return 0
 
     """ The abcpmc part starts: Define thetas i.e. parameter values to be inferred  and priors"""
 
     if conf['prior']['type'] == 'tophat':
         bounds = json.loads(conf['prior']['bounds'])
-        prior  = abcpmc.TophatPrior( bounds[0], bounds[1] )
+        prior = abcpmc.TophatPrior(bounds[0], bounds[1])
     elif conf['prior']['type'] == 'gaussian':
-        means    = json.loads(conf['prior']['means'])
-        COV      = json.loads(conf['prior']['covariance'])
+        means = json.loads(conf['prior']['means'])
+        COV = json.loads(conf['prior']['covariance'])
         prior = abcpmc.GaussianPrior(mu=means, sigma=COV)
     else:
         print('inference_abcpmc::main_abcpmc_MUSIC2: prior %s is unknown!' % (conf['prior']['type']))
         return 0
 
-
     eps = abcpmc.ConstEps(conf.getint('pmc', 'T'), json.loads(conf['metrics']['eps_startlimits']))
-       
-    
+
     if test:
         sampler = abcpmc.Sampler(N=conf.getint('pmc', 'Nw'), Y=data, postfn=testrand, dist=testmetric,
                                  threads=conf.getint('mp', 'Nthreads'), maxtasksperchild=conf.getint('mp', 'maxtasksperchild'))
     else:
-        sampler = abcpmc.Sampler(N=conf.getint('pmc', 'Nw'), Y=data, postfn=partial(music2run.main_ABC,parfile=conf['simulation']['parfile']),
-                                 dist=partial(surmet.abcpmc_dist_severalMetrices, metrics= json.loads(conf['metrics']['used']), outpath=conf['paths']['abcpmc']), 
+        sampler = abcpmc.Sampler(N=conf.getint('pmc', 'Nw'), Y=data, postfn=partial(music2run.main_ABC, parfile=conf['simulation']['parfile']),
+                                 dist=partial(surmet.abcpmc_dist_severalMetrices, metrics=json.loads(conf['metrics']['used']), outpath=conf['paths']['abcpmc']),
                                  threads=conf.getint('mp', 'Nthreads'), maxtasksperchild=conf.getint('mp', 'maxtasksperchild'))
-        #dist=surmet.abcpmc_dist_severalMetrices, 
+
+        # Prepares the file for counting
+        with open(conf['paths']['abcpmc'] + 'count.txt', 'w+') as f:
+            f.write('0')
+
     sampler.particle_proposal_cls = abcpmc.OLCMParticleProposal
     
     """ compare with AstroABC
@@ -92,12 +86,12 @@ def main_abcpmc_MUSIC2(conf, new_run=True, test=False):
     t0 = time.time()
     
     #	startfrom=iom.unpickleObject('/data/ClusterBuster-Output/MUSIC_NVSS02_Test01/launch_pools')
-    pool     = None #startfrom[-1]
-    launch(sampler,prior,conf.getfloat('pmc','alpha'),eps,surveypath=conf['paths']['abcpmc'],pool=pool)
+    pool = None #startfrom[-1]
+    launch(sampler, prior, conf.getfloat('pmc','alpha'), eps, surveypath=conf['paths']['abcpmc'], pool=pool)
     print("took", (time.time() - t0))
 
 
-def launch(sampler,prior,alpha,eps,ratio_min = 4e-2,surveypath=None, pool=None, plotting=False):
+def launch(sampler, prior, alpha, eps, ratio_min=4e-2, surveypath=None, pool=None, plotting=False):
     """ Launches pools
      Could become implemeted in abcpmc itself"""
     
@@ -107,12 +101,12 @@ def launch(sampler,prior,alpha,eps,ratio_min = 4e-2,surveypath=None, pool=None, 
         print("T: {0}, eps: [{1}], ratio: {2:>.4f}".format(pool.t, eps_str, pool.ratio))
 
         for i, (mean, std) in enumerate(zip(*abcpmc.weighted_avg_and_std(pool.thetas, pool.ws, axis=0))):
-            print(u"    theta[{0}]: {1:>.4f} \u00B1 {2:>.4f}".format(i, mean,std))
+            print(u"    theta[{0}]: {1:>.4f} \u00B1 {2:>.4f}".format(i, mean, std))
 
         eps.eps = np.percentile(pool.dists, alpha, axis=0) # reduce eps value
         pools.append(pool)
         
-        iom.pickleObject(pools, surveypath, 'launch_pools', append = False)
+        iom.pickleObject(pools, surveypath, 'launch_pools', append=False)
         
         
         
@@ -272,7 +266,8 @@ def plot_abctraces(pools, surveypath=''):
 if __name__ == "__main__":
     """ Full routines for parsing a combination of argparse, configparser and json"""
     parser = argparse.ArgumentParser(description='Evaluates the best solutions of survey simulations with the abc abbroach.')
-    parser.add_argument('-parini', dest='parini'  , action='store', default='params.ini', type=str,help='set filepath for parameter initialisation file.')
+    parser.add_argument('-parini', dest='parini', action='store', default='params.ini', type=str,
+                        help='set filepath for parameter initialisation file.')
     args = parser.parse_args()
 
 #    fd = open(args.parini, 'r')
@@ -280,4 +275,4 @@ if __name__ == "__main__":
     config.read(args.parini)
     args = parser.parse_args()
     
-    main_abcpmc_MUSIC2(config, new_run=True)  #dataNVSS
+    main_abcpmc_MUSIC2(config, test=False)  #dataNVSS

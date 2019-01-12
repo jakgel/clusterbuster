@@ -161,8 +161,49 @@ def polar_from_to(array,borders):
         return array_polar
 
 
+def compute_moments(sparseA, sparseD, sparseW, xy_swapped = True):
+
+    if len(sparseD) > 0:
+        sparseD = [1 for a in sparseA] # DEBUGGING
+
+        if xy_swapped:
+            x = np.cos(sparseA)*sparseD # * -1 next test
+            y = np.sin(sparseA)*sparseD
+        else:
+            x = np.sin(sparseA)*sparseD
+            y = np.cos(sparseA)*sparseD
+
+        moment_00 = np.sum(sparseW)
+        moment_10 = np.sum(sparseW*x)  # x*x
+        moment_01 = np.sum(sparseW*y)  # y*y
+        moment_11 = np.sum(sparseW*x*y)
+        moment_20 = np.sum(sparseW*x*x)
+        moment_02 = np.sum(sparseW*y*y)
+
+        _xm = moment_10/moment_00
+        _ym = moment_01/moment_00
+
+        moment_central_11 = moment_11/moment_00 - _xm*_ym
+        moment_central_20 = moment_20/moment_00 - _xm*_xm
+        moment_central_02 = moment_02/moment_00 - _ym*_ym
+        moment_angle = .5*np.arctan2(2*moment_central_11, moment_central_20-moment_central_02)
+        #moment_angle = np.arctan(moment_central_11,moment_central_20-moment_central_02)
+        #print('Moments:', moment_00, moment_10, moment_01, moment_11, moment_20, moment_02)
+        #print('Central:', moment_central_11, moment_central_20, moment_central_02)
+        #print('Derived', moment_angle)
+
+        #if xy_swapped:
+        #    moment_angle + np.pi/2
+
+    else:
+        moment_angle = 0
+
+
+    return moment_angle
+
+
     
-#=== Some cosmological stuff which could be put somewhere else ===#    
+#=== TODO: Some cosmological stuff which could be put somewhere else ===#
 def Mvir2Lx(MassBins,h=0.7): #Made for logarithmic values
    # Using the scalling relation of Reichert et al for z=0.0
   Lx    = 1.52*MassBins+1.52*np.log10(0.54*1e-15/h)+np.log10(0.88*2.5*1e45)    #W/Hz read file ... convert to masses ... convert to erg/s 

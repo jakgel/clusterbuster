@@ -7,7 +7,7 @@ Cluster,Identifier,RA,Dec,RA_Xmax,Dec_Xmax,z,LX_500_0.1-2.4,REF_LX,Type,Type_Fla
 A_S753,,210.9,-33.99,,,0.014,0.5,2003AJ....125.1095S,0,FALSE,RR_AS753,460,2003AJ....125.1095S,,"http://arxiv.org/pdf/astro-ph/0212154.pdf, PKS B1400-33",TRUE,,,,,,,,,
 A13,,3.41,-19.51,,,0.0943,1.18,2012A+ARv..20...54F,0,TRUE,RR_A13,31,2001AJ....122.1172S,,http://arxiv.org/pdf/astro-ph/0105267v1.pdf ? not gischt?,TRUE,,,,,,,,,
 A85,,10.41,-9.34,,,0.055,4.1,2012A+ARv..20...54F,0,TRUE,RR_A85,43,2001AJ....122.1172S,,"Rms noise 3.3mJy/beam, not so roundish at high resolution, very steep spectrum    http://arxiv.org/pdf/astro-ph/0105267v1.pdf, 49.1 as flux value",TRUE,,,,,,,,,
-A115,,14.0373,26.321,13.961349,26.408,0.197,8.91,2012A+ARv..20...54F,1,TRUE,RR_A115,147,2001A+A...376..803G,,"http://arxiv.org/abs/0705.1444 large uncertainty due to point sources, ",TRUE,,,,,,,,,
+A115,,14.0373,26.321,13.961349,26.408,0.197,8.91,2012A+ARv..20...54F,1,TRUE,RR_A115,147,2001A+A...376..803G,,"http://arxiv.org/abs/0705.1444 large uncertainty due to point sources, ",TRUE,,,,,,6.4,2018arXiv181208797K,"15, table 6",
 A133,,15.66,-21.95,,,0.057,1.93,1996MNRAS.281..799E,0,FALSE,RR_A133,137,2010ApJ...722..825R,,http://arxiv.org/pdf/astro-ph/0105267v1.pdf,TRUE,,,,,,,,,
 A209,,22.99,-13.576,,,0.206,6.17,2009A+A...507.1257G,1,FALSE,RR_A209,0.7,2009A+A...507.1257G,,http://www.aanda.org/articles/aa/pdf/2009/45/aa12667-09.pdf,FAINT,TRUE,,,,,,,,
 A521,,73.54,-10.24,,,0.253,8.47,2012A+ARv..20...54F,1,TRUE,RR_A521,15,"

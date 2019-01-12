@@ -21,6 +21,7 @@ import time
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA as sklearnPCA
+import scipy
     
 def abcpmc_dist_severalMetrices( SurveyA, SurveyB, metrics=['number'], outpath='', delal=True, stochdrop=True):
   """ abcpmc differs from astroABC in that sense that the model data is called before the data in the metric arguement,
@@ -40,41 +41,42 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics=['numbers'],
     SurveyB: model
     
     """
-    print('ABC_dist_severalMetrices',metrics)
+    print('ABC_dist_severalMetrices', metrics)
+    if verbose:
+        print(SurveyA.name, SurveyB.name)
 
-    if verbose: print(SurveyA.name, SurveyB.name)
-    
+    if stochdrop:
+        SurveyB.set_seed_dropout()
 
-    #TODO:  The efficiency is outdated and should be replaced asap
-    for eff in SurveyB.Rmodel.effList:
-
-        if stochdrop: SurveyB.set_dropseed()
-        
-        if len([gcl.updateInformation() for gcl in SurveyB.FilterCluster(minrel=1)]) < 3:
-            distances = [1e9 for m in metrics]
-        else:  
-            distances = []
-            SurveyA.FilterCluster(minrel=1)
-            SurveyB.FilterCluster(minrel=1)
-            print ('SurveyB.GCls', len(SurveyB.GCls), '-->', 'SurveyB.filteredClusters', len(SurveyB.filteredClusters))
-            for metric in metrics:
+    if len([gcl.updateInformation() for gcl in SurveyB.FilterCluster(minrel=1)]) < 3:
+        distances = [1e9 for m in metrics]
+    else:
+        distances = []
+        SurveyA.FilterCluster(minrel=1)
+        SurveyB.FilterCluster(minrel=1)
+        print('SurveyB.GCls', len(SurveyB.GCls), '-->', 'SurveyB.filteredClusters', len(SurveyB.filteredClusters))
+        for metric in metrics:
 #                print('metric', metric)
-                
-                if metric == 'number':
-                    distance  = ABC_summaryStatistics_numbers([SurveyA,SurveyB])
-                if metric == 'polarHisto':
-                    distance  = ABC_summaryStatistics_polarHisto([SurveyA,SurveyB], eff)
-                if metric == 'logMach':
-                    distance  = ABC_summaryStatistics_logMach([SurveyA,SurveyB])
-                if metric == 'PCA':       
-                    distance  = ABC_summaryStatistics_PCA([SurveyA,SurveyB])
-                
-                distances.append(distance)
+
+            if metric == 'number':
+                distance = ABC_summaryStatistics_numbers([SurveyA,SurveyB])
+            if metric == 'flux_kolm':
+                distance = ABC_summaryStatistics_flux_komogorov([SurveyA,SurveyB])
+            if metric == 'polarHisto':
+                distance = ABC_summaryStatistics_polarHisto([SurveyA,SurveyB])
+            if metric == 'logMach':
+                distance = ABC_summaryStatistics_logMach([SurveyA,SurveyB])
+            if metric == 'PCA':
+                distance = ABC_summaryStatistics_PCA([SurveyA,SurveyB])
+
+            distances.append(distance)
                      
-        print('surveymetrics::ABC_dist_severalMetrices::', SurveyA.name, 'VS', SurveyB.name, 'metric disimilarity:', ['%s: %.3e' % (m,d) for (m,d) in zip(metrics,distances)] )
+        print('surveymetrics::ABC_dist_severalMetrices::', SurveyA.name, 'VS', SurveyB.name, 'metric disimilarity:',
+              ['%s: %.3e' % (m,d) for (m,d) in zip(metrics,distances)] )
             
         
-        """ This puts the survey to a bagged sutvey folde rand increases the counter. It might be interesting to know if this number is also the number of the runs.
+        """ This puts the survey to a bagged survey folder and increases the counter.
+        It might be interesting to know if this number is also the number of the runs.
         """
         if delal:
 
@@ -154,7 +156,7 @@ def Clusters_discovery_prop(survey, discovery_prop=None, maxcomp=None, verbose=F
 """==============="""
 
 
-def ABC_summaryStatistics_polarHisto(Surveys, eff):
+def ABC_summaryStatistics_polarHisto(Surveys):
     """ Compares the 'average relic' of survey B (simulation) with survey A (real world survey)
     input: either  2 Clusterbuster Class Surveys
            or      2 Polary binned Histogramms of the same dimensions
@@ -200,11 +202,11 @@ def ABC_summaryStatistics_2DKS(Surveys, eff, parA=lambda x: x.M200, parB = lambd
         cl_A = [gcl.updateInformation()        for gcl in A]
         cl_A = [gcl.updateInformation(eff=eff) for gcl in B]
         
-    x1  = np.asarray([parA(gcl).value for gcl in cl_A])
-    y1  = np.asarray([parB(gcl).value for gcl in cl_A])   
+    x1 = np.asarray([parA(gcl).value for gcl in cl_A])
+    y1 = np.asarray([parB(gcl).value for gcl in cl_A])
 
-    x2  = np.asarray([parA(gcl).value for gcl in cl_B])
-    y2  = np.asarray([parB(gcl).value for gcl in cl_B])   
+    x2 = np.asarray([parA(gcl).value for gcl in cl_B])
+    y2 = np.asarray([parB(gcl).value for gcl in cl_B])
     
     
     """Two-dimensional Kolmogorov-Smirnov test on two samples. 
@@ -260,6 +262,13 @@ def ABC_summaryStatistics_numbers(Surveys, maxcomp=None, verbose = False):
     return deviation
 
 
+def ABC_summaryStatistics_flux_komogorov(Surveys):
+
+    [A, B] = Surveys
+    fluxes_A, fluxes_B = [relic.flux() for relic in A.fetch_totalRelics()], [relic.flux() for relic in B.fetch_totalRelics()]
+    statistic, p_value = scipy.stats.ks_2samp(fluxes_A, fluxes_B)
+
+    return 1-p_value
 
 def ABC_summaryStatistics_logMach(Surveys):
     """ Compares survey B (simulation) with survey A (real world survey)
@@ -278,8 +287,8 @@ def ABC_summaryStatistics_logMach(Surveys):
     
     
     # Get mach-numbers and remove nans
-    A = np.array( [np.log10(relic.Mach()) for relic in relicsA]) 
-    B = np.array( [np.log10(relic.Mach()) for relic in relicsB]) 
+    A = np.array([np.log10(relic.Mach()) for relic in relicsA])
+    B = np.array([np.log10(relic.Mach()) for relic in relicsB])
     
     mA = A[~np.isnan(A)].mean()
     mB = B[~np.isnan(B)].mean()
@@ -295,8 +304,8 @@ def ABC_summaryStatistics_PCA(Surveys):
     plotmeasures = [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.Mach, newdist]
     
     
-    X1 = A.fetchpandas(plotmeasures, surname=False).dropna().as_matrix()   #.data()   #, kwargs_FilterCluster={}, kwargs_FilterObjects={}
-    X2 = B.fetchpandas(plotmeasures, surname=False).dropna().as_matrix()   #.data()   #, kwargs_FilterCluster={}, kwargs_FilterObjects={}
+    X1 = A.fetch_pandas(plotmeasures, surname=False).dropna().as_matrix()   #.data()   #, kwargs_FilterCluster={}, kwargs_FilterObjects={}
+    X2 = B.fetch_pandas(plotmeasures, surname=False).dropna().as_matrix()   #.data()   #, kwargs_FilterCluster={}, kwargs_FilterObjects={}
     
     X1_std = StandardScaler().fit_transform(X1)
     X2_std = StandardScaler().fit_transform(X2)   
@@ -313,5 +322,3 @@ def ABC_summaryStatistics_PCA(Surveys):
     """ This gives you an proxy for the average summed square error in the 2-D dimensional reduction via pca """
     distance = np.sum(Y_sklearn**2)/len(Y_sklearn[0])
     return distance
-            
-    

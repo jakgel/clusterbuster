@@ -466,7 +466,6 @@ def Object_natural_keys(o): #, reverse = False
     (See Toothy's implementation in the comments)
     '''
     #if reverse: ll= ll[::-1]check_mkdir
-    print('_____________', o.name)
     return [ atoi(c) for c in re.split('(\d+)', o.name) ]
     
     
