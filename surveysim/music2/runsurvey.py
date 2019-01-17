@@ -73,7 +73,7 @@ POISON_PILL = "STOP"
    Now I use these two functions as the one that controls the ABC (main) and the one that does the computation (shedule task)"""
 
 
-def main(parfile, workdir=None, ABC=None, verbose=True, survey=None, index=None, Clfile='clusterCSV/MUSIC2-AGN',
+def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None, Clfile='clusterCSV/MUSIC2-AGN',
          processTasks=True):
 
     """
@@ -208,8 +208,8 @@ def main(parfile, workdir=None, ABC=None, verbose=True, survey=None, index=None,
             # choosens = np.array(choosen) + choosens
             # print('_________', choosens)
             # continue
-            if verbose:
-                print('len(choosen)', len(choosen))
+
+            #print('len(choosen)', len(choosen))
             for (snap, kk) in choosen:
                 l = all_clusters[(all_clusters["clID"] == clusterIDs[kk])
                                  & (all_clusters["snapID"] == snapidlist[snap])]

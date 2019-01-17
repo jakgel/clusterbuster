@@ -68,7 +68,8 @@ def main_abcpmc_MUSIC2(conf, test=False):
                                  threads=conf.getint('mp', 'Nthreads'), maxtasksperchild=conf.getint('mp', 'maxtasksperchild'))
     else:
         sampler = abcpmc.Sampler(N=conf.getint('pmc', 'Nw'), Y=data, postfn=partial(music2run.main_ABC, parfile=conf['simulation']['parfile']),
-                                 dist=partial(surmet.abcpmc_dist_severalMetrices, metrics=json.loads(conf['metrics']['used']), outpath=conf['paths']['abcpmc']),
+                                 dist=partial(surmet.abcpmc_dist_severalMetrices, metrics=json.loads(conf['metrics']['used']),
+                                              outpath=conf['paths']['abcpmc'], stochdrop=conf['flavor']['stochdrop']),
                                  threads=conf.getint('mp', 'Nthreads'), maxtasksperchild=conf.getint('mp', 'maxtasksperchild'))
 
         # Prepares the file for counting
@@ -91,9 +92,9 @@ def main_abcpmc_MUSIC2(conf, test=False):
     print("took", (time.time() - t0))
 
 
-def launch(sampler, prior, alpha, eps, ratio_min=4e-2, surveypath=None, pool=None, plotting=False):
+def launch(sampler, prior, alpha, eps, ratio_min=1e-2, surveypath=None, pool=None, plotting=False):
     """ Launches pools
-     Could become implemeted in abcpmc itself"""
+     Could become implemented in abc-pmc itself"""
     
     pools = []
     for pool in sampler.sample(prior, eps, pool):
@@ -101,21 +102,19 @@ def launch(sampler, prior, alpha, eps, ratio_min=4e-2, surveypath=None, pool=Non
         print("T: {0}, eps: [{1}], ratio: {2:>.4f}".format(pool.t, eps_str, pool.ratio))
 
         for i, (mean, std) in enumerate(zip(*abcpmc.weighted_avg_and_std(pool.thetas, pool.ws, axis=0))):
-            print(u"    theta[{0}]: {1:>.4f} \u00B1 {2:>.4f}".format(i, mean, std))
+            print("    theta[{0}]: {1:>.4f} +- {2:>.4f}".format(i, mean, std))
 
         eps.eps = np.percentile(pool.dists, alpha, axis=0) # reduce eps value
         pools.append(pool)
         
         iom.pickleObject(pools, surveypath, 'launch_pools', append=False)
-        
-        
-        
+
         """ Creates plots on the fly """
         if plotting:
             plot_abctraces(pools, surveypath)
  
         if pool.ratio < ratio_min:
-            print('Ended abcpmc because ratio_min < %.3e' % (ratio_min))
+            print('Ended abc-pmc because ratio_min < %.3e' % (ratio_min))
             break
     sampler.close()
     return pools
@@ -159,7 +158,7 @@ def plot_abctraces(pools, surveypath=''):
     distances = np.array([pool.dists for pool in pools])
     print(distances.shape)
     f, ax = plt.subplots()
-    for ii in  range(distances.shape[2]):
+    for ii in range(distances.shape[2]):
         ax.errorbar(np.arange(len(distances)), np.mean(distances, axis=1)[:, ii], np.std(distances, axis=1)[:, ii], label='M%i' % (ii+1))
 #            sns.distplot(np.asarray(distances)[:, ii], axlabel="distances", label='M%i' % (ii))   
     plt.title("Development of Metric Distances")
@@ -172,9 +171,8 @@ def plot_abctraces(pools, surveypath=''):
     thetas = np.array([pool.thetas for pool in pools])
     print(thetas.shape)
     f, ax = plt.subplots()
-    for ii in  range(thetas.shape[2]):
+    for ii in range(thetas.shape[2]):
         ax.errorbar(np.arange(len(thetas)), np.mean(thetas, axis=1)[:, ii], np.std(thetas, axis=1)[:, ii], label='theta %i' % (ii+1))
-#            sns.distplot(np.asarray(distances)[:, ii], axlabel="distances", label='M%i' % (ii))   
     plt.title("Development of Parameters")
     plt.xlabel('Iteration')
     plt.ylabel('Theta')
@@ -184,9 +182,10 @@ def plot_abctraces(pools, surveypath=''):
     
     """ Plot Variables """
     #TODO: Fix bug ... you need to call pools or pool?
-    thetas = pool.thetas
-    figure = corner.corner(thetas)
-    figure.savefig('%s/CornerThetas_%02i.png' % (surveypath,len(pools)-1))
+    for ii, pool, in enumerate(pools):
+        thetas = pool.thetas
+        figure = corner.corner(thetas)
+        figure.savefig('%s/CornerThetas_%02i.png' % (surveypath,ii))
     
     """
     corner.corner(distances)
@@ -197,9 +196,9 @@ def plot_abctraces(pools, surveypath=''):
     
 
     """ Plot Epsilon"""
-    fig,ax = plt.subplots()
+    fig, ax = plt.subplots()
     eps_values = np.array([pool.eps for pool in pools])
-    for ii in  range(distances.shape[2]):
+    for ii in range(distances.shape[2]):
         ax.plot(eps_values[:, ii], label='M%i' % (ii))
     ax.set_xlabel("Iteration")
     ax.set_ylabel(r"$\epsilon$", fontsize=15)
@@ -212,27 +211,27 @@ def plot_abctraces(pools, surveypath=''):
     fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(9, 4))
     
     # generate some random test data
-    all_data = [pool.thetas[:,0]     for pool in pools]
-    mod_data = [np.concatenate((pool.thetas[:,0]+0.2,pool.thetas[:,0]),axis=0) for pool in pools]
+    all_data = [pool.thetas[:,0] for pool in pools]
+    len_pools = [pool.thetas.shape[0]/pool.ratio for pool in pools]
+    print('len_pools:', len_pools, sum(len_pools))
+    mod_data = [np.concatenate((pool.thetas[:,0]+0.2, pool.thetas[:,0]), axis=0) for pool in pools]
     # plot violin plot
-    background = axes.violinplot(mod_data,
-                       showmeans=False,
-                       showmedians=False, showextrema=False)
+    #background = axes.violinplot(mod_data,
+    #                   showmeans=False,
+    #                   showmedians=False, showextrema=False)
     foreground = axes.violinplot(all_data,
                        showmeans=False,
                        showmedians=True)
     
-    for pc in background['bodies']:
-        pc.set_facecolor('grey')
+    #for pc in background['bodies']:
+    #    pc.set_facecolor('grey')
 #        pc.set_edgecolor('black')
-        pc.set_alpha(0.6)
+    #    pc.set_alpha(0.4)
         
-    for pc in foreground['bodies']:
-#        pc.set_facecolor('blue')
+    #for pc in foreground['bodies']:
+    #    pc.set_facecolor('cornflowerblue')
 #        pc.set_edgecolor('black')
-        pc.set_alpha(1)        
-    
-    print('!', mod_data)
+    #    pc.set_alpha(1)
 
 #    axes.set_title('violin plot')
     
@@ -240,18 +239,22 @@ def plot_abctraces(pools, surveypath=''):
     axes.yaxis.grid(True)
     axes.set_xticks([y+1 for y in range(len(all_data))])
     axes.set_xlabel('Iteration')
-    axes.set_ylabel('log( Efficiency $f_e$)')
-    
+    axes.set_ylabel('$\\log_{10}(\\xi_e)$')
+    axes.set_ylabel('$\\log_{10}(\\xi_e)$')
+
     # add x-tick labels
     plt.setp(axes, xticks=[y+1 for y in range(len(all_data))])
     fig.savefig('%s/Violin.png' % (surveypath))
     
-    """ Plot Parameters"""
-    for ii,_ in enumerate(pools):   
+    """ Plot Parameters
+    pools[ii].thetas[:, 0] is a numpy array 
+    """
+
+    for ii, nouse in enumerate(pools):
         if thetas.shape[1] > 1:
             jg = sns.jointplot(pools[ii].thetas[:, 0], 
                           pools[ii].thetas[:, 1], 
-                          kind="kde", 
+                          #kind="kde",  # BUG: creates an error
                          )
             jg.ax_joint.set_xlabel('var1')
             jg.ax_joint.set_ylabel('var2')
@@ -264,6 +267,14 @@ def plot_abctraces(pools, surveypath=''):
 
 
 if __name__ == "__main__":
+    import clusterbuster.iout.misc as iom
+    surveypath ='/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_05/'
+    pools = iom.unpickleObject(surveypath+'launch_pools')
+    print('Acceptance ratios:', [pool.ratio for pool in pools])
+
+    #plot_abctraces(pools, surveypath=surveypath)
+    exit()
+
     """ Full routines for parsing a combination of argparse, configparser and json"""
     parser = argparse.ArgumentParser(description='Evaluates the best solutions of survey simulations with the abc abbroach.')
     parser.add_argument('-parini', dest='parini', action='store', default='params.ini', type=str,

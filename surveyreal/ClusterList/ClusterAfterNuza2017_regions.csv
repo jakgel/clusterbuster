@@ -1,128 +1,126 @@
-"Cluster","Identifier","F_lit","F_lit_error","F_extra_frequ","assumed alpha","REF_F","REFTYPE_F","REFID_F","REFPAGE_F","Comments","FLAGS_INCLUDED_NVSS","FLAGS_CLASS","FLAG_conf","Counter","Alpha","Alpha_error","Alpha comment","REF_ALPHA","REFTYPE_ALPHA","REFID_ALPHA","REFPAGE_ALPHA","DETECTION","","","","","","","","","","","REMASTERED","Subtract"
-"#","","mJy","","mHz","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""
-"[KMA2007] 217.95869+13.53470","","NULL","","","","","","","","Can phoenix or lobe, http://adsabs.harvard.edu/abs/2011MNRAS.414.1175O, hard to measure , low luminosity, strong contaminating source","CLASSI","PHOENIX/LOBE","FALSE","","","","FALSE","","","","","","","","","","","","","","","","",""
-"1RXS_J060313.4+421231","Toothbrush","<364","","","","2018ApJ...852...65R","","","","Toothbrush relic! , Fluss von  Reinout gibt in 2016, relic B","TRUE","RELIC","","","-1.1","0.02","","2018ApJ...852...65R","TAB","4","6","","","","","","","","","","","","YES",""
-"1RXS_J060313.4+421231","S","","","","","2018ApJ...852...65R","","","","HaloOrRelic,
-region S","TRUE","RELIC","FALSE","TRUE","-1.28","0.05","","2018ApJ...852...65R","TAB","4","6","","","","","","","","","","","","",""
-"1RXS_J060313.4+421231","S","","","","","2018ApJ...852...65R","","","","relic D","TRUE","RELIC","FALSE","TRUE","-1.28","0.05","","2018ApJ...852...65R","TAB","4","6","","","","","","","","","","","","",""
-"1RXS_J060313.4+421231","SW","","","","","2018ApJ...852...65R","","","","relic E","TRUE","RELIC","","","-1.11","0.05","","2018ApJ...852...65R","TAB","4","6","","","","","","","","","","","","",""
-"1RXS_J060313.4+421231","Halo","","","","","2018ApJ...852...65R","","","","halo C","TRUE","HALO","","","-1.15","0.06","","2018ApJ...852...65R","TAB","4","6","","","","","","","","","","","","",""
-"24P73","","12.8","","","","","","","","unsure cluster position! http://adsabs.harvard.edu/abs/2009A%26A...508...75V","TRUE","PHOENIX","","","-2.2","","","","","","","","","","","","","","","","","","",""
-"0809+39","","62.6","","","","2009AJ....137.3158B","","","","I should have this, https://arxiv.org/pdf/0811.0205.pdf, REDSHIFT IS NOT KNOWN","NoCluster","RELIC","FALSE","","","","","","","","","","","","","","","","","","","","",""
-"A_S753","","460","","","","","","","","http://arxiv.org/pdf/astro-ph/0212154.pdf, PKS B1400-33","TRUE","","","","","","steepening","","","","","","","","","","","","","","","","YES",""
-"A13","","31","","","","","","","","http://arxiv.org/pdf/astro-ph/0105267v1.pdf ? not gischt?","TRUE","PHOENIX","","","","","steepening","","","","","","","","","","","","","","","","YES",""
-"A85","","43","","","","","","","","Rms noise 3.3mJy/beam, not so roundish at high resolution, very steep spectrum    http://arxiv.org/pdf/astro-ph/0105267v1.pdf, 49.1 as flux value","TRUE","","","","","","steepening","","","","","","","","","","","","","","","","YES",""
-"A115","","147","","","","","","","","http://arxiv.org/abs/0705.1444 large uncertainty due to point sources, ","TRUE","","","","","","","","","","","","","","","","","","","","","","YES",""
-"A133","","137","","","","","","","","http://arxiv.org/pdf/astro-ph/0105267v1.pdf","TRUE","","","","","","","","","","","","","","","","","","","","","","",""
-"A209","","0.7","","","","","","","","http://www.aanda.org/articles/aa/pdf/2009/45/aa12667-09.pdf","FAINT","RELIC","FALSE","","","","","","","","","","","","","","","","","","","","",""
-"A520","Halo","","","","","","","","","detected X-Rax shock","NORELIC","HALO","","","","","","","","","","","","","","","","","","","","","",""
-"A521","","15","","","","","","","","http://arxiv.org/pdf/0803.4127v1.pdf","TRUE","","","","","","straight","","","","","","","","","","","","","","","","YES",""
-"A521","Halo","","","","","","","","","","TRUE","HALO","","","","","","","","","","","","","","","","","","","","","",""
-"A523","","61","","","","","","","","Or an halo  http://adsabs.harvard.edu/abs/2011A%26A...530L...5G, http://adsabs.harvard.edu/abs/2011A%26A...533A..35V http://arxiv.org/pdf/1107.5597.pdf","TRUE","","","","","","","","","","","","","","","","","","","","","","",""
-"A548b","N","121","","","","","","","","MCXC_J0545.4-2556, ask simbad to incude A548b cluster, integrated circular flux is 70.2, https://www.researchgate.net/publication/241588031_Radio_Relics_in_Clusters_of_Galaxies_A_unique_case_of_Abell_548b","TRUE","RELIC","","","","","A","","","","","","","","","","","","","","","","YES",""
-"A548b","NW","","","","","","","","","","TRUE","RELIC","","","","","","","","","","","","","","","","","","","","","",""
-"A548b","C","","","","","","","","","","TRUE","RELIC","FALSE","","","","","","","","","","","","","","","","","","","","",""
-"A610","","18.6","","","","","","","","https://arxiv.org/pdf/astro-ph/0008342v1.pdf Or http://xxx.tau.ac.il/pdf/0806.2969.pdf 17.3)","TRUE","","","","","","","","","","","","","","","","","","","","","","YES",""
-"A725","","6","","","","","","","","http://arxiv.org/pdf/0806.2969v1.pdf But http://davide2.bo.astro.it/wp-content/uploads/2014/02/trasatti_2015.pdf  say its just the tail of a radio galaxy","CLASSI","PHOENIX","FALSE","","","","","","","","","","","","","","","","","","","","",""
-"A746","","24.5","","","","","","","","FIRST pointsource. http://www.aanda.org/articles/aa/full_html/2011/09/aa17149-11/F4.html  ???","TRUE","","","","","","FALSE","","","","","","","","","","","","","","","","YES",""
-"A754","","6","","","","","","","","Relic to faint ... I realy would like to see this object in MSSS !  http://iopscience.iop.org/0004-637X/559/2/785/fulltext/","FAINT","SHOCKLET","FALSE","","","","complex","","","","","","","","","","","","","","","","",""
-"A768","","NULL","","","","","","","","missclassified as radio relic, A786?","CLASSI","AGN","TRUE","","","","FALSE","","","","","","","","","","","","","","","","",""
-"A781","","15.5","","","","","","","","https://www.researchgate.net/publication/48202156_The_large-scale_diffuse_radio_emission_in_A781","TRUE","","","","","","","","","","","","","","","","","","","","","","YES",""
-"A786","","NULL","","","","","","","","","CLASSI","AGN_RELIC/PHOENIX","TRUE","","","","","","","","","","","","","","","","","","","","",""
-"A910","","12.1","","","","","","","","http://adsabs.harvard.edu/abs/2012A%26A...545A..74G, ok but strong confusion","CONF","RELIC","FALSE","","","","","","","","","","","","","","","","","","","","",""
-"A1033","","46.9","","","","","","","","Emission is strongly intermingled. http://adsabs.harvard.edu/abs/2015MNRAS.448.2197D. http://www.sao.ru/cats/~CLUSTERS/CLUSTERS/RO_images/A1033/A1033id.html, http://mnras.oxfordjournals.org/content/448/3/2197.full.pdf gives better flux measurements","TRUE","","","","","","steepening","","","","","","","","","","","","","","","","YES",""
-"A1240","N","6","0.2","","","2009A+A...494..429B","TAB","7","11","http://arxiv.org/pdf/0810.2223v1.pdf","TRUE","","","","-1.1","0.1","fluxpaper","","","","","","","","","","","","","","","","YES",""
-"A1240","S","10.1","0.4","","","2009A+A...494..429B","TAB","7","11","http://arxiv.org/pdf/0810.2223v1.pdf","TRUE","","","","-1.3","0.2","fluxpaper","","","","","","","","","","","","","","","","",""
-"A1300","W","20","","","","","","","","http://adsabs.harvard.edu/abs/1999MNRAS.302..571R","TRUE","","","","","","","","","","","","","","","","","","","","","","YES",""
-"A1300","SW","","","","","","","","","","TRUE","","","","","","","","","","","","","","","","","","","","","","",""
-"A1351","","13","","","","","","","","http://adsabs.harvard.edu/abs/2009ApJ...704L..54G","TRUE","","","","","","","","","","","","","","","","","","","","","","",""
-"A1367","","232","28","","","2013ApJ...779..189F","TAB","3","6","","FALSE","RELIC","FALSE","","","","","","","","","","","","","","","","","","","","",""
-"A1367","Halo","","","","","2013ApJ...779..189F","","","","","TRUE","HALO","","","","","","","","","","","","","","","","","","","","","",""
-"A1443","","9.8","","","","","","","","http://mnras.oxfordjournals.org/content/454/4/3391.full.pdf, extrapolated from 323 with alpha -1.2","TRUE","","","","","","FALSE","","","","","","","","","","","","","","","","YES",""
-"A1612","","62.8","","","","","","","","http://arxiv.org/pdf/1107.5597.pdf","TRUE","","","","","","straight","","","","","","","","","","","","","","","","YES",""
-"A1656","","260","","","","","","","","Missing short spacings, elongated, detectable? low surface brighteness   http://www.mpifr-bonn.mpg.de/1298937/Trasatti.pdf","FALSE","RELIC","TRUE","","","","straight","","","","","","","","","","","","","","","","",""
-"A1664","","107","","","","","","","","roundish","TRUE","","","","","","","","","","","","","","","","","","","","","","YES",""
-"A1682","NW","26.9","","","","","","","","http://adsabs.harvard.edu/abs/2013A%26A...551A..24V, the diffuse component is just to faint in NVSS, however the NW ridge can be measured","TRUE","SHOCKLET","FALSE","","","","","","","","","","","","","","","","","","","","",""
-"A1682","SE","","","","","","","","","http://adsabs.harvard.edu/abs/2013A%26A...551A..24V, the diffuse component is just to faint in NVSS, however the NW ridge can be measured","TRUE","SHOCKLET","FALSE","TRUE","","","","","","","","","","","","","","","","","","","",""
-"A1758N","","12.8","","","","","","","","http://www.aanda.org/articles/aa/pdf/2009/45/aa12667-09.pdf, http://adsabs.harvard.edu/abs/2011MmSAI..82..541G","TRUE","","","","","","","","","","","","","","","","","","","","","","","FIRST"
-"A1758S","E","1.5","0.3","","","","TAB","3","7","https://arxiv.org/pdf/1804.09187.pdf","FAINT","RELIC","FALSE","","-1.3","0.1","","","","","","","","","","","","","","","","","",""
-"A1758S","Halo","3.1","0.7","","","2018arXiv180409187B","TAB","3","7","https://arxiv.org/pdf/1804.09187.pdf","FAINT","HALO","TRUE","","-1.1","0.1","","","","","","","","","","","","","","","","","",""
-"A2034","","24","","","","","","","","http://www.aanda.org/articles/aa/pdf/2011/09/aa17149-11.pdf  Two relics, only one visible (peaks are compact soures) of faint one","TRUE","","","","","","FALSE","","","","","","","","","","","","","","","","YES",""
-"A2048","","19","","","","","","","","http://www.aanda.org/articles/aa/pdf/2011/03/aa15991-10.pdf","TRUE","","","","","","","","","","","","","","","","","","","","","","",""
-"A2048","","39","","","","","","","","http://www.prao.ru/conf/yerac2012/presentations/A.Shulevski.pdf","CLASSI","AGN_RELIC","","","","","steepening","","","","","","","","","","","","","","","","YES",""
-"A2061","","27.6","","","","","","","","http://adsabs.harvard.edu/cgi-bin/bib_query?arXiv:1107.5597","TRUE","","","","","","","","","","","","","","","","","","","","","","YES",""
-"A2063","","77.6","","","","","","","","roundish, steepening  http://adsabs.harvard.edu/abs/1994A%26A...285...27K  2 (3C318.1)","TRUE","PHOENIX","","","","","steepening","","","","","","","","","","","","","","","","YES",""
-"A2146","","1.1","","X","","2017arXiv170803641H","text","4.2","8","","FAINT","RELIC","FALSE","","1","","derived, assumed?","","","","","","","","","","","","","","","","",""
-"A2146","Halo","1.5","","X","","2017arXiv170803641H","text","4.2","8","","FAINT","HALO","FALSE","","2","","derived, assumed?","","","","","","","","","","","","","","","","",""
-"A2163","","18.7","","","","","","","","With Halo http://www.aanda.org/articles/aa/pdf/2001/25/aah2692.pdf  Source D3 in Feretti et all 2001 they measured 18.7pm0.3, SIMBAD  positional offset ? I used  243.940 -6.151","TRUE","","","","","","","","","","","","","","","","","","","","","","YES",""
-"A2255","NE","23","1","","","2005A+A...430L...5G","text","3","3","Three peculiar filaments http://www.slac.stanford.edu/cgi-wrap/getdoc/slac-pub-10880.pdf","FAINT","RELIC","","","","","","","","","","","","","","","","","","","","","",""
-"A2255","","56","3","","","2005A+A...430L...5G","text","3","3","","TRUE","HALO","","","","","","","","","","","","","","","","","","","","","",""
-"A2255","NW","8.4","2","350","-1.3...-1.6","2008A+A...481L..91P","text","3","2","","FAINT","RELIC","FALSE","","","","","","","","","","","","","","","","","","","","",""
-"A2255","SW","2.3","0.6","350","-1.3...-1.6","2008A+A...481L..91P","text","3","2","","FAINT","RELIC","FALSE","TRUE","","","","","","","","","","","","","","","","","","","",""
-"A2256","","462","","","","","","","","http://www.astron.nl/lofarscience2011/presentations/Day02_vanWeeren.pdf","TRUE","","","","","","complex","","","","","","","","","","","","","","","","YES",""
-"A2345","E","29","0.4","","","2009A+A...494..429B","TAB","6","8","https://arxiv.org/pdf/0810.2223.pdf","TRUE","","","","-1.3","0.1","fluxpaper","","","","","","","","","","","","","","","","YES",""
-"A2345","W","30","0.5","","","2009A+A...494..429B","TAB","6","8","https://arxiv.org/pdf/0810.2223.pdf","TRUE","","","","-1.5","0.1","fluxpaper","","","","","","","","","","","","","","","","",""
-"A2443","","6.5","","","","2011AJ....141..149C","","","","ultra steep spectrum, faint, strong contaminating sources; http://www.mergingclustercollaboration.org/abell-2443.html","CONF","PHOENIX/RELIC","","","","","steepening","","","","","","","","","","","","","","","","",""
-"A2744","","18.2","","","","","","","","easily visible","TRUE","","","","","","","","","","","","","","","","","","","","","","YES",""
-"A3365","E","47.9","","","","","","","","http://arxiv.org/pdf/1107.5597.pdf, new cluster position","TRUE","","","","","","FALSE","","","","","","","","","","","","","","","","YES",""
-"A3365","W","","","","","","","","","","TRUE","","","","","","","","","","","","","","","","","","","","","","",""
-"A3376","E","302","","","","2006Sci...314..791B","","","","rms =0.52, fragmented in several regions http://arxiv.org/pdf/1206.3389v1.pdf","TRUE","RELIC","","","-1.37","0.08","FALSE","","FIG","3","6","","","","","","","","","","","","YES",""
-"A3376","W","","","","","2006Sci...314..791B","","","","","TRUE","RELIC","","TRUE","-1.17","0.06","","","FIG","3","6","","","","","","","","","","","","",""
-"A3411","a, b","53","","","","","","","","http://iopscience.iop.org/article/10.1088/0004-637X/769/2/101/pdf, http://www.mergingclustercollaboration.org/abell-3411.html","TRUE","","","","","","combined","","","","","","","","","","","","","","","","YES",""
-"A3411","b","","","","","","","","","","TRUE","","","","","","","","","","","","","","","","","","","","","","",""
-"A3411","c","","","","","","","","","","TRUE","","","","","","","","","","","","","","","","","","","","","","",""
-"A3527-bis","","35","","","","","","","","Spectral index to flat for a stationary shock, https://arxiv.org/pdf/1609.08339v1.pdf","TRUE","","","","","","","","","","","","","","","","","","","","","","",""
-"A3667","NW","1200","","","","","","","","Class one, though two counter relics","noMAP","RELIC","TRUE","","","","","","","","","","","","","","","","","","","","",""
-"A3667","SE","","","","","","","","","","noMAP","RELIC","TRUE","TRUE","","","","","","","","","","","","","","","","","","","",""
-"A4038","","49","","","","","","","","http://iopscience.iop.org/0004-637X/744/1/46/pdf/apj_744_1_46.pdf","TRUE","","","","","","steepening","","","","","","","","","","","","","","","","YES",""
-"ACT-CLJ0102-4915","","8.6","","","","","","","","El gordo http://iopscience.iop.org/article/10.1088/0004-637X/786/1/49/pdf","noMAP","RELIC","TRUE","","","","FALSE","","","","","","","","","","","","","","","","",""
-"ACT-CLJ0102-4915","","","","","","","","","","El gordo http://iopscience.iop.org/article/10.1088/0004-637X/786/1/49/pdf","noMAP","RELIC","TRUE","TRUE","","","","","","","","","","","","","","","","","","","",""
-"ACT-CLJ0102-4915","","","","","","","","","","El gordo http://iopscience.iop.org/article/10.1088/0004-637X/786/1/49/pdf","noMAP","HALO","TRUE","","","","","","","","","","","","","","","","","","","","",""
-"CIZA_J0107.7+5408","N","30","","","","","","","","http://arxiv.org/pdf/1604.03551v1.pdf,  flux <36 if no point source subtraction","TRUE","","","","","","","","","","","","","","","","","","","","","","",""
-"CIZA_J0107.7+5408","S","","","","","","","","","","TRUE","","","","","","","","","","","","","","","","","","","","","","",""
-"CIZA_J0649.3+1801","a","27.5","","","","","","","","http://arxiv.org/pdf/1107.5597.pdf, also Raj17","TRUE","","","","","","FALSE","","","","","","","","","","","","","","","","YES",""
-"CIZA_J0649.3+1801","b","","","","","","","","","","TRUE","","","","","","","","","","","","","","","","","","","","","","",""
-"CIZA_J2242.8+5301","N","144","","","","","","","","Sausage! Spectra from http://www.aanda.org/articles/aa/pdf/2013/07/aa21267-13.pdf, new paper https://arxiv.org/pdf/1706.09903.pdf","TRUE","RELIC","","","","","straight","","","","","","","","","","","","","","","","YES",""
-"CIZA_J2242.8+5301","S","","","","","","","","","","TRUE","RELIC","","TRUE","","","complex","","","","","","","","","","","","","","","","YES",""
-"CL 0217+70","NW","NULL","","","","2011ApJ...727L..25B","","","","S. Brown+_2010; Feretti_2012 : strongly confused with other source","CONF","RELIC","FALSE","","","","","","","","","","","","","","","","","","","","",""
-"CL 0217+70","SE","","","","","2011ApJ...727L..25B","","","","","CONF","RELIC","FALSE","TRUE","","","","","","","","","","","","","","","","","","","",""
-"CL0217+70","halo","","","","","2011ApJ...727L..25B","","","","","TRUE","HALO","","","","","","","","","","","","","","","","","","","","","",""
-"1E_0657-55","E","82.6","","","","2015MNRAS.449.1486S","","","","Bulletcluster","noMAP","RELIC","FALSE","","","","","","","","","","","","","","","","","","","","",""
-"1E_0657-55","halo","","","","","2015MNRAS.449.1486S","","","","Bulletcluster","noMAP","HALO","FALSE","","","","","","","","","","","","","","","","","","","","",""
-"MaxBCG_138.91895+25.19876","","24.7","","","","","","","","Simbad creates problems, subtract pointsource with 0.8 mJy , http://www.aanda.org/articles/aa/pdf/2011/03/aa15991-10.pdf","CLASSI","","","","","","","","","","","","","","","","","","","","","","",""
-"MaxBCG_217.95869+13.53470","","14.6","","","","","","","","(LOBE relic) http://www.aanda.org/articles/aa/pdf/2011/03/aa15991-10.pdf","CONF","AGN_RELIC","","","","","","","","","","","","","","","","","","","","","YES",""
-"MACS J0025-1222","NW","1","","","","2017A+A...597A..96R","text","3.4","10","Baby Bullet (Simbad:MCS J0025.4-1222 ) , https://arxiv.org/pdf/1611.01273.pdf","FAINT","RELIC","FALSE","TRUE","","","","","text","3.4","10","","","","","","","","","","","","",""
-"MACS J0025-1222","SE","1.3","","","","2017A+A...597A..96R","text","3.4","10","","FAINT","RELIC","FALSE","","","","","","text","3.4","10","","","","","","","","","","","","",""
-"MACS_J0717.5+3745","d","83","","","","","","","","http://arxiv.org/pdf/0905.3650v2.pdf","TRUE","RELIC","","","","-1.1","0.1","2018MNRAS.478.2927B","TAB","3","7","","","","","","","","","","","","YES",""
-"MACS_J1149.5+2223","SE","10.3","","","","","","","http://mnras.oxfordjournals.org/content/426/1/40.full.pdf, http://www.mergingclustercollaboration.org/macs-j114952223.html","","TRUE","","","","","-1.15","quite old measures","","","","","","","","","","","","","","","","YES",""
-"MACS_J1149.5+2223","NW","","","","","","","","http://mnras.oxfordjournals.org/content/426/1/40.full.pdf, http://www.mergingclustercollaboration.org/macs-j114952223.html","","TRUE","","","","","-0.75","quite old measures","","","","","","","","","","","","","","","","",""
-"MACS_J1752.0+4440","NE","101.8","","","","","","","","http://adsabs.harvard.edu/abs/2012MNRAS.425L..36V","TRUE","","","","","","FALSE","","","","","","","","","","","","","","","","YES",""
-"MACS_J1752.0+4440","SW","","","","","","","","","","TRUE","","","","","","","","","","","","","","","","","","","","","","",""
-"MACS_J2243.3-0935","","1.9","","","","2016MNRAS.458.1803C","","","","flux extrapolated, Infall shock, http://adsabs.harvard.edu/abs/2016arXiv160205923C","FAINT","RELIC","FALSE","","","","","","","","","","","","","","","","","","","","",""
-"PLCKESZ_G287.0+32.9","N","58","","","","","","","","http://www.mergingclustercollaboration.org/plck-g2870329.html","TRUE","","","","","","","","","","","","","","","","","","","","","","YES",""
-"PLCKESZ_G287.0+32.9","S","","","","","","","","","","TRUE","","","","","","","","","","","","","","","","","","","","","","",""
-"PLCKESZ_G287.0+32.9","Halo","","","","","","","","","","TRUE","","","","","","","","","","","","","","","","","","","","","","",""
-"PLCK_G200.9-28.2","","24.9","","2.5","","2018arXiv170801718K","TAB","4","6","https://arxiv.org/pdf/1708.01718.pdf","TRUE","","","","","","","","","","","","","","","","","","","","","","",""
-"PSZ1 G004.5-19.5","","19","","","","2017arXiv170800789A","","","5","PSZ1_G004.45-19.55 in Simbad, http:// www.aanda.org/articles/aa/pdf/2014/02/aa21638-13.pdf, New! https://arxiv.org/pdf/1708.00789.pdf","TRUE","","","","","","","","","","5","","","","","","","","","","","","",""
-"PSZ1 G096.89+24.17","N","27.2","","","","","","","","http://arxiv.org/pdf/1408.2677v1.pdf, de Gasperin+2014","TRUE","","","","","","FALSE","","","","","","","","","","","","","","","","YES",""
-"PSZ1 G096.89+24.17","S","","","","","","","","","","TRUE","","","","","","","","","","","","","","","","","","","","","","",""
-"PSZ1 G108.18-11.53","NE","76.7","0.2","","","2015MNRAS.453.3483D","TAB","3","","ftp://ftp.hs.uni-hamburg.de/pub/outgoing/fdg/PSZ1G108.pdf, workaround with TYC 3644-1850-1  ","TRUE","","","","-1.25","0.02","","2015MNRAS.453.3483D","TAB","3","","","","","","","","","","","","","YES",""
-"PSZ1 G108.18-11.53","SW","45.4","0.2","","","2015MNRAS.453.3483D","TAB","3","","","TRUE","","","","-1.28","0.02","","2015MNRAS.453.3483D","TAB","3","","","","","","","","","","","","","",""
-"RXC J0225.1-2928","","37","","","","","","","","http://mnras.oxfordjournals.org/content/459/3/2525.full.pdf","TRUE","","","","","","","","","","","","","","","","","","","","","","",""
-"RXC J1053.7+5452","","15","","","","","","","","http://www.physics.ucdavis.edu/~dwittman/Table/RXCJ1053.7+5452/home.html","TRUE","","","","","","FALSE","","","","","","","","","","","","","","","","YES",""
-"RXC J1234.2+0947","","3.1","","","","","","",""," http://arxiv.org/pdf/1503.02415.pdf (Z5247) 0.53 rms, pointsource like at 3 sigma","TRUE","","","","","","FALSE","","","","","","","","","","","","","","","","YES",""
-"RXC J1314.4-2515","E","30.3","","","","","","","","http://www.mergingclustercollaboration.org/rxc-j13144-2515.html (Causes trouble with automated pipeline)","TRUE","","","","","","","","","","","","","","","","","","","","","","YES",""
-"RXC J1314.4-2515","W","","","","","","","","","","TRUE","","","","","","","","","","","","","","","","","","","","","","",""
-"S1081","","2.4","","","","2008AJ....135.1276M","","","","http://mnras.oxfordjournals.org/content/406/4/2578.full.pdf","noMAP","RELIC","FALSE","","","","FALSE","","","","","","","","","","","","","","","","",""
-"ZwCl 0008+5215","E","67","","","","","","","","http://arxiv.org/pdf/1102.2235v1.pdf (ds9 did not work automaticly)","TRUE","","","","","","straight","","","","","","","","","","","","","","","","YES",""
-"ZwCl 0008+5215","W","","","","","","","","","","TRUE","","","","","","","","","","","","","","","","","","","","","","",""
-"CL 1446+26","","5.3","","","","2012A+A...545A..74G","","","","Close to ZwCl_1447.2+2619 , faint and heavily contaminated by points sources http://arxiv.org/pdf/1207.2915v1.pdf, http://adsabs.harvard.edu/abs/2012A%26A...545A..74G","CONF","RELIC","FALSE","","","","FALSE","","","","","","","","","","","","","","","","",""
-"CL 1446+26","halo","","","","","","","","","","CONF","HALO","FALSE","","","","","","","","","","","","","","","","","","","","",""
-"ZwCl 2341+0000","a","22","","","","","","","","Two redshifts given!, Bagchi, J., Ensslin, T. A., Miniati, F., et al., 2002, New Astronomy, 7, 249 , bzw. http://arxiv.org/pdf/1001.4980.pdf Two subsources!, Possible double relics but a complicated case because of  embedded pointsource and unsure classification","TRUE","","FALSE","","-0.76","","Steepening? 240&610MHz(GMRT)","https://www.aanda.org/articles/aa/pdf/2010/03/aa13983-09.pdf","text","4","3","","","","","","","","","","","","YES",""
-"ZwCl 2341+0000","b","","","","","","","","","","TRUE","","FALSE","","-0.76","","Steepening? 240&610MHz(GMRT)","https://www.aanda.org/articles/aa/pdf/2010/03/aa13983-09.pdf","text","4","3","","","","","","","","","","","","",""
-"ZwCl 2341+0000","c","","","","","","","","","","TRUE","","FALSE","","-0.49","","Steepening? 240&610MHz(GMRT)","https://www.aanda.org/articles/aa/pdf/2010/03/aa13983-09.pdf","text","4","3","","","","","","","","","","","","",""
-"SPT-CL J0245-5302","NE","","","","","","","","","","","RELIC","","","","","","","","","","2018","","","","","","","","","","","",""
-"SPT-CL J0245-5302","SE","","","","","","","","","","","RELIC","","","","","","","","","","2018","","","","","","","","","","","",""
-"A168","N","","","","","","","","","","","RELIC","","","","","","","","","","2018","","","","","","","","","","","",""
-"A168","Nb","","","","","","","","","","","AGN_RELIC","","","","","","","","","","2018","","","","","","","","","","","",""
-"","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""
+Cluster,Identifier,F_lit,F_lit_error,F_extra_frequ,assumed alpha,REF_F,REFTYPE_F,REFID_F,REFPAGE_F,Comments,FLAGS_INCLUDED_NVSS,FLAGS_CLASS,FLAG_conf,Counter,Alpha,Alpha_error,Alpha comment,REF_ALPHA,REFTYPE_ALPHA,REFID_ALPHA,REFPAGE_ALPHA,DETECTION,,,,,,,,,,,REMASTERED,Subtract
+#,,mJy,,mHz,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+[KMA2007] 217.95869+13.53470,,NULL,,,,,,,,"Can phoenix or lobe, http://adsabs.harvard.edu/abs/2011MNRAS.414.1175O, hard to measure , low luminosity, strong contaminating source",CLASSI,PHOENIX/LOBE,FALSE,,,,FALSE,,,,,,,,,,,,,,,,,
+1RXS_J060313.4+421231,Toothbrush,<364,,,,2018ApJ...852...65R,,,,"Toothbrush relic! , Fluss von  Reinout gibt in 2016, relic B",TRUE,RELIC,,,-1.1,0.02,,2018ApJ...852...65R,TAB,4,6,,,,,,,,,,,,YES,
+1RXS_J060313.4+421231,S,,,,,2018ApJ...852...65R,,,,"HaloOrRelic,
+region S",TRUE,RELIC,FALSE,TRUE,-1.28,0.05,,2018ApJ...852...65R,TAB,4,6,,,,,,,,,,,,,
+1RXS_J060313.4+421231,S,,,,,2018ApJ...852...65R,,,,relic D,TRUE,RELIC,FALSE,TRUE,-1.28,0.05,,2018ApJ...852...65R,TAB,4,6,,,,,,,,,,,,,
+1RXS_J060313.4+421231,SW,,,,,2018ApJ...852...65R,,,,relic E,TRUE,RELIC,,,-1.11,0.05,,2018ApJ...852...65R,TAB,4,6,,,,,,,,,,,,,
+1RXS_J060313.4+421231,Halo,,,,,2018ApJ...852...65R,,,,halo C,TRUE,HALO,,,-1.15,0.06,,2018ApJ...852...65R,TAB,4,6,,,,,,,,,,,,,
+24P73,,12.8,,,,,,,,unsure cluster position! http://adsabs.harvard.edu/abs/2009A%26A...508...75V,TRUE,PHOENIX,,,-2.2,,,,,,,,,,,,,,,,,,,
+0809+39,,62.6,,,,2009AJ....137.3158B,,,,"I should have this, https://arxiv.org/pdf/0811.0205.pdf, REDSHIFT IS NOT KNOWN",NoCluster,RELIC,FALSE,,,,,,,,,,,,,,,,,,,,,
+A_S753,,460,,,,,,,,"http://arxiv.org/pdf/astro-ph/0212154.pdf, PKS B1400-33",TRUE,,,,,,steepening,,,,,,,,,,,,,,,,YES,
+A13,,31,,,,,,,,http://arxiv.org/pdf/astro-ph/0105267v1.pdf ? not gischt?,TRUE,PHOENIX,,,,,steepening,,,,,,,,,,,,,,,,YES,
+A85,,43,,,,,,,,"Rms noise 3.3mJy/beam, not so roundish at high resolution, very steep spectrum    http://arxiv.org/pdf/astro-ph/0105267v1.pdf, 49.1 as flux value",TRUE,,,,,,steepening,,,,,,,,,,,,,,,,YES,
+A115,,147,,,,,,,,"http://arxiv.org/abs/0705.1444 large uncertainty due to point sources, ",TRUE,,,,,,,,,,,,,,,,,,,,,,YES,
+A133,,137,,,,,,,,http://arxiv.org/pdf/astro-ph/0105267v1.pdf,TRUE,,,,,,,,,,,,,,,,,,,,,,,
+A209,,0.7,,,,,,,,http://www.aanda.org/articles/aa/pdf/2009/45/aa12667-09.pdf,FAINT,RELIC,FALSE,,,,,,,,,,,,,,,,,,,,,
+A520,Halo,,,,,,,,,detected X-Rax shock,NORELIC,HALO,,,,,,,,,,,,,,,,,,,,,,
+A521,,15,,,,,,,,http://arxiv.org/pdf/0803.4127v1.pdf,TRUE,,,,,,straight,,,,,,,,,,,,,,,,YES,
+A521,Halo,,,,,,,,,,TRUE,HALO,,,,,,,,,,,,,,,,,,,,,,
+A523,,61,,,,,,,,"Or an halo  http://adsabs.harvard.edu/abs/2011A%26A...530L...5G, http://adsabs.harvard.edu/abs/2011A%26A...533A..35V http://arxiv.org/pdf/1107.5597.pdf",TRUE,,,,,,,,,,,,,,,,,,,,,,,
+A548b,N,121,,,,,,,,"MCXC_J0545.4-2556, ask simbad to incude A548b cluster, integrated circular flux is 70.2, https://www.researchgate.net/publication/241588031_Radio_Relics_in_Clusters_of_Galaxies_A_unique_case_of_Abell_548b",TRUE,RELIC,,,,,A,,,,,,,,,,,,,,,,YES,
+A548b,NW,,,,,,,,,,TRUE,RELIC,,,,,,,,,,,,,,,,,,,,,,
+A548b,C,,,,,,,,,,TRUE,RELIC,FALSE,,,,,,,,,,,,,,,,,,,,,
+A610,,18.6,,,,,,,,https://arxiv.org/pdf/astro-ph/0008342v1.pdf Or http://xxx.tau.ac.il/pdf/0806.2969.pdf 17.3),TRUE,,,,,,,,,,,,,,,,,,,,,,YES,
+A725,,6,,,,,,,,http://arxiv.org/pdf/0806.2969v1.pdf But http://davide2.bo.astro.it/wp-content/uploads/2014/02/trasatti_2015.pdf  say its just the tail of a radio galaxy,CLASSI,PHOENIX,FALSE,,,,,,,,,,,,,,,,,,,,,
+A746,,24.5,,,,,,,,FIRST pointsource. http://www.aanda.org/articles/aa/full_html/2011/09/aa17149-11/F4.html  ???,TRUE,,,,,,FALSE,,,,,,,,,,,,,,,,YES,
+A754,,6,,,,,,,,Relic to faint ... I realy would like to see this object in MSSS !  http://iopscience.iop.org/0004-637X/559/2/785/fulltext/,FAINT,SHOCKLET,FALSE,,,,complex,,,,,,,,,,,,,,,,,
+A768,,NULL,,,,,,,,"missclassified as radio relic, A786?",CLASSI,AGN,TRUE,,,,FALSE,,,,,,,,,,,,,,,,,
+A781,,15.5,,,,,,,,https://www.researchgate.net/publication/48202156_The_large-scale_diffuse_radio_emission_in_A781,TRUE,,,,,,,,,,,,,,,,,,,,,,YES,
+A786,,NULL,,,,,,,,,CLASSI,AGN_RELIC/PHOENIX,TRUE,,,,,,,,,,,,,,,,,,,,,
+A910,,12.1,,,,,,,,"http://adsabs.harvard.edu/abs/2012A%26A...545A..74G, ok but strong confusion",CONF,RELIC,FALSE,,,,,,,,,,,,,,,,,,,,,
+A1033,,46.9,,,,,,,,"Emission is strongly intermingled. http://adsabs.harvard.edu/abs/2015MNRAS.448.2197D. http://www.sao.ru/cats/~CLUSTERS/CLUSTERS/RO_images/A1033/A1033id.html, http://mnras.oxfordjournals.org/content/448/3/2197.full.pdf gives better flux measurements",TRUE,,,,,,steepening,,,,,,,,,,,,,,,,YES,
+A1240,N,6,0.2,,,2009A+A...494..429B,TAB,7,11,http://arxiv.org/pdf/0810.2223v1.pdf,TRUE,,,,-1.1,0.1,fluxpaper,,,,,,,,,,,,,,,,YES,
+A1240,S,10.1,0.4,,,2009A+A...494..429B,TAB,7,11,http://arxiv.org/pdf/0810.2223v1.pdf,TRUE,,,,-1.3,0.2,fluxpaper,,,,,,,,,,,,,,,,,
+A1300,W,20,,,,,,,,http://adsabs.harvard.edu/abs/1999MNRAS.302..571R,TRUE,,,,,,,,,,,,,,,,,,,,,,YES,
+A1300,SW,,,,,,,,,,TRUE,,,,,,,,,,,,,,,,,,,,,,,
+A1351,,13,,,,,,,,http://adsabs.harvard.edu/abs/2009ApJ...704L..54G,TRUE,,,,,,,,,,,,,,,,,,,,,,,
+A1367,,232,28,,,2013ApJ...779..189F,TAB,3,6,,FALSE,RELIC,FALSE,,,,,,,,,,,,,,,,,,,,,
+A1367,Halo,,,,,2013ApJ...779..189F,,,,,TRUE,HALO,,,,,,,,,,,,,,,,,,,,,,
+A1443,,9.8,,,,,,,,"http://mnras.oxfordjournals.org/content/454/4/3391.full.pdf, extrapolated from 323 with alpha -1.2",TRUE,,,,,,FALSE,,,,,,,,,,,,,,,,YES,
+A1612,,62.8,,,,,,,,http://arxiv.org/pdf/1107.5597.pdf,TRUE,,,,,,straight,,,,,,,,,,,,,,,,YES,
+A1656,,260,,,,,,,,"Missing short spacings, elongated, detectable? low surface brighteness   http://www.mpifr-bonn.mpg.de/1298937/Trasatti.pdf",FALSE,RELIC,TRUE,,,,straight,,,,,,,,,,,,,,,,,
+A1664,,107,,,,,,,,roundish,TRUE,,,,,,,,,,,,,,,,,,,,,,YES,
+A1682,NW,26.9,,,,,,,,"http://adsabs.harvard.edu/abs/2013A%26A...551A..24V, the diffuse component is just to faint in NVSS, however the NW ridge can be measured",TRUE,SHOCKLET,FALSE,,,,,,,,,,,,,,,,,,,,,
+A1682,SE,,,,,,,,,"http://adsabs.harvard.edu/abs/2013A%26A...551A..24V, the diffuse component is just to faint in NVSS, however the NW ridge can be measured",TRUE,SHOCKLET,FALSE,TRUE,,,,,,,,,,,,,,,,,,,,
+A1758N,,12.8,,,,,,,,"http://www.aanda.org/articles/aa/pdf/2009/45/aa12667-09.pdf, http://adsabs.harvard.edu/abs/2011MmSAI..82..541G",TRUE,,,,,,,,,,,,,,,,,,,,,,,FIRST
+A1758S,E,1.5,0.3,,,,TAB,3,7,https://arxiv.org/pdf/1804.09187.pdf,FAINT,RELIC,FALSE,,-1.3,0.1,,,,,,,,,,,,,,,,,,
+A1758S,Halo,3.1,0.7,,,2018arXiv180409187B,TAB,3,7,https://arxiv.org/pdf/1804.09187.pdf,FAINT,HALO,TRUE,,-1.1,0.1,,,,,,,,,,,,,,,,,,
+A2034,,24,,,,,,,,"http://www.aanda.org/articles/aa/pdf/2011/09/aa17149-11.pdf  Two relics, only one visible (peaks are compact soures) of faint one",TRUE,,,,,,FALSE,,,,,,,,,,,,,,,,YES,
+A2048,,19,,,,,,,,http://www.aanda.org/articles/aa/pdf/2011/03/aa15991-10.pdf,TRUE,,,,,,,,,,,,,,,,,,,,,,,
+A2048,,39,,,,,,,,http://www.prao.ru/conf/yerac2012/presentations/A.Shulevski.pdf,CLASSI,AGN_RELIC,,,,,steepening,,,,,,,,,,,,,,,,YES,
+A2061,,27.6,,,,,,,,http://adsabs.harvard.edu/cgi-bin/bib_query?arXiv:1107.5597,TRUE,,,,,,,,,,,,,,,,,,,,,,YES,
+A2063,,77.6,,,,,,,,"roundish, steepening  http://adsabs.harvard.edu/abs/1994A%26A...285...27K  2 (3C318.1)",TRUE,PHOENIX,,,,,steepening,,,,,,,,,,,,,,,,YES,
+A2146,,1.1,,X,,2017arXiv170803641H,text,4.2,8,,FAINT,RELIC,FALSE,,1,,"derived, assumed?",,,,,,,,,,,,,,,,,
+A2146,Halo,1.5,,X,,2017arXiv170803641H,text,4.2,8,,FAINT,HALO,FALSE,,2,,"derived, assumed?",,,,,,,,,,,,,,,,,
+A2163,,18.7,,,,,,,,"With Halo http://www.aanda.org/articles/aa/pdf/2001/25/aah2692.pdf  Source D3 in Feretti et all 2001 they measured 18.7pm0.3, SIMBAD  positional offset ? I used  243.940 -6.151",TRUE,,,,,,,,,,,,,,,,,,,,,,YES,
+A2255,NE,23,1,,,2005A+A...430L...5G,text,3,3,Three peculiar filaments http://www.slac.stanford.edu/cgi-wrap/getdoc/slac-pub-10880.pdf,FAINT,RELIC,,,,,,,,,,,,,,,,,,,,,,
+A2255,,56,3,,,2005A+A...430L...5G,text,3,3,,TRUE,HALO,,,,,,,,,,,,,,,,,,,,,,
+A2255,NW,8.4,2,350,-1.3...-1.6,2008A+A...481L..91P,text,3,2,,FAINT,RELIC,FALSE,,,,,,,,,,,,,,,,,,,,,
+A2255,SW,2.3,0.6,350,-1.3...-1.6,2008A+A...481L..91P,text,3,2,,FAINT,RELIC,FALSE,TRUE,,,,,,,,,,,,,,,,,,,,
+A2256,,462,,,,,,,,http://www.astron.nl/lofarscience2011/presentations/Day02_vanWeeren.pdf,TRUE,,,,,,complex,,,,,,,,,,,,,,,,YES,
+A2345,E,29,0.4,,,2009A+A...494..429B,TAB,6,8,https://arxiv.org/pdf/0810.2223.pdf,TRUE,,,,-1.3,0.1,fluxpaper,,,,,,,,,,,,,,,,YES,
+A2345,W,30,0.5,,,2009A+A...494..429B,TAB,6,8,https://arxiv.org/pdf/0810.2223.pdf,TRUE,,,,-1.5,0.1,fluxpaper,,,,,,,,,,,,,,,,,
+A2443,,6.5,,,,2011AJ....141..149C,,,,"ultra steep spectrum, faint, strong contaminating sources; http://www.mergingclustercollaboration.org/abell-2443.html",CONF,PHOENIX/RELIC,,,,,steepening,,,,,,,,,,,,,,,,,
+A2744,,18.2,,,,,,,,easily visible,TRUE,,,,,,,,,,,,,,,,,,,,,,YES,
+A3365,E,47.9,,,,,,,,"http://arxiv.org/pdf/1107.5597.pdf, new cluster position",TRUE,,,,,,FALSE,,,,,,,,,,,,,,,,YES,
+A3365,W,,,,,,,,,,TRUE,,,,,,,,,,,,,,,,,,,,,,,
+A3376,E,302,,,,2006Sci...314..791B,,,,"rms =0.52, fragmented in several regions http://arxiv.org/pdf/1206.3389v1.pdf",TRUE,RELIC,,,-1.37,0.08,FALSE,,FIG,3,6,,,,,,,,,,,,YES,
+A3376,W,,,,,2006Sci...314..791B,,,,,TRUE,RELIC,,TRUE,-1.17,0.06,,,FIG,3,6,,,,,,,,,,,,,
+A3411,"a, b",53,,,,,,,,"http://iopscience.iop.org/article/10.1088/0004-637X/769/2/101/pdf, http://www.mergingclustercollaboration.org/abell-3411.html",TRUE,,,,,,combined,,,,,,,,,,,,,,,,YES,
+A3411,b,,,,,,,,,,TRUE,,,,,,,,,,,,,,,,,,,,,,,
+A3411,c,,,,,,,,,,TRUE,,,,,,,,,,,,,,,,,,,,,,,
+A3527-bis,,35,,,,,,,,"Spectral index to flat for a stationary shock, https://arxiv.org/pdf/1609.08339v1.pdf",TRUE,,,,,,,,,,,,,,,,,,,,,,,
+A3667,NW,1200,,,,,,,,"Class one, though two counter relics",noMAP,RELIC,TRUE,,,,,,,,,,,,,,,,,,,,,
+A3667,SE,,,,,,,,,,noMAP,RELIC,TRUE,TRUE,,,,,,,,,,,,,,,,,,,,
+A4038,,49,,,,,,,,http://iopscience.iop.org/0004-637X/744/1/46/pdf/apj_744_1_46.pdf,TRUE,,,,,,steepening,,,,,,,,,,,,,,,,YES,
+ACT-CLJ0102-4915,,8.6,,,,,,,,El gordo http://iopscience.iop.org/article/10.1088/0004-637X/786/1/49/pdf,noMAP,RELIC,TRUE,,,,FALSE,,,,,,,,,,,,,,,,,
+ACT-CLJ0102-4915,,,,,,,,,,El gordo http://iopscience.iop.org/article/10.1088/0004-637X/786/1/49/pdf,noMAP,RELIC,TRUE,TRUE,,,,,,,,,,,,,,,,,,,,
+ACT-CLJ0102-4915,,,,,,,,,,El gordo http://iopscience.iop.org/article/10.1088/0004-637X/786/1/49/pdf,noMAP,HALO,TRUE,,,,,,,,,,,,,,,,,,,,,
+CIZA_J0107.7+5408,N,30,,,,,,,,"http://arxiv.org/pdf/1604.03551v1.pdf,  flux <36 if no point source subtraction",TRUE,,,,,,,,,,,,,,,,,,,,,,,
+CIZA_J0107.7+5408,S,,,,,,,,,,TRUE,,,,,,,,,,,,,,,,,,,,,,,
+CIZA_J0649.3+1801,a,27.5,,,,,,,,"http://arxiv.org/pdf/1107.5597.pdf, also Raj17",TRUE,,,,,,FALSE,,,,,,,,,,,,,,,,YES,
+CIZA_J0649.3+1801,b,,,,,,,,,,TRUE,,,,,,,,,,,,,,,,,,,,,,,
+CIZA_J2242.8+5301,N,144,,,,,,,,"Sausage! Spectra from http://www.aanda.org/articles/aa/pdf/2013/07/aa21267-13.pdf, new paper https://arxiv.org/pdf/1706.09903.pdf",TRUE,RELIC,,,,,straight,,,,,,,,,,,,,,,,YES,
+CIZA_J2242.8+5301,S,,,,,,,,,,TRUE,RELIC,,TRUE,,,complex,,,,,,,,,,,,,,,,YES,
+CL 0217+70,NW,NULL,,,,2011ApJ...727L..25B,,,,S. Brown+_2010; Feretti_2012 : strongly confused with other source,CONF,RELIC,FALSE,,,,,,,,,,,,,,,,,,,,,
+CL 0217+70,SE,,,,,2011ApJ...727L..25B,,,,,CONF,RELIC,FALSE,TRUE,,,,,,,,,,,,,,,,,,,,
+CL0217+70,halo,,,,,2011ApJ...727L..25B,,,,,TRUE,HALO,,,,,,,,,,,,,,,,,,,,,,
+1E_0657-55,E,82.6,,,,2015MNRAS.449.1486S,,,,Bulletcluster,noMAP,RELIC,FALSE,,,,,,,,,,,,,,,,,,,,,
+1E_0657-55,halo,,,,,2015MNRAS.449.1486S,,,,Bulletcluster,noMAP,HALO,FALSE,,,,,,,,,,,,,,,,,,,,,
+MaxBCG_138.91895+25.19876,,24.7,,,,,,,,"Simbad creates problems, subtract pointsource with 0.8 mJy , http://www.aanda.org/articles/aa/pdf/2011/03/aa15991-10.pdf",CLASSI,,,,,,,,,,,,,,,,,,,,,,,
+MaxBCG_217.95869+13.53470,,14.6,,,,,,,,(LOBE relic) http://www.aanda.org/articles/aa/pdf/2011/03/aa15991-10.pdf,CONF,AGN_RELIC,,,,,,,,,,,,,,,,,,,,,YES,
+MACS J0025-1222,NW,1,,,,2017A+A...597A..96R,text,3.4,10,"Baby Bullet (Simbad:MCS J0025.4-1222 ) , https://arxiv.org/pdf/1611.01273.pdf",FAINT,RELIC,FALSE,TRUE,,,,,text,3.4,10,,,,,,,,,,,,,
+MACS J0025-1222,SE,1.3,,,,2017A+A...597A..96R,text,3.4,10,,FAINT,RELIC,FALSE,,,,,,text,3.4,10,,,,,,,,,,,,,
+MACS_J0717.5+3745,d,83,,,,,,,,http://arxiv.org/pdf/0905.3650v2.pdf,TRUE,RELIC,,,,-1.1,0.1,2018MNRAS.478.2927B,TAB,3,7,,,,,,,,,,,,YES,
+MACS_J1149.5+2223,SE,10.3,,,,,,,"http://mnras.oxfordjournals.org/content/426/1/40.full.pdf, http://www.mergingclustercollaboration.org/macs-j114952223.html",,TRUE,,,,,-1.15,quite old measures,,,,,,,,,,,,,,,,YES,
+MACS_J1149.5+2223,NW,,,,,,,,"http://mnras.oxfordjournals.org/content/426/1/40.full.pdf, http://www.mergingclustercollaboration.org/macs-j114952223.html",,TRUE,,,,,-0.75,quite old measures,,,,,,,,,,,,,,,,,
+MACS_J1752.0+4440,NE,101.8,,,,,,,,http://adsabs.harvard.edu/abs/2012MNRAS.425L..36V,TRUE,,,,,,FALSE,,,,,,,,,,,,,,,,YES,
+MACS_J1752.0+4440,SW,,,,,,,,,,TRUE,,,,,,,,,,,,,,,,,,,,,,,
+MACS_J2243.3-0935,,1.9,,,,2016MNRAS.458.1803C,,,,"flux extrapolated, Infall shock, http://adsabs.harvard.edu/abs/2016arXiv160205923C",FAINT,RELIC,FALSE,,,,,,,,,,,,,,,,,,,,,
+PLCKESZ_G287.0+32.9,N,58,,,,,,,,http://www.mergingclustercollaboration.org/plck-g2870329.html,TRUE,,,,,,,,,,,,,,,,,,,,,,YES,
+PLCKESZ_G287.0+32.9,S,,,,,,,,,,TRUE,,,,,,,,,,,,,,,,,,,,,,,
+PLCKESZ_G287.0+32.9,Halo,,,,,,,,,,TRUE,,,,,,,,,,,,,,,,,,,,,,,
+PLCK_G200.9-28.2,,24.9,,2.5,,2018arXiv170801718K,TAB,4,6,https://arxiv.org/pdf/1708.01718.pdf,TRUE,,,,,,,,,,,,,,,,,,,,,,,
+PSZ1 G004.5-19.5,,19,,,,2017arXiv170800789A,,,5,"PSZ1_G004.45-19.55 in Simbad, http:// www.aanda.org/articles/aa/pdf/2014/02/aa21638-13.pdf, New! https://arxiv.org/pdf/1708.00789.pdf",TRUE,,,,,,,,,,5,,,,,,,,,,,,,
+PSZ1 G096.89+24.17,N,27.2,,,,,,,,"http://arxiv.org/pdf/1408.2677v1.pdf, de Gasperin+2014",TRUE,,,,,,FALSE,,,,,,,,,,,,,,,,YES,
+PSZ1 G096.89+24.17,S,,,,,,,,,,TRUE,,,,,,,,,,,,,,,,,,,,,,,
+PSZ1 G108.18-11.53,NE,76.7,0.2,,,2015MNRAS.453.3483D,TAB,3,,"ftp://ftp.hs.uni-hamburg.de/pub/outgoing/fdg/PSZ1G108.pdf, workaround with TYC 3644-1850-1  ",TRUE,,,,-1.25,0.02,,2015MNRAS.453.3483D,TAB,3,,,,,,,,,,,,,YES,
+PSZ1 G108.18-11.53,SW,45.4,0.2,,,2015MNRAS.453.3483D,TAB,3,,,TRUE,,,,-1.28,0.02,,2015MNRAS.453.3483D,TAB,3,,,,,,,,,,,,,,
+RXC J0225.1-2928,,37,,,,,,,,http://mnras.oxfordjournals.org/content/459/3/2525.full.pdf,TRUE,,,,,,,,,,,,,,,,,,,,,,,
+RXC J1053.7+5452,,15,,,,,,,,http://www.physics.ucdavis.edu/~dwittman/Table/RXCJ1053.7+5452/home.html,TRUE,,,,,,FALSE,,,,,,,,,,,,,,,,YES,
+RXC J1234.2+0947,,3.1,,,,,,,," http://arxiv.org/pdf/1503.02415.pdf (Z5247) 0.53 rms, pointsource like at 3 sigma",TRUE,,,,,,FALSE,,,,,,,,,,,,,,,,YES,
+RXC J1314.4-2515,E,30.3,,,,,,,,http://www.mergingclustercollaboration.org/rxc-j13144-2515.html (Causes trouble with automated pipeline),TRUE,,,,,,,,,,,,,,,,,,,,,,YES,
+RXC J1314.4-2515,W,,,,,,,,,,TRUE,,,,,,,,,,,,,,,,,,,,,,,
+S1081,,2.4,,,,2008AJ....135.1276M,,,,http://mnras.oxfordjournals.org/content/406/4/2578.full.pdf,noMAP,RELIC,FALSE,,,,FALSE,,,,,,,,,,,,,,,,,
+ZwCl 0008+5215,E,67,,,,,,,,http://arxiv.org/pdf/1102.2235v1.pdf (ds9 did not work automaticly),TRUE,,,,,,straight,,,,,,,,,,,,,,,,YES,
+ZwCl 0008+5215,W,,,,,,,,,,TRUE,,,,,,,,,,,,,,,,,,,,,,,
+CL 1446+26,,5.3,,,,2012A+A...545A..74G,,,,"Close to ZwCl_1447.2+2619 , faint and heavily contaminated by points sources http://arxiv.org/pdf/1207.2915v1.pdf, http://adsabs.harvard.edu/abs/2012A%26A...545A..74G",CONF,RELIC,FALSE,,,,FALSE,,,,,,,,,,,,,,,,,
+CL 1446+26,halo,,,,,,,,,,CONF,HALO,FALSE,,,,,,,,,,,,,,,,,,,,,
+ZwCl 2341+0000,N,,,,,,,,,"Two redshifts given!, Bagchi, J., Ensslin, T. A., Miniati, F., et al., 2002, New Astronomy, 7, 249 , bzw. http://arxiv.org/pdf/1001.4980.pdf Two subsources!, Possible double relics but a complicated case because of  embedded pointsource and unsure classification",TRUE,,FALSE,,-1.31,0.14,,2017ApJ...841....7B,text,4,3,,,,,,,,,,,,YES,
+ZwCl 2341+0000,S,,,,,,,,,,TRUE,,FALSE,,-1.2,0.18,,2017ApJ...841....7B,text,4,3,,,,,,,,,,,,,
+SPT-CL J0245-5302,NE,,,,,,,,,,,RELIC,,,,,,,,,,2018,,,,,,,,,,,,
+SPT-CL J0245-5302,SE,,,,,,,,,,,RELIC,,,,,,,,,,2018,,,,,,,,,,,,
+A168,N,,,,,,,,,,,RELIC,,,,,,,,,,2018,,,,,,,,,,,,
+A168,Nb,,,,,,,,,,,AGN_RELIC,,,,,,,,,,2018,,,,,,,,,,,,

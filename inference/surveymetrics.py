@@ -64,8 +64,14 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics=['numbers'],
                 distance = ABC_summaryStatistics_flux_komogorov([SurveyA,SurveyB])
             if metric == 'polarHisto':
                 distance = ABC_summaryStatistics_polarHisto([SurveyA,SurveyB])
+            if metric == 'polarHisto_simple':
+                distance = ABC_summaryStatistics_polarHisto_simple([SurveyA,SurveyB])
             if metric == 'logMach':
                 distance = ABC_summaryStatistics_logMach([SurveyA,SurveyB])
+            if metric == 'alpha':
+                distance = ABC_summaryStatistics_alpha([SurveyA,SurveyB])
+            if metric == '2DKS':
+                distance = ABC_summaryStatistics_2DKS([SurveyA,SurveyB])
             if metric == 'PCA':
                 distance = ABC_summaryStatistics_PCA([SurveyA,SurveyB])
 
@@ -164,28 +170,61 @@ def ABC_summaryStatistics_polarHisto(Surveys):
            
     This method will fail if the first survey class doesn't have any relics!
     """
-    [SurveyA,SurveyB] = Surveys
+    [SurveyA, SurveyB] = Surveys
 
     # Filtering by redshift
     zborder = 0.05
-    ztype   = '>'
-    
-    norm = dbc.norm('R200',Nexp=1.5) # I used Nexp=2.0 in the past! ANd maybe I just should use 1.0!!!!!!!!!!!!!!
+    ztype = '>'
+
+    print('ABC_summaryStatistics_polarHisto _____ A')
+    norm = dbc.norm('R200', Nexp=1.0)         # In the past I used 1.5 ... because this could be a better scaling
     for Survey in Surveys:
-        Survey.mainhist = dbc.Histogram2D(nbins=(32,30), fromto= [[0,2.*np.pi],[0,1.5]], norm=norm )     # angle_projected(rad), D_proj(R200) 
+        Survey.hist_main = dbc.Histogram2D(nbins=(32,30), fromto=[[0,2.*np.pi], [0,1.5]], norm=norm)     # angle_projected(rad), D_proj(R200)
         Survey.expScale = 0.65
-    
-    if SurveyB.polar()[0] is None :
+
+    polar = SurveyB.polar(zborder=zborder, ztype=ztype, normalize=True)
+    if polar[0] is None:
         HiB = 0
     else:
-        HiB = SurveyB.polar(zborder = zborder,ztype = ztype, normalize=True)[1][0]
-    HiA = SurveyA.polar(zborder = zborder,ztype = ztype, normalize=True)[1][0]
-    deviation =  np.sum(np.abs(HiA-HiB))
+        HiB = polar[1][0]
+    print('ABC_summaryStatistics_polarHisto _____ B')
+    HiA = SurveyA.polar(zborder=zborder, ztype=ztype, normalize=True)[1][0]
+    deviation = np.sum(np.abs(HiA-HiB))
     
     return deviation
-    
 
-def ABC_summaryStatistics_2DKS(Surveys, eff, parA=lambda x: x.M200, parB = lambda y: y.P_rest):
+
+def ABC_summaryStatistics_polarHisto_simple(Surveys):
+    """ Compares the 'average relic' of survey B (simulation) with survey A (real world survey)
+    input: either  2 Clusterbuster Class Surveys
+           or      2 Polary binned Histogramms of the same dimensions
+
+
+    This method will fail if the first survey class doesn't have any relics!
+    """
+    [SurveyA, SurveyB] = Surveys
+
+    # Filtering by redshift
+    zborder = 0.05
+    ztype = '>'
+
+    norm = dbc.norm('R200', Nexp=1.5)  # I used Nexp=2.0 in the past! ANd maybe I just should use 1.0!!!!!!!!!!!!!!
+    for Survey in Surveys:
+        Survey.mainhist = dbc.Histogram2D(nbins=(32, 30), fromto=[[0, 2. * np.pi], [0, 1.5]],
+                                          norm=norm)  # angle_projected(rad), D_proj(R200)
+        Survey.expScale = 0.65
+
+    if SurveyB.polar()[0] is None:
+        HiB = 0
+    else:
+        HiB = SurveyB.polar(zborder=zborder, ztype=ztype, normalize=True)[1][0]
+    HiA = SurveyA.polar(zborder=zborder, ztype=ztype, normalize=True)[1][0]
+    deviation = np.sum(np.abs(HiA - HiB))
+
+    return deviation
+
+
+def ABC_summaryStatistics_2DKS(Surveys, eff, verbose=False, parA=lambda x: x.M200, parB = lambda y: y.P_rest):
     """ Compares survey B (simulation) with survey A (real world survey)
     input: either  2 Clusterbuster Class Surveys
     """
@@ -232,7 +271,8 @@ def ABC_summaryStatistics_2DKS(Surveys, eff, parA=lambda x: x.M200, parB = lambd
         if math.isnan(access): access = 1.e-10
     else:
         access = 1.e-10
-    print('surveymetrics::ABC_summaryStatistics_2DKS()::access', access)
+    if verbose:
+        print('surveymetrics::ABC_summaryStatistics_2DKS()::access', access)
     return np.log10(1/access)
 
 def ABC_summaryStatistics_numbers(Surveys, maxcomp=None, verbose = False):
@@ -265,14 +305,15 @@ def ABC_summaryStatistics_numbers(Surveys, maxcomp=None, verbose = False):
 def ABC_summaryStatistics_flux_komogorov(Surveys):
 
     [A, B] = Surveys
-    fluxes_A, fluxes_B = [relic.flux() for relic in A.fetch_totalRelics()], [relic.flux() for relic in B.fetch_totalRelics()]
+    fluxes_A  = [relic.flux() for relic in A.fetch_totalRelics()]
+    fluxes_B  = [relic.flux() for relic in B.fetch_totalRelics()]
     statistic, p_value = scipy.stats.ks_2samp(fluxes_A, fluxes_B)
 
     return 1-p_value
 
 def ABC_summaryStatistics_logMach(Surveys):
     """ Compares survey B (simulation) with survey A (real world survey)
-        Derives the Histogram of the log(Mach) number and returns the differnce of the medians
+        Derives the Histogram of the log(Mach) number and returns the difference of the means
     """
     [A, B] = Surveys
 
@@ -294,6 +335,32 @@ def ABC_summaryStatistics_logMach(Surveys):
     mB = B[~np.isnan(B)].mean()
     
     return abs(mA-mB)
+
+
+
+def ABC_summaryStatistics_alpha(Surveys):
+    """ Compares survey B (simulation) with survey A (real world survey)
+        Derives the Histogram of the alpha number and returns the difference of the means
+    """
+    [A, B] = Surveys
+
+    if isinstance(A, cbclass.Survey):
+        """ Assume to work with surveys """
+        relicsA = A.fetch_totalRelics()
+        relicsB = B.fetch_totalRelics()
+    else:
+        """ Asume to work with lists of galaxy clusters """
+        relicsA = [gcl.filterRelics() for gcl in A]
+        relicsB = [gcl.filterRelics() for gcl in B]
+
+        # Get mach-numbers and remove nans
+    A = np.array([relic.alpha() for relic in relicsA])
+    B = np.array([relic.alpha() for relic in relicsB])
+
+    mA = A[~np.isnan(A)].mean()
+    mB = B[~np.isnan(B)].mean()
+
+    return abs(mA - mB)
 
 
 def ABC_summaryStatistics_PCA(Surveys):
@@ -319,6 +386,6 @@ def ABC_summaryStatistics_PCA(Surveys):
     sklearn_pca = sklearnPCA(n_components=2)
     Y_sklearn = sklearn_pca.fit_transform(X1_std)
     
-    """ This gives you an proxy for the average summed square error in the 2-D dimensional reduction via pca """
+    """ This gives you a proxy for the average summed square error in the 2-D dimensional reduction via pca """
     distance = np.sum(Y_sklearn**2)/len(Y_sklearn[0])
     return distance

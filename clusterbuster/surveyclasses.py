@@ -765,7 +765,7 @@ class Galaxycluster(object):
             if self.z < zmin:
                 statuses.append('low z')
             
-            if       self.flux() == 0: 
+            if self.flux() == 0:
                 vec = self.gettypestring(vec=True)
                 if 'noMAP' not in status:
                     if vec[1] > 0 not in status:
@@ -794,8 +794,7 @@ class Galaxycluster(object):
                 allwhere = np.concatenate((relic.pmask, allwhere), axis=1)
             else:
                 allwhere = relic.pmask
-                
-    
+
         return allwhere
     
     def whereToMask(self, H, iL):

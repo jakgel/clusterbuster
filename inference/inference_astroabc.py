@@ -385,7 +385,7 @@ def main_MUSIC_2(newrun=True):
             outfile = folder + 'abc_pmc_output_3param_0.25simple.txt'  
             tlevels  = [3.0,1.1]      # maximum,minimum tolerance      
     #        prior    = np.random.multivariate_normal(means, COV, 20000) #cov.reshape((2,2))
-        A        = np.loadtxt(outfile,skiprows=1)
+        A = np.loadtxt(outfile,skiprows=1)
         print len(A[:,0:2])      
     #        plot_chain2D(prior, A[:,0:2], 70, 6, extent=(-5.5,-3,-1.2,1.7), outfile=outfile+'.pdf')
     #        plot_chain2D_new(prior, A[:,0:2], 70, 6, extent=(-5.5,-3,-1.2,1.7), outfile=outfile+'.pdf')

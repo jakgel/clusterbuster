@@ -1136,8 +1136,7 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
     """
 
     pdframes = [survey.fetch_pandas(plotmeasures, logs=logs, vkwargs_FilterCluster={"zborder":0.05}) for survey in SurveySamples]
-    pdframe_combined = joinpandas(pdframes)                    
-
+    pdframe_combined = joinpandas(pdframes)
     print(len(SurveySamples))    
 
 
@@ -1151,11 +1150,10 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
          plt.imshow(np.abs([x,y].corr()), cmap=cmap, **kwargs) 
     """
 
-    
     pdframe_combined.to_csv(path_or_buf='/data/Test-%s.csv' % (SurveySamples[0].name))
     print(pdframe_combined.Survey.unique())
-    g = sns.PairGrid(pdframe_combined, hue="Survey", palette="Set2",dropna=True)     
-    g = g.map_upper (sns.regplot, scatter_kws={'edgecolors':"white","linewidth":1,"alpha":0.3})  #plt.scatter , , edgecolor="white"
+    g = sns.PairGrid(pdframe_combined, hue="Survey", palette="Set2", dropna=True)
+    g = g.map_upper(sns.regplot, scatter_kws={'edgecolors':"white", "linewidth":1, "alpha":0.3})  #plt.scatter , , edgecolor="white"
     g = g.map_diag(sns.kdeplot, lw=3, legend=False, alpha=0.7, shade=True)  #histtype="step"  {'cmap':['Blues_d','Blues']}
     
 
@@ -1166,8 +1164,33 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
     make_kde.cmap_cycle = cycle(colorsmaps[0:len(pdframe_combined.Survey.unique())])    #, 'Reds_r'
         
     g = g.map_lower(make_kde, alpha=0.5) #cmap="Blues", shade=True,   color=...
-   
 
+    # from https://stackoverflow.com/questions/52118245/python-seaborn-jointplot-does-not-show-the-correlation-coefficient-and-p-value-o
+    if 1==1:
+        for survey in SurveySamples:
+            pdframes = survey.fetch_pandas(plotmeasures, logs=logs, vkwargs_FilterCluster={"zborder": 0.05})
+            print(pdframes.keys())
+            #print(pdframes.corr(method='pearson'))
+
+            # from https://stackoverflow.com/questions/25571882/pandas-columns-correlation-with-statistical-significance
+            # construct two arrays, one of the correlation and the other of the p-vals
+            import scipy.stats as stats
+            import pandas as pd
+            df_clean = pdframes.dropna()
+            rho = df_clean.corr()
+            pval = np.zeros([df_clean.shape[1], df_clean.shape[1]])
+            for i in range(df_clean.shape[1]):  # rows are the number of rows in the matrix.
+                for j in range(df_clean.shape[1]):
+                    JonI = pd.ols(y=df_clean.icol(i), x=df_clean.icol(j), intercept=True)
+                    pval[i, j] = JonI.f_stat['p-value']
+
+            print(stats.pearsonr(df_clean[pdframes.keys()[0]], df_clean[pdframes.keys()[1]]))
+
+
+            #exit()
+        #import scipy.stats as stats
+        #j = sns.jointplot('Num of A', ' Ratio B', data=data_df, kind='reg', height=8)
+        #g.annotate(stats.pearsonr)
     
     #== Save file
     nowfile = 'Scattermatrix'
