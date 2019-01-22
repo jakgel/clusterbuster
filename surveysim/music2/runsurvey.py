@@ -40,12 +40,12 @@ import clusterbuster.surveyclasses  as cbclass
 import clusterbuster.iout.misc      as iom
 import clusterbuster.surveyut       as suut
 import clusterbuster.constants      as myu
-from   clusterbuster.cosmocalc      import cosmocalc
+
 
 import time
 import random 
-from   random import uniform
-
+from random import uniform
+from astropy.cosmology import FlatLambdaCDM
 
 
 
@@ -184,8 +184,8 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
             N_shells = float(pase['N_shells'])
 
         shells_z, delta_z = np.linspace(Z[0], Z[1], num=N_shells + 1, retstep=True)
-        DCMRs = [cosmocalc(z, H0=myu.H0, WM=Omega_M, WV=Omega_vac)['VCM_Gpc3'] for z in
-                 shells_z]  # Array if comoving distance  sampled onto z-array
+        cosmo = FlatLambdaCDM(H0=myu.H0, Om0=Omega_M)
+        DCMRs = cosmo.comoving_volume(shells_z) / 1e9
         count = 0
 
         # choosens = np.zeros(len(zsnap_list))

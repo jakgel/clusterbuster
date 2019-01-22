@@ -299,32 +299,58 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=T
         plt.show()
 
     return 0
-        
+
+def plot_Clusters_subfigure(survey, ids):
+
+    fig = plt.figure(figsize=(8, 10))
+    gc = []
+
+    import copy
+    survey_use = copy.deepcopy(survey)
+
+    #for GCl in survey_use.GCls:
+    #    if GCl.name == ids:
+    #        gc.append(aplpy.FITSFigure(GCl.mapdic['Diffuse'], subplot=[0.05, 0.05, 0.9, 0.3], figure=fig))
+
+    path = "/data/ClusterBuster-Output/NVSS/Images"
+
+    gc.append(aplpy.FITSFigure(img1, subplot=[0.05, 0.05, 0.9, 0.3], figure=fig))
+    gc.append(aplpy.FITSFigure(img2, subplot=[0.05, 0.35, 0.9, 0.3], figure=fig))
+
+    for subfigure in gc:
+        subfigure.recenter(ra, dec, radius=0.5)
+        subfigure.tick_labels.hide()
+        subfigure.axis_labels.hide()
+
+
+
+
 def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=False, DS9regions=False, diamF=2.6, 
                   colorbar=False, beam=True, shapes=False, recenter=True, infolabel = False, sectors=False,
                   xray=False, highres=False, show_rot=False, vectors = False, label_sheme='balanced', 
                   maxdist=1700, filterargs = {'zborder':0, 'ztype':'>', 'minimumLAS':4, 'GClflux':20, 'index':None}):
      
-    pdfs  = []
+    pdfs = []
 #    cmap  = 'afmhot'   #'BuPu'   #
 #    norm  = MPLcolors.PowerNorm(gamma=2) #CW uses a gamma of 2
     #cmap =plt.cm.get_cmap('RdYlBu')
-    laargs = {'color':'#DDDDDD'}      # line arguments
-    ciargs = {'color':'#DDDDDD'}      # arguments for the circle/centre area
-    baargs = {'color':'#DDDDDD'}      # argument for the scale bar
-    if label_sheme =='dark':
-        laargs.update({'color':'black'})
-        ciargs.update({'color':'#111111'})
-        baargs.update({'color':'#111111'})
-    elif label_sheme =='bright':    
-        laargs.update({'color':'w'})
-        ciargs.update({'color':'w'})
-        baargs.update({'color':'w'})
+    laargs = {'color': '#DDDDDD'}      # line arguments
+    ciargs = {'color': '#DDDDDD'}      # arguments for the circle/centre area
+    baargs = {'color': '#DDDDDD'}      # argument for the scale bar
+    if label_sheme == 'dark':
+        laargs.update({'color': 'black'})
+        ciargs.update({'color': '#111111'})
+        baargs.update({'color': '#111111'})
+    elif label_sheme == 'bright':
+        laargs.update({'color': 'w'})
+        ciargs.update({'color': 'w'})
+        baargs.update({'color': 'w'})
 
 
     for GCl in survey.FilterCluster(**filterargs):
-    
-        GCl = copy.deepcopy(GCl) # Because else changes will influence all galaxy clusters, you knwo class referencing in python, i.e.
+
+        # Outdated? Because else changes will influence all galaxy clusters, you knwo class referencing in python, i.e.
+        GCl = copy.deepcopy(GCl)
         if xray:  
             """X-Ray""" 
             if 'Brems' not in GCl.mapdic:     
@@ -341,18 +367,11 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
         if R200 <= 0:  
             print( 'For GCl %s no mass proxy and hence no virial radius is known. For plottting issues we set R200=1600 kpc.' % (GCl.name) ) 
             R200 = 1600
-        radius  =       R200/kpc
-        diam    = diamF*R200/kpc 
+        radius = R200/kpc
+        diam = diamF*R200/kpc
  
         import seaborn as sns; sns.set(style="white", color_codes=True) #ticks
         f = aplpy.FITSFigure(GCl.mapdic['Brems']) #dimensions=[0, 1],, slices=[10, 10], , slices=[10, 10]
-#        f.add_grid()
-#        f.grid.hide()
-#        f.grid.set_xspacing(0.2)
-#        f.grid.set_color('blue') 
-#        f.grid.show()
-
-#        f.remove_grid()
 
         if recenter:
             print('Recentering', GCl.name, GCl.RA(),GCl.Dec(),diam)
@@ -360,8 +379,6 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
 
 
         if survey.Rmodel.simu:
-#            f.tick_labels.set_xformat("dd:mm:ss")
-#            f.tick_labels.set_yformat("dd:mm:ss")  
             f.axis_labels.set_xtext('Coordinate 1')
             f.axis_labels.set_ytext('Coordinate 2')
             f.tick_labels.hide()
@@ -372,36 +389,30 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
 
         # The basic image
         if dynamicscale:
-            vmax    = np.max(f._data)
-            levels  = [GCl.dinfo.limit*l for l in [ survey.m_cnt**n for n in np.arange(0,16)  ]]  #0,16
+            vmax = np.max(f._data)
+            levels = [GCl.dinfo.limit*l for l in [survey.m_cnt**n for n in np.arange(0,16)]]  #0,16
         else:
-#            vmid    = 3e-7
-#            exponent= 1.7 
             print('plot_Clusters fixed scale might be brocken!')
-            vmax    = survey.emi_max
-            levels  = survey.cnt_levels
+            vmax = survey.emi_max
+            levels = survey.cnt_levels
            
 
-        vmin    = 0.6 * GCl.dinfo.rms #0.25
-        vmid    = -2  #0.00006  * GCl.dinfo.rms
-        exponent= np.log(vmax/vmin)
-         
-#        print(levels, survey.cnt_levels)
-#        levels   = [l*1e-3 for l in levels]
-
+        vmin = 0.6 * GCl.dinfo.rms #0.25
+        vmid = -2   #0.00006  * GCl.dinfo.rms
+        exponent = np.log(vmax/vmin)
 
         if not xray:
             
             for relic in GCl.filterRelics():
                 pixelcnt = np.transpose(np.squeeze(relic.cnt))
 #                print( pixelcnt.shape )
-                wcscnts  =  f.pixel2world(pixelcnt[0,:],pixelcnt[1,:])
+                wcscnts = f.pixel2world(pixelcnt[0,:],pixelcnt[1,:])
 #                print( type(wcscnts), len(wcscnts) )
-                wcscnts =  np.asarray([ (x,y)  for x,y in zip(wcscnts[0],wcscnts[0]) ]).T
+                wcscnts = np.asarray([ (x,y) for x,y in zip(wcscnts[0],wcscnts[0]) ]).T
 #                print( wcscnts.shape )
                 f.show_polygons([wcscnts], lw=2, color = 'white') # , lw=1, color = 'white' , alpha=1.0
 #                print( len(relic.cnt) )
-            addargs = {'vmid':vmid,'vmin':vmin,'vmax':vmax,'stretch':'log','exponent':exponent}
+            addargs = {'vmid':vmid, 'vmin':vmin, 'vmax':vmax, 'stretch':'log', 'exponent':exponent}
             
             """ It seems like you can only have one interactive contours """
 
@@ -412,13 +423,13 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
             f.show_contour(GCl.mapdic['Diffuse'], linewidth=0.15, overlap = True, levels=levels, colors='green',filled=False)
         else:
              if 'MUSIC' in survey.name or 'Threehundret' or 'ShockTest' in survey.name: #MUSIC-2
-                vmin_xr    = 2.5
-                vmax_xr    = 9.7 #6.2
-                vmid_xr    = -1.5
+                vmin_xr = 2.5
+                vmax_xr = 9.7     #6.2
+                vmid_xr = -1.5
              else:
-                vmin_xr    = -2
-                vmax_xr    =  5.
-                vmid_xr    = -4.5
+                vmin_xr = -2
+                vmax_xr = 5.
+                vmid_xr = -4.5
             
              exponent= np.log(max(vmax/vmin,1.0001))
             
@@ -432,11 +443,11 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
 #        levels = [l-3.5 for l in levels]   
                          
              if highres:
-                 key      = "Raw"
+                 key = "Raw"
                  key_comp = "CompModell" 
-                 levels = [levels[0]/8, levels[0]/4,levels[0]/2] + levels
+                 levels = [levels[0]/8, levels[0]/4, levels[0]/2] + levels
              else:
-                 key      = "Diffuse"
+                 key = "Diffuse"
                  key_comp = "Subtrated"
                  
 
@@ -444,7 +455,7 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
              if key_comp in GCl.mapdic:
                  f.show_contour(GCl.mapdic[key], linewidth=0.15, overlap = True, levels=levels, colors='green',filled=False)
              if key_comp in GCl.mapdic and subtracted: 
-                 f.show_contour(GCl.mapdic[key_comp], linewidth=0.15, overlap = True, levels=levels, colors='red', filled=False )  
+                 f.show_contour(GCl.mapdic[key_comp], linewidth=0.15, overlap = True, levels=levels, colors='red', filled=False)
 
              
         
@@ -495,7 +506,7 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
 #            f.beam.set_major(GCl.dinfo.beam[0] * u.arcsecond)
 #            f.beam.set_minor(GCl.dinfo.beam[1] * u.arcsecond)
 #            f.beam.set_angle(GCl.dinfo.beam[2])  # degrees
-            f.beam.set(facecolor='#BBBBBB',alpha=0.8,edgecolor='black')
+            f.beam.set(facecolor='#BBBBBB', alpha=0.8, edgecolor='black')
 
         if show_rot:     
             f.add_label(0.97, 0.12, '$\\theta=%.3f$' % (GCl.mockobs.theta), relative=True, style='oblique', size='large', horizontalalignment='right', **laargs) #-0.01*len(Cl_name)
@@ -519,10 +530,9 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
 
         """DEVELOPMENT"""
         if vectors:
-
            pdata = GCl.mapdic['MassSpeed'] #fits with magnitude of signal (use where not enough signal)
            adata = GCl.mapdic['MassAngle'] #fits with angle of signal     (use nan, where no vector should be)
-           f.show_vectors(pdata, adata, step=15,scale=1e-2,alpha=0.2, color='blue',lw=2) # , mutation_scale=4 ,ls='-.-', 0.3, head_width=5
+           f.show_vectors(pdata, adata, step=15, scale=1e-2, alpha=0.2, color='blue', lw=2) # , mutation_scale=4 ,ls='-.-', 0.3, head_width=5
 
 #           x  = GCl.mapdic['x'] + 3.0 dsdsd+ GCl.RA  #fits with magnitude of signal (use where not enough signal)
 #           y  = GCl.mapdic['y'] + GCl.Dec #fits with angle of signal     (use nan, where no vector should be)
@@ -530,7 +540,10 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
 #           dy = GCl.mapdic['dy']  #fits with angle of signal     (use nan, where no vector should be)
 #           f.show_arrows(x, y, dx, dy, step=15,scale=1e-2,alpha=0.2, color='blue',lw=2) # , mutation_scale=4 ,ls='-.-', 0.3, head_width=5
         """DEVELOPMENT END"""
-        
+
+        f.set_nan_color((0.5, 0.5, 0.5))
+
+
         nowfolder = '%s/Images/' % (survey.outfolder)
         iom.check_mkdir(nowfolder)
         savefile = '%s/%s-%s%s' % (nowfolder,survey.name, GCl.name,'HR'*highres)
@@ -541,6 +554,8 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
         f.close()
         plt.close("all")
         print(len(pdfs))
+
+
         
     merger = PdfFileMerger()
     
@@ -1137,6 +1152,7 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
 
     pdframes = [survey.fetch_pandas(plotmeasures, logs=logs, vkwargs_FilterCluster={"zborder":0.05}) for survey in SurveySamples]
     pdframe_combined = joinpandas(pdframes)
+    NSurveys = len(SurveySamples)
     print(len(SurveySamples))    
 
 
@@ -1153,23 +1169,21 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
     pdframe_combined.to_csv(path_or_buf='/data/Test-%s.csv' % (SurveySamples[0].name))
     print(pdframe_combined.Survey.unique())
     g = sns.PairGrid(pdframe_combined, hue="Survey", palette="Set2", dropna=True)
-    g = g.map_upper(sns.regplot, scatter_kws={'edgecolors':"white", "linewidth":1, "alpha":0.3})  #plt.scatter , , edgecolor="white"
-    g = g.map_diag(sns.kdeplot, lw=3, legend=False, alpha=0.7, shade=True)  #histtype="step"  {'cmap':['Blues_d','Blues']}
-    
-
+    g = g.map_upper(sns.regplot, scatter_kws={'edgecolors':"white", "linewidth":1, "alpha":0.5/np.sqrt(NSurveys)})  #plt.scatter , , edgecolor="white"
+    g = g.map_diag(sns.kdeplot, lw=3, legend=False, alpha=1.0/np.sqrt(NSurveys), shade=True)  #histtype="step"  {'cmap':['Blues_d','Blues']}
 
     pdframe_combined.Survey.unique()
-    colorsmaps = ('BuGn', 'Oranges', 'Red')
+    colorsmaps = ('BuGn', 'Oranges', 'Red') #("Blues", "Blues_d", "Blues_d") #
         
     make_kde.cmap_cycle = cycle(colorsmaps[0:len(pdframe_combined.Survey.unique())])    #, 'Reds_r'
         
-    g = g.map_lower(make_kde, alpha=0.5) #cmap="Blues", shade=True,   color=...
+    g = g.map_lower(make_kde, alpha=0.7/np.sqrt(NSurveys))
 
     # from https://stackoverflow.com/questions/52118245/python-seaborn-jointplot-does-not-show-the-correlation-coefficient-and-p-value-o
     if 1==1:
         for survey in SurveySamples:
             pdframes = survey.fetch_pandas(plotmeasures, logs=logs, vkwargs_FilterCluster={"zborder": 0.05})
-            print(pdframes.keys())
+            print('Keys:', pdframes.keys())
             #print(pdframes.corr(method='pearson'))
 
             # from https://stackoverflow.com/questions/25571882/pandas-columns-correlation-with-statistical-significance
@@ -1181,13 +1195,39 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
             pval = np.zeros([df_clean.shape[1], df_clean.shape[1]])
             for i in range(df_clean.shape[1]):  # rows are the number of rows in the matrix.
                 for j in range(df_clean.shape[1]):
-                    JonI = pd.ols(y=df_clean.icol(i), x=df_clean.icol(j), intercept=True)
-                    pval[i, j] = JonI.f_stat['p-value']
+                    if df_clean.keys()[i] != "Survey" and df_clean.keys()[j] != "Survey":
+                        #print(df_clean.iloc[:,i],df_clean.icol(j))
+                        JonI = pd.ols(y=df_clean.iloc[:,i], x=df_clean.icol(j), intercept=True)
+                        pval[i, j] = JonI.f_stat['p-value']
+                        print("Scatterplot, pval for %s-%s" % (df_clean.keys()[i],df_clean.keys()[j]), pval[i, j])
 
-            print(stats.pearsonr(df_clean[pdframes.keys()[0]], df_clean[pdframes.keys()[1]]))
+            #print('scatterplot: rho', type(rho))
+            #print(rho.values.shape)
+            #print(rho.values)
+            #print(stats.pearsonr(df_clean[pdframes.keys()[0]], df_clean[pdframes.keys()[1]]))
 
+            xlabels, ylabels = [], []
+            for ax in g.axes[-1, :]:
+                xlabel = ax.xaxis.get_label_text()
+                xlabels.append(xlabel)
+            for ax in g.axes[:, 0]:
+                ylabel = ax.yaxis.get_label_text()
+                ylabels.append(ylabel)
 
-            #exit()
+            for i in range(len(xlabels)):
+                for j in range(len(ylabels)):
+                    #g.axes[j, i].xaxis.set_label_text(xlabels[i])
+                    #g.axes[j, i].yaxis.set_label_text(ylabels[j])
+                    if i == j:
+                        g.axes[j, i].text(0.5, 0.1, '#%i' % (df_clean.shape[0]), zorder=1e10, horizontalalignment='center',
+                                          verticalalignment='center', transform=g.axes[j, i].transAxes)
+                    if i < j and abs(rho.values[i,j]) > 0.01:
+                        g.axes[j, i].text(0.5, 0.1, 'correlation: %0.2f' % rho.values[i,j], horizontalalignment='center',
+                                          verticalalignment='center', transform=g.axes[j, i].transAxes)
+                    if i > j:
+                        pass
+
+                #exit()
         #import scipy.stats as stats
         #j = sns.jointplot('Num of A', ' Ratio B', data=data_df, kind='reg', height=8)
         #g.annotate(stats.pearsonr)

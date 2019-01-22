@@ -3,12 +3,12 @@
 A python 2.7 environment to jointly analyse the radio maps from cosmological simulations and radio sky surveys. It provides the functionalities to
 go from data-cubes (simulations) or .fits images (surveys) to object catalogues.
 
-This python implementation provides a joint analysis framwork for radio relic surveys and simulations. You have to supply the map files or simulations cubes by yourself.
+It provides a joint analysis framework for radio relic surveys and simulations. You have to supply the map files or simulations cubes by yourself.
 Because of the widely varying output of different simulations you also have write your own wrapper to parse simulaion output into this tool. ClusterBuster provides some functionalities for this purpose.
-Once you have done this you are able to create a survey catalogue (.pickle) that you can use for further analysis. Approximate Bayesian computation for your own specified model is implemented in an submodel.
+Once you have done this you are able to create a survey catalogue (.pickle) that you can use for further analysis. Approximate Bayesian computation for your own specified model has to be implemented in a submodel (so some coding is required).
 ``astroABC`` requires ``NumPy``, and ``astropy``. The modules ``astroABC``,``abcpmc``, and ``multiprocessing`` are optional and usefull if you want to analyse simulations.
 
-In the subdirectories several functionalities are added. In the provided examples the focus is on so called diffuse radio emision, which is synchrotron emission emerging from cosmic rays in galaxy clusters.
+In the subdirectories several functionalities are added. In the provided examples the focus is on so-called diffuse radio emision, which is synchrotron emission emerging from cosmic rays in galaxy clusters.
 A future release will add additional modules to analyse at least MUSIC-2.
 
 Radio Surveys:
@@ -17,11 +17,12 @@ Radio Surveys:
 
 
 ##  Likely changes
-- The [cosmocalc](http://cxc.harvard.edu/contrib/cosmocalc/) will be removed. Instead installing descriptions will be layed out.
+- The requirement of [cosmocalc](http://cxc.harvard.edu/contrib/cosmocalc/) will be removed. 
+- Installing descriptions will be layed out.
 - Files paths in some .py will be made more general (example RelicSurveys/RelicExtraction.py)
 - DEBUGGING   parts within the code will be removed
 - DEVELOPMENT parts within the code will be removed
-- Remove the NVSS images (currently 50MB) and add a description where to find them
+- NVSS poststamp images (currently 50MB) will be removed and add a description added where to find them
 
 Input for simulations likely added:
 - Cosmic web (cite, also cite the data science centre because it has the radio emission)
@@ -57,7 +58,7 @@ Alternatively clone/fork this directory from  github.
 - matplotlib > (needs matplotlib.mlab)
 - reproject (the NVSS subtraction part)
 
-Add our github path to your bashrc like
+Add the github path to your bashrc like
 >> export PYTHONPATH="/PATH/TO/clusterbuster:${PYTHONPATH}"
 
 *Additional packaes needed?*

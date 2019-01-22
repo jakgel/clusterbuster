@@ -31,7 +31,6 @@ import NFW.mass_concentration as massC
 
 #from .mathut  import *
 
-from clusterbuster.cosmocalc import cosmocalc
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.cosmology import FlatLambdaCDM   # from astropy.cosmology import WMAP9 as cosmo
@@ -491,15 +490,10 @@ class Galaxycluster(object):
             Also includes properties, which are by definition accociated to clusters with radio relics
         """     
 
-        # This cosmologies don't cope well together --> go to astropy!
-        self.cosmoPara = cosmocalc(self.z(), H0=70, WM=0.27, WV=0.73)
-        self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3, Ob0=0.05)
-        """ competing with comocalc implementation, one could use it like 
-        self.cosmoPara['PS_kpc'] --> self.cosmo.kpc_proper_per_arcmin(self.z()).value/60
-        """
-        # Cosmology used --> exchange with astropy for future compatibility and functionalities !
-        self.cosmoDL = self.cosmoPara['DL_cm']   # Gyr Mpc cm
-        self.cosmoPS = self.cosmoPara['PS_kpc']  # kpc/''
+        # Astropy cosmology
+        self.cosmo = FlatLambdaCDM(H0=70, Om0=0.27)
+        self.cosmoDL = self.cosmo.luminosity_distance(self.z.value).cgs.value # cm
+        self.cosmoPS = self.cosmo.kpc_proper_per_arcmin(self.z.value).value /60  # kpc/''
 
         # Computes M200 from other mass proxies if needed  
         if massproxis:
@@ -583,7 +577,8 @@ class Galaxycluster(object):
         alpha = 1.51
         h100  = 0.70
         h70   = 1.0
-        Ez = np.sqrt(self.cosmoPara['WM']*(1+self.z)**3 + self.cosmoPara['WV'])
+        # np.sqrt(self.cosmoPara['WM']*(1+self.z)**3 + self.cosmoPara['WV'])
+        Ez = np.sqrt(self.cosmo._Om0*(1+self.z)**3 + self.cosmo._Ode0)
         return 1e44 * 0.1175*Ez**alpha/h100**(2-alpha) * (M*h70/1e14)**alpha * h70**2
 
 

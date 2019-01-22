@@ -280,6 +280,45 @@ Cluster               &  z   &  $M_{200}$          &  $F_\mathrm{NVSS}$   &   $F
     mf.close()
     
     
+    ''' Write relic clusters coordinates '''
+    mf = open(location+"centre","w")
+
+    head_mod = """\\begin{table*}
+                \\begin{center}
+                \\caption{Radio relic hosting clusters centre coordinates}
+                \\scriptsize""" * int(outer) + """ 
+                \\begin{tabular}{ l  r  r  c  c  c}
+                \hline\hline
+                \label{tab:NVSSrelics}
+                Cluster               &  RA  &  Dec    &  Method   &  $\\Delta_\\mathrm{simbad}$ & References\\\\ 
+                                      &  deg  &  deg  &           &       ''       &    \\\\ 
+                    (1)               & (2)  &  (3)  &        (4)  &          (5)  &  (6)  \\\\\hline\hline     """
+
+    foot_mod = '\hline\hline\n\\end{tabular}\n' + int(outer) * '\\end{center}\n\\label{tab:NVSSrelics}\n\\end{table*}'
+    mf.write(head_mod)
+    for m in survey.GCls:
+        
+        
+        # WRITE COMMON FILE
+        if m.getstatusstring()[0] is not None:
+          
+            # PS$^1$  &
+            # \'\'/Mpc  &
+            #   %4.1f &      1000./(m.cosmoPS*60)
+        	
+    #        if m.P_rest() == 0:
+    #              print '!!!!!!!! m.Prest == 0', m.name,  m.P_rest
+            string = "%25s &  %.3f & %.3f &"   % (m.name, m.RA.value, m.Dec.value) +  'Planck & 0.01  & cite \\\\'
+            mf.write(string + '\n')
+            n_clusters += 1
+
+    print('n_clusters:',  n_clusters )
+
+    mf.write( foot_mod )
+    mf.close()
+    
+    
+    
     ''' Do phoenix clusters '''
     mf = open(location+'phoenixes',"w")
     mf.write(head)
@@ -299,6 +338,7 @@ Cluster               &  z   &  $M_{200}$          &  $F_\mathrm{NVSS}$   &   $F
     
     mf.write( foot )
     mf.close()
+
 
 
 

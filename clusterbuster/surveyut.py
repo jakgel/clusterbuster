@@ -19,15 +19,12 @@ def AddFilesToSurvey(survey, savefolder, verbose = True, clusterwise=False):
     Currently clusterwise=True is the case for the normal Run() and clusterwise=False is the case for the ABC-routine.
     How about CW?
     """
-    
-    
+
     """ This replaces tha galaxy clusters of a survey object with all pickled galaxy clusters in an particular 'savefolder' """
-    minsize        = 1
-    location       = savefolder+'/pickled/'
-    location       = location.replace('//','/')
-    GCls           = []
-        
-    
+    minsize  = 1
+    location = savefolder+'/pickled/'
+    location = location.replace('//', '/')
+    GCls     = []
 
     if clusterwise: 
         fn = 'GCl'
@@ -48,7 +45,7 @@ def AddFilesToSurvey(survey, savefolder, verbose = True, clusterwise=False):
              os.remove(filename) 
 
     GCls = sorted(GCls, key= iom.Object_natural_keys)
-    survey.GCls =  GCls
+    survey.GCls = GCls
      
     if len(GCls) == 0:
         print('surveyutil::AddFilesToSurvey() len(GCls)', len(GCls))
