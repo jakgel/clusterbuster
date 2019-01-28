@@ -940,15 +940,15 @@ class PreModel_Hoeft(RModel):
     """
     Class that inherits from 'RModel'  and adds parameters to descripe a population of preexisting electrons and further, misc parameters
     """
-    def __init__(self, id, **kwargs ):
+    def __init__(self, id, t0=0.5, t1=7, n0=1e-6, n1=1e-1, ratio=1e-5, **kwargs):
 
         """ Model of preexisting electrons, see internal .pdf description"""
         RModel.__init__(self, id, pre=True, **kwargs)
-        self.t0    = 0.5   # Minimal time since reacceleration in Gyr
-        self.t1    = 7     # Maximal time since reacceleration in Gyr
-        self.n0    = 1e-6  # Electron number density of accretion shocks
-        self.n1    = 1e-1  # Electron number density of 'core'
-        self.ratio = 0.05  # Initial normalisation PRE and thermal at shockfront
+        self.t0    = t0   # Minimal time since reacceleration in Gyr
+        self.t1    = t1   # Maximal time since reacceleration in Gyr
+        self.n0    = n0   # Electron number density of accretion shocks
+        self.n1    = n1   # Electron number density of 'core'
+        self.ratio = ratio  # Initial normalisation PRE and thermal at shockfront
 
 class PreModel_Gelszinnis(RModel):
     """

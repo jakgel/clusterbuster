@@ -236,8 +236,8 @@ def CreateRadioCube( snapred, Rmodel, z,  nuobs=1.4, logging = True):
             t_shocked[rho_e < Rmodel.n0] = Rmodel.t0
             t_shocked[rho_e > Rmodel.n1] = Rmodel.t1
             poisson_factor = math.nextTime(1)   # stochastic event
-            t_shocked   = t_shocked*poisson_factor
-            gamma_boost = 2.4e4/t_shocked/( (B/R)**2. + Bcmb**2.)  #Magnetic field before enhancement through compression
+            t_shocked = t_shocked*poisson_factor
+            gamma_boost = 2.4e4/t_shocked/((B/R)**2. + Bcmb**2.)  #Magnetic field before enhancement through compression
             f_boost[MF] = Rmodel.ratio*gamma_boost**(snap.s[MF]-2)
         
         elif isinstance(Rmodel, cbclass.PreModel_Gelszinnis):
@@ -248,19 +248,19 @@ def CreateRadioCube( snapred, Rmodel, z,  nuobs=1.4, logging = True):
                  #Also (log?)normal normalization of plasma --> should saturate at a certain fraction
                  #Influence for high mach number shocks should roughly add the same amount of emission as the thermal pool in average.
             """
-            f_expid = expit(  (Rmodel.sigmoid_0-np.log10(snap.rdow[MF]*snap.u[MF]*(rho_conv*T_conv)))/Rmodel.sigmoid_width  )
-            s       = 1     
-            if Rmodel.p_sigma  > 0:
-                s   = np.random.normal(0, Rmodel.p_sigma)                                                
-            f_boost[MF] = s*np.power(snap.DSAPsi,Rmodel.PREexpo-1)*f_expid
+            f_expid = expit((Rmodel.sigmoid_0-np.log10(snap.rdow[MF]*snap.u[MF]*(rho_conv*T_conv)))/Rmodel.sigmoid_width)
+            s = 1
+            if Rmodel.p_sigma > 0:
+                s = np.random.normal(0, Rmodel.p_sigma)
+            f_boost[MF] = s*np.power(snap.DSAPsi, Rmodel.PREexpo-1)*f_expid
         else:
             print('The model of pre-existing electrons is unknown. Choose the inheriting class of ObjectClasses::Rmodel.')
 
                      
     #=== Compute Radio Emission: Using Eq. 32 from Hoeft-Brueggen 2007, part B
-    ergSI         =  1.e-7                                                     # [erg/s per W]
-    snap.radi[MF] =  ergSI * snap.radi[MF]*factor_nu*factor_B*factor_fudge     # in  [W/Hz]
-    snap.radiPre  =  snap.radi*f_boost                                         # in  [W/Hz]
+    ergSI         = 1.e-7                                                     # [erg/s per W]
+    snap.radi[MF] = ergSI * snap.radi[MF]*factor_nu*factor_B*factor_fudge     # in  [W/Hz]
+    snap.radiPre  = snap.radi*f_boost                                         # in  [W/Hz]
     #print 'snap.s[MF]', snap.s[MF] DEBUGGING CHEAT here!
     if logging: print('  Total radio power in cube: %5.2e W/Hz at %5.2f GHz rest frame frequency' %  ( np.sum(snap.radi[MF]), nurest))
     radiofolder = 'ToImplement'  #strSn.replace('shocks','radio')  

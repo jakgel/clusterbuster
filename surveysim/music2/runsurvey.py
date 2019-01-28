@@ -317,8 +317,8 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
                                             compress=float(pase['compress']), t0=10**lgt0, t1=10**lgt1, ratio=10**lgratio)
             Rm = RModel
             writestring += "Model #%7i parameters:" % (RModelID) + ' %+.4e %+.4e %+.4e %+.3f\n' % (
-            Rm.effList[0], Rm.B0, Rm.kappa, Rm.compress) + ' %+.4e %+.4e %+.4e %+.4e\n' % (
-                           Rm.p0, Rm.p_sigma, Rm.sigmoid_0, Rm.sigmoid_width)
+            Rm.effList[0], Rm.B0, Rm.kappa, Rm.compress) + ' %+.4e %+.4e %+.4e\n' % (
+                           Rm.t0, Rm.t1, Rm.ratio)
         else:
             print('RunSurvey::main: model unknown')
             return
@@ -505,7 +505,7 @@ def RadioAndMock_loaded(val, verbose=True):
     (snapMF,  pase, realisations, survey) = val
     Rmodel = survey.Rmodel
 
-    (radiosnap, subsmt)  = radiomodel.CreateRadioCube(snapMF, Rmodel, realisations[0].mockobs.z_snap, nuobs=pase['nu_obs'], logging=False)[0:2]
+    (radiosnap, subsmt) = radiomodel.CreateRadioCube(snapMF, Rmodel, realisations[0].mockobs.z_snap, nuobs=pase['nu_obs'], logging=False)[0:2]
     smt.MergeSMT_simple(subsmt, silent=True)
     ##=== Stage II - DoMockObs
     if verbose: print('Start compiling MockObservations for further models of cluster #%5i snap #%3i with in total %i realisations.' % (realisations[0].mockobs.clid, realisations[0].mockobs.snap, len(realisations)))
@@ -528,10 +528,13 @@ def RadioAndMock_loaded(val, verbose=True):
             realisations[kk].updateInformation(massproxis=True)
 
         """ Here we add the radio emission due to pre-existing electrons """
-        if Rmodel.pre:
-            randfactor           = 10**np.random.normal(0, Rmodel.p_sigma, 1)
-            realisation.PreNorm  = randfactor*Rmodel.p0
-            radiosnap.radiPre   += realisations.PreNorm * radiosnap.radiPre
+        if isinstance(Rmodel, cbclass.PreModel_Gelszinnis):
+            randfactor = 10**np.random.normal(0, Rmodel.p_sigma, 1)
+            realisation.PreNorm = randfactor*Rmodel.p0
+            radiosnap.radiPre += realisations.PreNorm * radiosnap.radiPre
+        elif isinstance(Rmodel, cbclass.PreModel_Hoeft):
+            randfactor = 1  # get it from the other procedure
+            radiosnap.radiPre += realisations.PreNorm * radiosnap.radiPre
             
         """ Here we compute the volume weighted radio emission """   
         radiosum      = np.sum(radiosnap.radi)
