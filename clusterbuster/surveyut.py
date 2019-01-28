@@ -219,10 +219,9 @@ def assign_snaps(snaplist_z, boundaries_z, VCM, snaps_Nclusters, sigma_z=0.2, us
     
     clusterlist = []
     z_central = np.mean(boundaries_z)
-    weighted_snap = weight_snap(snaplist_z, z_central, sigma_z=sigma_z, use_list=use_list)     
+    weighted_snap = weight_snap(snaplist_z, z_central, sigma_z=sigma_z, use_list=use_list)
     weighting = VCM * skycoverage * weighted_snap/Vsimu
-    
-    
+
     # Now do a poisson trial for each cluster in each snapshot
     #print(snaplist_z)
     #print(weighting * snaps_Nclusters[0])

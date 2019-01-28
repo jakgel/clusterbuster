@@ -185,7 +185,7 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
 
         shells_z, delta_z = np.linspace(Z[0], Z[1], num=N_shells + 1, retstep=True)
         cosmo = FlatLambdaCDM(H0=myu.H0, Om0=Omega_M)
-        DCMRs = cosmo.comoving_volume(shells_z) / 1e9
+        DCMRs = cosmo.comoving_volume(shells_z).value / 1e9
         count = 0
 
         # choosens = np.zeros(len(zsnap_list))
