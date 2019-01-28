@@ -314,7 +314,7 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
             (lgeff, lgB0, kappa, lgt0, lgt1, lgratio) = ABC
             print(ABC)
             RModel = cbclass.PreModel_Hoeft(RModelID, effList=[10 ** lgeff], B0=10 ** lgB0, kappa=kappa,
-                                            compress=float(pase['compress']), t0=10**t0, t1=10**t1, ratio=10**lgratio)
+                                            compress=float(pase['compress']), t0=10**lgt0, t1=10**lgt1, ratio=10**lgratio)
             Rm = RModel
             writestring += "Model #%7i parameters:" % (RModelID) + ' %+.4e %+.4e %+.4e %+.3f\n' % (
             Rm.effList[0], Rm.B0, Rm.kappa, Rm.compress) + ' %+.4e %+.4e %+.4e %+.4e\n' % (
