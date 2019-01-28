@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.mlab as mlab
-
+import math
+import random
 
 
 def sigmoid(x):
@@ -202,7 +203,13 @@ def compute_moments(sparseA, sparseD, sparseW, xy_swapped = True):
     return moment_angle
 
 
-    
+
+
+def nextTime(rateParameter):
+    return -math.log(1.0 - random.random()) / rateParameter
+
+
+
 #=== TODO: Some cosmological stuff which could be put somewhere else ===#
 def Mvir2Lx(MassBins,h=0.7): #Made for logarithmic values
    # Using the scalling relation of Reichert et al for z=0.0
@@ -210,5 +217,6 @@ def Mvir2Lx(MassBins,h=0.7): #Made for logarithmic values
   return Lx
   
   
-  
+
+
 

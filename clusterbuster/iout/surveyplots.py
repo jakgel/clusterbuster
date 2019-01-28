@@ -22,6 +22,7 @@ import clusterbuster.surveyclasses as cbclass
 import clusterbuster.dbclasses as dbc
 import clusterbuster.iout.misc as iom
 import clusterbuster.maput as maput
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import math as math
@@ -401,61 +402,48 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
         vmid = -2   #0.00006  * GCl.dinfo.rms
         exponent = np.log(vmax/vmin)
 
+        if highres:
+            key = "Raw"
+            key_comp = "CompModell"
+            levels = [levels[0] / 8, levels[0] / 4, levels[0] / 2] + levels
+        else:
+            key = "Diffuse"
+            key_comp = "Subtracted"
+
         if not xray:
-            
+            cbar_text = 'flux density in [Jy/beam}'
+
             for relic in GCl.filterRelics():
                 pixelcnt = np.transpose(np.squeeze(relic.cnt))
-#                print( pixelcnt.shape )
                 wcscnts = f.pixel2world(pixelcnt[0,:],pixelcnt[1,:])
-#                print( type(wcscnts), len(wcscnts) )
                 wcscnts = np.asarray([ (x,y) for x,y in zip(wcscnts[0],wcscnts[0]) ]).T
-#                print( wcscnts.shape )
                 f.show_polygons([wcscnts], lw=2, color = 'white') # , lw=1, color = 'white' , alpha=1.0
-#                print( len(relic.cnt) )
             addargs = {'vmid':vmid, 'vmin':vmin, 'vmax':vmax, 'stretch':'log', 'exponent':exponent}
             
             """ It seems like you can only have one interactive contours """
-
-#            f.show_colorscale(vmin=1e9, vmax=1e11,  stretch='linear', cmap='afmhot') #gist_heat 
-            f.show_colorscale(vmid=vmid, vmin=vmin, vmax=vmax,  stretch='log', exponent=exponent, cmap='afmhot') #gist_heat      
-#            f.show_contour(GCl.mapdic['Diffuse'], linewidth=0.15, overlap = True, levels=[l for l in levels if l<vmax*survey.m_cnt], cmap='afmhot',filled=True, alpha=0.49, extend='max', **addargs) #
+            f.show_colorscale(vmid=vmid, vmin=vmin, vmax=vmax,  stretch='log', exponent=exponent, cmap='afmhot')
             print(levels, survey.cnt_levels)
-            f.show_contour(GCl.mapdic['Diffuse'], linewidth=0.15, overlap = True, levels=levels, colors='green',filled=False)
+            f.show_contour(GCl.mapdic['Diffuse'], linewidth=0.15, overlap=True, levels=levels, colors='green', filled=False, smooth=1)
         else:
-             if 'MUSIC' in survey.name or 'Threehundret' or 'ShockTest' in survey.name: #MUSIC-2
+            cbar_text = '$\log_{10}(P_\\mathrm{Brems,bol}$ in restframe) [arbitrary unit]'
+            if 'MUSIC' in survey.name or 'Threehundret' or 'ShockTest' in survey.name:
                 vmin_xr = 2.5
                 vmax_xr = 9.7     #6.2
                 vmid_xr = -1.5
-             else:
+            else:
                 vmin_xr = -2
                 vmax_xr = 5.
                 vmid_xr = -4.5
             
-             exponent= np.log(max(vmax/vmin,1.0001))
+            exponent = np.log(max(vmax/vmin, 1.0001))
             
-             f.show_colorscale(vmid = vmid_xr, vmin=vmin_xr, vmax=vmax_xr,  stretch='log', exponent=exponent, cmap='afmhot') #gist_heat      
-#             f.show_colorscale(cmap='afmhot') #gist_heat  
-#             return 0
-#             f.show_contour(GCl.xname[-1], colors='grey', linewidth=0.5,  levels=levels, overlap = True)
-             #development
-#             """ X-ray """
-#        levels = [1,1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7]
-#        levels = [l-3.5 for l in levels]   
-                         
-             if highres:
-                 key = "Raw"
-                 key_comp = "CompModell" 
-                 levels = [levels[0]/8, levels[0]/4, levels[0]/2] + levels
-             else:
-                 key = "Diffuse"
-                 key_comp = "Subtrated"
-                 
+            f.show_colorscale(vmid = vmid_xr, vmin=vmin_xr, vmax=vmax_xr,  stretch='log', exponent=exponent, cmap='afmhot') #gist_heat
+            if key_comp in GCl.mapdic:
+                f.show_contour(GCl.mapdic[key], linewidth=0.15, overlap = True, levels=levels, colors='green',filled=False)
 
-#             addargs = {'vmid':vmid,'vmin':vmin,'vmax':vmax,'stretch':'log','exponent':exponent}
-             if key_comp in GCl.mapdic:
-                 f.show_contour(GCl.mapdic[key], linewidth=0.15, overlap = True, levels=levels, colors='green',filled=False)
-             if key_comp in GCl.mapdic and subtracted: 
-                 f.show_contour(GCl.mapdic[key_comp], linewidth=0.15, overlap = True, levels=levels, colors='red', filled=False)
+        print(subtracted, key_comp, GCl.mapdic)
+        if key_comp in GCl.mapdic and subtracted:
+             f.show_contour(GCl.mapdic[key_comp], linewidth=0.15, overlap = True, levels=levels, colors='red', filled=False)
 
              
         
@@ -525,7 +513,7 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
             f.add_colorbar()
             f.colorbar.show()
 #            f.colorbar.set_axis_label_text('%s flux density [Jy/beam]' % (survey.name_short))
-            f.colorbar.set_axis_label_text('$\log_{10}(P_\\mathrm{Brems,bol}$ in restframe) [arbitrary unit]')
+            f.colorbar.set_axis_label_text(cbar_text)
             
 
         """DEVELOPMENT"""
@@ -580,122 +568,94 @@ def circular_cutout(f, savefile):
     f.save(savefile+'_circular.png')
 
 
+def plot_fluxRatio_LAS(surveys):
+    """ Test the deviation of the  literatur evalue and measured fluxes of the brightest objects in a cluster """
 
-def PlotDistribution_FluxRatioLAS(location, ClList, RList):
-#=== Test the deviation of the  literatur evalue and measured fluxes of the brightest objects in a cluster
-   
-    # use latex for font rendering
-    import matplotlib as mpl
-    mpl.rcParams['text.usetex'] = True
 
-    plt.clf()
-    fig = plt.figure(figsize=(8, 4.7), dpi=200)
-    ax  = plt.subplot(111) 
-  
-    # brightrelics = ....
-    # filter brightest object ... get only its flux ...
-    # compare it with flux minus other fluxes'
-  
-    extrapolL = [] #n fact its: ['A1443','A1682','MCS_J1149.5+2223','MCS_J2243.3-0935','ZwCl_2341+0000']
-    for o in ClList:
-       if  o.name in extrapolL:
-           print( o.name  )
-  
-    x_list   = [o.largestLAS                 for o in ClList if o.flux_lit >0 and o.name not in extrapolL]
-    y_list   = [o.flux/o.flux_lit            for o in ClList if o.flux_lit >0 and o.name not in extrapolL] #[np.log10(o.flux/o.flux_lit)  for o in ClList if o.flux_lit >0]
-    y_err    = [o.flux_err/o.flux_lit        for o in ClList if o.flux_lit >0 and o.name not in extrapolL]
-    area     = [np.power(o.flux,0.35)*4e0    for o in ClList if o.flux_lit >0 and o.name not in extrapolL]
-  
-    x_list2  = [o.largestLAS                 for o in ClList if o.flux_lit >0 and o.name     in extrapolL]
-    y_list2  = [o.flux/o.flux_lit            for o in ClList if o.flux_lit >0 and o.name     in extrapolL] #[np.log10(o.flux/o.flux_lit)  for o in ClList if o.flux_lit >0]
-    y_err2   = [o.flux_err/o.flux_lit        for o in ClList if o.flux_lit >0 and o.name     in extrapolL]
-    area2    = [np.power(o.flux,0.35)*4e0     for o in ClList if o.flux_lit >0 and o.name    in extrapolL]
-  
-  
-    farnsw_x         = [0,     0.5,   1.0,    1.5,    2.0,    2.5,    3.0,    3.5,    4.0,    4.5,    5.0,    5.5,    6.0,    6.5,    7.0,    7.5,    8.0,    8.5,    9.0,    9.5,   10.0,   10.5,   11.0,   11.5,   12.0,   12.5,   13.0,   13.5,   14.0,  14.5,   15.0,   15.5,   16.0,   16.5,   17.0,   17.5,   18.0,   18.5,   19.0,    19.5,   20.0]
-    farnsw_dec74_pix = [32,     32,    32,     24,     22,     24,     27,     31,     32,     38,     42,     49,     58,     69,     89,    116,    154,    206,    273,    341,    418,    494,    570,    641,    706,    766,    820,    868,    912,    952,   986,   1016,   1042,   1066,   1085,  1101, 1114, 1127, 1136, 1143, 1148]
-    farnsw_dec18_pix = [32,     32,    32,     31,     30,     30,     30,     30,     35,     39,     45,     50,     70,     96,    132,    178,    232,    293,    363,    435,    508,    581,    652,    723,    776,    832,    880,    922,    960,    993,  1022,   1047,   1069,   1088,   1106,  1118, 1130, 1140, 1147, 1153, 1157]
+    for survey in surveys:
+        df = survey.fetch_pandas([lambda x: x.GCl.largestLAS, lambda x: x.GCl.flux,
+                                        lambda x: x.GCl.flux_lit, lambda x: x.GCl.area],
+                                       logs=[False]*3,  keys="dic", vkwargs_FilterCluster={"zborder": 0.05})
+        print('Keys:', df.keys())
+        df_clean = df.dropna()
+        print(df_clean.keys())
 
-    farnsw_dec18 = [(1171.-y)/1140. for y in farnsw_dec18_pix]
-    farnsw_dec74 = [(1171.-y)/1140. for y in farnsw_dec74_pix]
-  
-    colors   = ['b','g']  
-    alphas   = [1-(err/val) for (val,err) in zip(y_list, y_err)]
-    
-    print( alphas )
-    rgba_colors = np.zeros((len(alphas),4))
-    # for red the first column needs to be one
-    rgba_colors[:,2]  = 1.0
-    # the fourth column needs to be your alphas
-    rgba_colors[:, 3] = alphas
+        clusters = survey.FilterCluster(minrel=1, zborder=0.05, ztype='>')
 
-    print( alphas )
-    [ax.scatter( x_list , y_list,    s=area ,  alpha=    0.60,  color=  colors[0], zorder=2)        ]#,     
-    #l_i_err  = [ax.errorbar(x_list , y_list, yerr=y_err,  alpha=    0.60,  ecolor=colors[0], zorder=2, marker='+') ]#, 
-    
-                #ax.scatter(x_list2, y_list2, s=area2, alpha=0.35,color=colors[1])]    
-    [ax.plot(farnsw_x, [y for y in farnsw_dec18], alpha=0.7, c='grey', zorder=1), 
-                ax.plot(farnsw_x, [y for y in farnsw_dec74], alpha=0.7, c='grey', zorder=1)] #[ax.plot(farnsw_x, [np.log10(y) for y in farnsw_y], alpha=0.7)]   
-    #leg1     = plt.legend( l_i, ['$S_\\mathrm{1.4,\\,lit}$','$S_\\mathrm{1.4,\\,lit}$ (extrapolated)'], ncol=2, frameon=True, fontsize=11,handlelength=1, loc = 3, borderpad = 0.4, handletextpad=0.2, framealpha=0.60, scatterpoints = 1) # title='log$_{10}(P_{1.4})\\,\mathrm{[W/Hz]}$'
-    ax.fill_between(farnsw_x, [y for y in farnsw_dec18], [y for y in farnsw_dec74], color='grey', alpha='0.3',zorder=1)
+        # use latex for font rendering
+        mpl.rcParams['text.usetex'] = True
 
-    spixel   = 7.5
-    size     = np.linspace((60+350)/spixel, (1400++350)/spixel, 30, endpoint=True)   # size array in arcsec FWHM
-    H        = np.loadtxt('../clusterbuster/AdvancedImaging/ImageInnerPos-exp.out') 
-    
-  
-    powers   = [3,30,300]  #[10**a for a in [0.5,1.0,1.5,2.0] ]
-    legl     = [np.power(po,0.38)*4.5e-0                                               for po  in powers]
-    l_iii    = [ax.scatter([],[], s=leg, edgecolors='none', alpha=0.6,color=colors[0]) for leg in legl  ]
-    labels   = ['%i' %(powe) for powe in powers]    
-    leg2     = plt.legend(l_iii, labels, ncol=4, frameon=False, fontsize=9, handlelength=1, loc = 1, borderpad = 0.4, handletextpad=0.2, framealpha=0.70, title='$S_\\mathrm{1.4,\\,NVSS}\\,\mathrm{[mJy]}$', scatterpoints = 1)
-    #plt.gca().add_artist(leg1)
+        plt.clf()
+        plt.style.use('default')
+        scale = 0.8
+        fig, ax = plt.subplots(figsize=(8*scale, 4.7*scale), dpi=200)
 
-    ax.set_xlim(0,20.0)
-    ax.set_ylim(0,1.4) #ax.set_ylim(-1,0.5)
+        colors = ['b', 'g']
+        area = np.power(df_clean['F'], 0.35)*4
+        ax.scatter(df_clean['LASmax'], df_clean['F']/df_clean['F_lit'], s=area,  alpha=0.60, color=colors[0], zorder=2)
+
+    farnsw_x = [0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5,
+                10.0, 10.5, 11.0, 11.5, 12.0, 12.5, 13.0, 13.5, 14.0, 14.5, 15.0, 15.5, 16.0, 16.5, 17.0, 17.5,
+                18.0, 18.5, 19.0, 19.5, 20.0]
+    farnsw_dec74_pix = [32, 32, 32, 24, 22, 24, 27, 31, 32, 38, 42, 49, 58, 69, 89, 116, 154, 206, 273, 341, 418,
+                        494, 570, 641, 706, 766, 820, 868, 912, 952, 986, 1016, 1042, 1066, 1085, 1101, 1114, 1127,
+                        1136, 1143, 1148]
+    farnsw_dec18_pix = [32, 32, 32, 31, 30, 30, 30, 30, 35, 39, 45, 50, 70, 96, 132, 178, 232, 293, 363, 435, 508,
+                        581, 652, 723, 776, 832, 880, 922, 960, 993, 1022, 1047, 1069, 1088, 1106, 1118, 1130, 1140,
+                        1147, 1153, 1157]
+
+    farnsw_dec18 = [(1171. - y) / 1140. for y in farnsw_dec18_pix]
+    farnsw_dec74 = [(1171. - y) / 1140. for y in farnsw_dec74_pix]
+
+    ax.plot(farnsw_x, [y for y in farnsw_dec18], alpha=0.7, c='grey', zorder=1)
+    ax.plot(farnsw_x, [y for y in farnsw_dec74], alpha=0.7, c='grey', zorder=1)
+    ax.fill_between(farnsw_x, [y for y in farnsw_dec18], [y for y in farnsw_dec74], color='grey', alpha='0.3', zorder=1)
+
+    powers = [3, 30, 300]
+    legl   = [np.power(power, 0.38)*4.5e-0 for power in powers]
+    l_iii  = [ax.scatter([],[], s=leg, edgecolors='none', alpha=0.6, color=colors[0]) for leg in legl]
+    labels = ['%i' %powe for powe in powers]
+    plt.legend(l_iii, labels, ncol=4, frameon=False, fontsize=9, handlelength=1, loc = 1, borderpad=0.4,
+               handletextpad=0.2, framealpha=0.70, title='$F_\\mathrm{1.4,\\,NVSS}\\,\mathrm{[mJy]}$', scatterpoints=1)
+
+    ax.set_xlim(0, 20.0)
+    ax.set_ylim(ymin=0)
     ax.set_xticks(np.arange(min(ax.get_xlim()), max(ax.get_xlim())+0.5, 3.0))
-    ax.set_xlabel('$\\mathrm{LAS}\,[\\mathrm{arcmin}]$') #('$\\mathrm{max(LAS)}\,[\\mathrm{arcmin}]$')
-    ax.set_ylabel('$S_\\mathrm{1.4,\\,NVSS} / S_\\mathrm{1.4,\\,lit}$') #ax.set_ylabel('$\\mathrm{log_{10}}(F_\\nu / F_{\\nu, lit})\\,\\mathrm{[mJy]}$')
-    ax.set_aspect(1.0/ax.get_data_ratio())
+    ax.set_xlabel('largest $\\mathrm{LAS}\,[\\mathrm{arcmin}]$')
+    ax.set_ylabel('$F_\\mathrm{1.4,\\,NVSS} / F_\\mathrm{1.4,\\,lit}$')
+    ax.tick_params(direction="in", which='both')
+    #ax.set_aspect(1.0/ax.get_data_ratio())
      
      
-    # 4 linien
-    # beam         0.75
-    # 1Mpc z=0.10  8.98
-    # 1Mpc z=0.06 14.28 
-    # 1Mpc z=0.05 16.16
-    # nominal Largest imagable angular scale by VLA configuration 16.94
-    scales    = [0.75,                                         8.98,                           16.16,                  16.94]
-    textl     = ['$\\theta_\\mathrm{FWHM}$','$\\theta_\\mathrm{z=0.10}$', '$\\theta_\\mathrm{z=0.05}$', '$\\mathrm{\\theta_{VLA,D}}$']  #['$\\theta_\\mathrm{FWHM}$','$\\theta_\\mathrm{1\\,Mpc,z=0.10}$', '$\\theta_\\mathrm{1\\,Mpcz=0.06}$', '$\\mathrm{max(\\theta_{VLA,D})}$'] 
-    color     = ['black','b','b', 'black']
-    height    = [ 0.14, 0.2, 0.2, 0.14]
-    mod       = ( (0,0), (0,0), (0,0), (0,0) )             #( (0.6,-0.06), (0,0), (0, -0), (0.6,-0.06) )  #( (0.8,-0.0), (-0.8,0), (-0.8, -0), (0.8,-0.0) )
-    
-    #c     = [plt.cm.rainbow( (np.log10(np.log10(m))-ax1.get_ylim()[0])/abs(ax1.get_ylim()[1]-ax1.get_ylim()[0]) ) for m in mach]
-    for ii,m in enumerate(scales):
-        ax.plot(  [m]*2 , [ax.get_ylim()[0], height[ii] ], '-', c=color[ii], lw=1.8, linestyle=':', alpha=0.7 ) 
-        ax.text(  m-0.4+mod[ii][0], height[ii]+0.01+mod[ii][1], textl[ii], fontsize=10, color='black', alpha=0.7)
-        
-    weirdcases = [o.name     for o in ClList if (o.flux_lit >0 and np.log10(o.flux/o.flux_lit) > np.log10(1.3))]
-    print( 'weirdcases:', weirdcases )
- 
-    #===
-    plt.savefig(location+'.pdf') 
-    plt.close(fig)
-  
+    """
+     beam         0.75
+     1Mpc z=0.10  8.98
+     1Mpc z=0.06 14.28 
+     1Mpc z=0.05 16.16
+     nominal Largest imagable angular scale by VLA configuration 16.94
+    """
+    scales = [0.75, 8.98, 16.16, 16.94]
+    textl = ['$\\Theta_\\mathrm{FWHM}$','$\\Theta_\\mathrm{z=0.10}$', '$\\Theta_\\mathrm{z=0.05}$', '$\\mathrm{\\Theta_{VLA,D}}$']
+    color = ['black', 'b', 'b', 'black']
+    height = [ 0.14, 0.2, 0.2, 0.14]
+    mod = ((0,0), (0,0), (0,0), (0,0))
 
-def stats_lineregress(name, data_x, data_y, verbose = False):
-    
-    if len([np.log10(x) for x in data_x]) > 0:
-        slope, intercept, r_value, p_value, std_err = stats.linregress( [np.log10(x) for x in data_x], [np.log10(y) for y in data_y])
-        if verbose:
-            print('Survey %s regression --> slope  %.3e, intercept %.3e, r_value %.3e, p_value %.3e, std_err %.3e'  % (name,  slope, intercept, r_value, p_value, std_err) )
-            print("r-squared:", r_value**2)
-        #--> get the full sample, for this puprose create an array in z' that you can latter flatten!
-        
-        return slope, intercept
-    
-    return None, None
+    for ii,m in enumerate(scales):
+        ax.plot([m]*2, [ax.get_ylim()[0], height[ii] ], '-', c=color[ii], lw=1.8, linestyle=':', alpha=0.7 )
+        ax.text(m-0.4+mod[ii][0], height[ii]+0.01+mod[ii][1], textl[ii], fontsize=10, color='black', alpha=0.7)
+
+    #weirdcases = [o.name for o in ClList if (o.flux_lit > 0 and np.log10(o.flux/o.flux_lit) > np.log10(1.3))]
+    #print('weirdcases:', weirdcases)
+
+    #fig = plt.figure(figsize=(8 * scale, 4.7 * scale), dpi=200)
+
+    nowfile = 'fluxes_LAS'
+    nowfolder = surveys[-1].outfolder + '/PostProcessing/'
+    iom.check_mkdir(nowfolder)
+    print('Gonna save:  %s' % (nowfolder + nowfile))
+    plt.savefig('%s%s.png' % (nowfolder, nowfile), dpi=400)
+    plt.savefig('%s%s.pdf' % (nowfolder, nowfile))
+    plt.clf()
 
 
 def create_Mass_redshift2( SurveySamples, zrange,colors, markers = np.asarray(['.','s']), log=[False,False], logplot=[True,True], lockedaxis=False):
@@ -1132,17 +1092,18 @@ import seaborn as sns;
 from itertools import cycle
 from pandas.tools.plotting import scatter_matrix
 
-def joinpandas(pdframes):
-    pdframe_combined = None
+def joinpandas(df):
+    df_combined = None
     
-    for pdframe in pdframes:
-        if pdframe_combined is None:
-            pdframe_combined  = pdframe
+    for pdframe in df:
+        if df_combined is None:
+            df_combined  = pdframe
         else:
-            pdframe_combined = pdframe_combined.append(pdframe)
+            df_combined = df_combined.append(pdframe)
 
-    return pdframe_combined
-    
+    return df_combined
+
+
 def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
     sns.set(style="ticks", color_codes=True)
 
@@ -1150,11 +1111,9 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
     Input: SurveySamples ... there is currently no differnciation between different Survey Samples (symbol-wise or else)
     """
 
-    pdframes = [survey.fetch_pandas(plotmeasures, logs=logs, vkwargs_FilterCluster={"zborder":0.05}) for survey in SurveySamples]
-    pdframe_combined = joinpandas(pdframes)
+    df = [survey.fetch_pandas(plotmeasures, logs=logs, vkwargs_FilterCluster={"zborder":0.05}) for survey in SurveySamples]
+    df_combined = joinpandas(df)
     NSurveys = len(SurveySamples)
-    print(len(SurveySamples))    
-
 
     """ Examples of additional plots 
     def hexbin(x, y, color, **kwargs):
@@ -1166,72 +1125,76 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
          plt.imshow(np.abs([x,y].corr()), cmap=cmap, **kwargs) 
     """
 
-    pdframe_combined.to_csv(path_or_buf='/data/Test-%s.csv' % (SurveySamples[0].name))
-    print(pdframe_combined.Survey.unique())
-    g = sns.PairGrid(pdframe_combined, hue="Survey", palette="Set2", dropna=True)
+
+    try:
+        df_combined['$\\alpha_\mathrm{int}$'] = df_combined['$\\alpha_\mathrm{int}$'].fillna(df_combined['$\\alpha$'])
+        ##df_combined = df_combined.rename(index=str, columns={u'$\\alpha$': u'$\\alpha_\mathrm{int}$'})
+        df_combined = df_combined.drop(['$\\alpha$'], axis=1)
+    except:
+        pass
+
+    print('df_combined.Survey.unique()', df_combined.Survey.unique())
+    print(df_combined.keys())
+
+    df_combined.to_csv(path_or_buf='/data/Test-%s.csv' % (SurveySamples[0].name))
+
+    g = sns.PairGrid(df_combined, hue="Survey", palette="Set2", dropna=True)
     g = g.map_upper(sns.regplot, scatter_kws={'edgecolors':"white", "linewidth":1, "alpha":0.5/np.sqrt(NSurveys)})  #plt.scatter , , edgecolor="white"
     g = g.map_diag(sns.kdeplot, lw=3, legend=False, alpha=1.0/np.sqrt(NSurveys), shade=True)  #histtype="step"  {'cmap':['Blues_d','Blues']}
+    #g = g.map_diag(sns.distplot)  #, lw=3, legend=False, alpha=1.0/np.sqrt(NSurveys), shade=True
 
-    pdframe_combined.Survey.unique()
-    colorsmaps = ('BuGn', 'Oranges', 'Red') #("Blues", "Blues_d", "Blues_d") #
+    colormaps = ('BuGn', 'Oranges', 'Red') #("Blues", "Blues_d", "Blues_d") #
+    #colormaps = sns.cubehelix_palette(8, start=2, rot=0, dark=0, light=.95, reverse=True)
+
+    make_kde.cmap_cycle = cycle(colormaps[0:len(df_combined.Survey.unique())])    #,
         
-    make_kde.cmap_cycle = cycle(colorsmaps[0:len(pdframe_combined.Survey.unique())])    #, 'Reds_r'
-        
-    g = g.map_lower(make_kde, alpha=0.7/np.sqrt(NSurveys))
+    g = g.map_lower(make_kde, alpha=1.0/np.sqrt(NSurveys), shade=True, shade_lowest=False)
 
     # from https://stackoverflow.com/questions/52118245/python-seaborn-jointplot-does-not-show-the-correlation-coefficient-and-p-value-o
-    if 1==1:
-        for survey in SurveySamples:
-            pdframes = survey.fetch_pandas(plotmeasures, logs=logs, vkwargs_FilterCluster={"zborder": 0.05})
-            print('Keys:', pdframes.keys())
-            #print(pdframes.corr(method='pearson'))
+    for numbered, survey in enumerate(SurveySamples):
+        df = survey.fetch_pandas(plotmeasures, logs=logs, vkwargs_FilterCluster={"zborder": 0.05})
+        print('Keys:', df.keys())
 
-            # from https://stackoverflow.com/questions/25571882/pandas-columns-correlation-with-statistical-significance
-            # construct two arrays, one of the correlation and the other of the p-vals
-            import scipy.stats as stats
-            import pandas as pd
-            df_clean = pdframes.dropna()
-            rho = df_clean.corr()
-            pval = np.zeros([df_clean.shape[1], df_clean.shape[1]])
-            for i in range(df_clean.shape[1]):  # rows are the number of rows in the matrix.
-                for j in range(df_clean.shape[1]):
-                    if df_clean.keys()[i] != "Survey" and df_clean.keys()[j] != "Survey":
-                        #print(df_clean.iloc[:,i],df_clean.icol(j))
-                        JonI = pd.ols(y=df_clean.iloc[:,i], x=df_clean.icol(j), intercept=True)
-                        pval[i, j] = JonI.f_stat['p-value']
-                        print("Scatterplot, pval for %s-%s" % (df_clean.keys()[i],df_clean.keys()[j]), pval[i, j])
+        # from https://stackoverflow.com/questions/25571882/pandas-columns-correlation-with-statistical-significance
+        # construct two arrays, one of the correlation and the other of the p-vals
+        import scipy.stats as stats
+        import pandas as pd
+        df_clean = df.dropna()
+        rho = df_clean.corr()
+        pval = np.zeros([df_clean.shape[1], df_clean.shape[1]])
+        for i in range(df_clean.shape[1]):  # rows are the number of rows in the matrix.
+            for j in range(df_clean.shape[1]):
+                if df_clean.keys()[i] != "Survey" and df_clean.keys()[j] != "Survey":
+                    JonI = pd.ols(y=df_clean.iloc[:,i], x=df_clean.icol(j), intercept=True)
+                    pval[i, j] = JonI.f_stat['p-value']
+                    print("Scatterplot, pval for %s-%s" % (df_clean.keys()[i], df_clean.keys()[j]), pval[i, j])
 
-            #print('scatterplot: rho', type(rho))
-            #print(rho.values.shape)
-            #print(rho.values)
-            #print(stats.pearsonr(df_clean[pdframes.keys()[0]], df_clean[pdframes.keys()[1]]))
+        xlabels, ylabels = [], []
+        for ax in g.axes[-1, :]:
+            xlabel = ax.xaxis.get_label_text()
+            xlabels.append(xlabel)
+        for ax in g.axes[:, 0]:
+            ylabel = ax.yaxis.get_label_text()
+            ylabels.append(ylabel)
 
-            xlabels, ylabels = [], []
-            for ax in g.axes[-1, :]:
-                xlabel = ax.xaxis.get_label_text()
-                xlabels.append(xlabel)
-            for ax in g.axes[:, 0]:
-                ylabel = ax.yaxis.get_label_text()
-                ylabels.append(ylabel)
+        for i in range(len(xlabels)):
+            for j in range(len(ylabels)):
+                #g.axes[j, i].xaxis.set_label_text(xlabels[i])
+                #g.axes[j, i].yaxis.set_label_text(ylabels[j])
+                if i == j:
+                    g.axes[j, i].text(0.5, 0.1, '#%i' % (df_clean.shape[0]), zorder=1e10, horizontalalignment='center',
+                                      verticalalignment='center', transform=g.axes[j, i].transAxes)
+                if i < j and abs(rho.values[i,j]) > 0.01:
+                    g.axes[j, i].text(0.5, 0.1+numbered*0.07, 'correlation: %0.2f' % rho.values[i,j], horizontalalignment='center',
+                                      verticalalignment='center', transform=g.axes[j, i].transAxes)
+                if i > j:
+                    pass
 
-            for i in range(len(xlabels)):
-                for j in range(len(ylabels)):
-                    #g.axes[j, i].xaxis.set_label_text(xlabels[i])
-                    #g.axes[j, i].yaxis.set_label_text(ylabels[j])
-                    if i == j:
-                        g.axes[j, i].text(0.5, 0.1, '#%i' % (df_clean.shape[0]), zorder=1e10, horizontalalignment='center',
-                                          verticalalignment='center', transform=g.axes[j, i].transAxes)
-                    if i < j and abs(rho.values[i,j]) > 0.01:
-                        g.axes[j, i].text(0.5, 0.1, 'correlation: %0.2f' % rho.values[i,j], horizontalalignment='center',
-                                          verticalalignment='center', transform=g.axes[j, i].transAxes)
-                    if i > j:
-                        pass
+            #exit()
+    #import scipy.stats as stats
+    #j = sns.jointplot('Num of A', ' Ratio B', data=data_df, kind='reg', height=8)
+    #g.annotate(stats.pearsonr)
 
-                #exit()
-        #import scipy.stats as stats
-        #j = sns.jointplot('Num of A', ' Ratio B', data=data_df, kind='reg', height=8)
-        #g.annotate(stats.pearsonr)
-    
     #== Save file
     nowfile = 'Scattermatrix'
     nowfolder = SurveySamples[-1].outfolder + '/PostProcessing/'

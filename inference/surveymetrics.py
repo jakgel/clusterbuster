@@ -105,7 +105,7 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics=['numbers'],
                         n=10
                     except:
                         n += 1
-                        time.sleep(0.5)
+                        time.sleep(0.2)
                         print('surveymetrics::ABC_dist_severalMetrices:: Could not write counter.')
                         print("___ cp -rf %s/pickled/Survey.pickle %s/surveys/Survey_unknown.pickle" % (SurveyB.outfolder, outpath))
                 os.system("rm -rf %s/pickled/Survey.pickle" % (SurveyB.outfolder))
@@ -123,7 +123,7 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics=['numbers'],
                 line += '%7i %+.4e %+.4e %+.4e' % (SURVEYCOUNT, eff, Rm.B0, Rm.kappa)
       
                 if isinstance(Rm, cbclass.PreModel_Hoeft):
-                    line += ' %+.4e +.4e %+.4e %+.4e %+.4e' % (Rm.kappa, Rm.t0, Rm.t1, Rm.n0, Rm.n1)
+                    line += ' %+.4e +.4e %+.4e %+.4e %+.4e' % (Rm.ratio, Rm.t0, Rm.t1, Rm.n0, Rm.n1)
                 if isinstance(Rm, cbclass.PreModel_Gelszinnis):
                     line += ' %+.4e %+.4e %+.4e %+.4e' % (Rm.p0, Rm.p_sigma, Rm.sigmoid_0, Rm.sigmoid_width)
                 line += '\n'

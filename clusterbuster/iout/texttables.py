@@ -37,10 +37,10 @@ def findshort(phrase, shortlist):
     return phrase
 
 def ClusterVol_lum(surveys, location):  
-    ''' Output to start a MCMC based analysis      
+    """ Output to start a MCMC based analysis      
         Work in progress
     
-    '''
+    """
     GCllist = []
     header  = 'SurveyID, PowerCluster, M200, Simu?'
     for ii,survey in enumerate(surveys):
@@ -141,18 +141,18 @@ def create_table_columns(objectlist, dictionary, delimiter='&', ender='\\\\'):
     for obj in objectlist:
         line= ''
         for ii,entry in enumerate(dictionary):
-            ''' Formats the line: For each object the entry ( a lambda variable) of the list is looked for 
+            """ Formats the line: For each object the entry ( a lambda variable) of the list is looked for 
             line += entry[1] %  entry[0](obj)  is the simple version, but because I allow for formating of several value sin one column, I
             
-            '''
+            """
             if isinstance(entry[0], list):
-                ''' Multiple entries '''
+                """ Multiple entries """
                 line += entry[1] % tuple([e(obj) for e in  entry[0]])  #else: mhhh
             elif len(entry)>3:
-                ''' One single entry '''
+                """ One single entry """
                 line += entry[1] %  entry[0](obj)  #else:
             else:
-                ''' Measurand '''
+                """ Measurand """
                 line += entry[1] %  entry[0](obj)()  #else:
             if ii < len(dictionary) - 1: line += delimiter       
         line += '%s \n' % (ender)
@@ -163,7 +163,7 @@ def create_table_columns(objectlist, dictionary, delimiter='&', ender='\\\\'):
 
 
 def create_table(objectlist, dictionary, caption='nocap', outer=False, longtab=False):
-    ''' A function to create a late table based on an object list and an dictionary of values '''
+    """ A function to create a late table based on an object list and an dictionary of values """
     
     header, ender = create_table_frame(objectlist[0], caption, dictionary, outer=outer, longtab=outer)
     columns       = create_table_columns(objectlist, dictionary)
@@ -208,7 +208,9 @@ def RList2table_paper(location, survey, longtab=False):
 def GClList2table_paper(location, survey, shortlist=None, longtab=False):   
     
 
-    outer = False 
+    outer = False
+    n_clusters=0
+    n_compact_sources = 0
   
     if longtab:
         head = """\\begin{landscape}
@@ -253,11 +255,11 @@ Cluster               &  z   &  $M_{200}$          &  $F_\mathrm{NVSS}$   &   $F
     
     
     #RList.sort(key= iom.Object_natural_keys ) 
-    ''' Start with relic cluster '''
+    """ Start with relic cluster """
     mf = open(location,"w")
     mf.write(head)
 
-    n_clusters=0
+
     for m in survey.GCls:
         
         
@@ -274,52 +276,92 @@ Cluster               &  z   &  $M_{200}$          &  $F_\mathrm{NVSS}$   &   $F
             mf.write(string + '\n')
             n_clusters += 1
 
-    print('n_clusters:',  n_clusters )
+    print('n_clusters:',  n_clusters)
 
     mf.write( foot )
     mf.close()
     
-    
-    ''' Write relic clusters coordinates '''
-    mf = open(location+"centre","w")
+
+    """ Write relic clusters coordinates """
+    mf = open(location + "centre", "w")
 
     head_mod = """\\begin{table*}
                 \\begin{center}
                 \\caption{Radio relic hosting clusters centre coordinates}
                 \\scriptsize""" * int(outer) + """ 
-                \\begin{tabular}{ l  r  r  c  c  c}
+                \\begin{tabular}{ l  r  r  c  c  c  c}
                 \hline\hline
                 \label{tab:NVSSrelics}
-                Cluster               &  RA  &  Dec    &  Method   &  $\\Delta_\\mathrm{simbad}$ & References\\\\ 
-                                      &  deg  &  deg  &           &       ''       &    \\\\ 
-                    (1)               & (2)  &  (3)  &        (4)  &          (5)  &  (6)  \\\\\hline\hline     """
+                Cluster               &  RA  &  Dec    &  Method   &  \multicolumn{2}{c}{$\\Delta_\\mathrm{simbad}$} & References\\\\ 
+                                      &  [deg]  &  [deg]  &           &       [\SI{}{\\arcsecond}]       &    $[R_{200}]$    &    \\\\ 
+                    (1)               & (2)  &  (3)  &        (4)  &          (5)  &  (6)    &  (7)  \\\\\hline\hline     """
 
     foot_mod = '\hline\hline\n\\end{tabular}\n' + int(outer) * '\\end{center}\n\\label{tab:NVSSrelics}\n\\end{table*}'
     mf.write(head_mod)
     for m in survey.GCls:
-        
-        
+
         # WRITE COMMON FILE
         if m.getstatusstring()[0] is not None:
-          
             # PS$^1$  &
             # \'\'/Mpc  &
             #   %4.1f &      1000./(m.cosmoPS*60)
-        	
-    #        if m.P_rest() == 0:
-    #              print '!!!!!!!! m.Prest == 0', m.name,  m.P_rest
-            string = "%25s &  %.3f & %.3f &"   % (m.name, m.RA.value, m.Dec.value) +  'Planck & 0.01  & cite \\\\'
+
+            #        if m.P_rest() == 0:
+            #              print '!!!!!!!! m.Prest == 0', m.name,  m.P_rest
+            string = "%25s &  %.3f & %.3f &" % (m.name, m.RA.value, m.Dec.value) + 'Planck & 0.01  & 0.1  & cite \\\\'
             mf.write(string + '\n')
-            n_clusters += 1
 
-    print('n_clusters:',  n_clusters )
-
-    mf.write( foot_mod )
+    mf.write(foot_mod)
     mf.close()
-    
-    
-    
-    ''' Do phoenix clusters '''
+
+
+    """ Write subtracted sources """
+    mf = open(location + "compacts", "w")
+
+    head_mod = """\\begin{table*}
+                \\begin{center}
+                \\scriptsize""" * int(outer) + """ 
+                \\begin{tabular}{ l  r  r  r  c  c  c  c}
+                \hline\hline
+                \label{tab:NVSSrelics}
+                Cluster               &  RA     &  Dec    &  flux  &  type &  $\\Theta_\\mathrm{major}$ & $\\Theta_\\mathrm{minor}$ & $\\theta$ \\\\ 
+                                      &  [deg]  &  [deg]  &  [mJ]  &              &      [ \SI{}{\\arcminute}]  &            [\SI{}{\\arcminute}]             &    [deg]    \\\\ 
+                    (1)               & (2)     &  (3)    &   (4)  &     (5)      &       (6)                  &  (7)                      &    (8)     \\\\\hline\hline
+                """
+
+    foot_mod = '\hline\hline\n\\end{tabular}\n' + int(outer) * '\\end{center}\n\\label{tab:NVSS_compactsources}\n\\end{table*}'
+    mf.write(head_mod)
+    for m in survey.GCls:
+
+        # WRITE COMMON FILE
+        if m.getstatusstring()[0] is not None:
+
+            for compact in m.compacts:
+                values = iom.J2000ToCoordinate(compact['dir'])
+                values = [float(value) for value in values]
+                if values[0] > 0:
+                    RA = (values[0]+values[1]/60+values[2]/3600)*15
+                else:
+                    RA = (values[0]-values[1]/60-values[2]/3600)*15
+                Dec = values[3]+values[4]/60+values[5]/3600
+                string = "%25s &  %.3f & %.3f &" % (m.name, RA, Dec)
+                if compact['shape'] == "Point":
+                    string += "%.1f & %s  &  &   &  \\\\" % (float(compact['flux']), compact['shape'])
+                else:
+                    string += "%.1f & %s & %.2f & %.2f  & %.0f \\\\" % (float(compact['flux']), "Extended",
+                                                                            float(compact['majoraxis']), float(compact['minoraxis']),
+                                                                            float(compact['theta']))
+
+                mf.write(string + '\n')
+                n_compact_sources += 1
+
+    print('n_compact_sources:', n_compact_sources)
+
+    mf.write(foot_mod)
+    mf.close()
+
+
+    """ Do phoenix clusters """
     mf = open(location+'phoenixes',"w")
     mf.write(head)
     for m in survey.GCls:
@@ -344,7 +386,7 @@ Cluster               &  z   &  $M_{200}$          &  $F_\mathrm{NVSS}$   &   $F
 
    
 def LOFARwiki(survey):
-    ''' A functionality created to embed images into an internal wiki '''
+    """ A functionality created to embed images into an internal wiki """
     
     # Create LOFAR-wiki links
     string = ''

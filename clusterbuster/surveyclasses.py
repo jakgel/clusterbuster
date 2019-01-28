@@ -270,7 +270,7 @@ class Survey(object):
           
         return sum([GCl.hist for GCl in self.GCls], 0)
      
-    def fetch_pandas(survey, plotmeasures, logs=None,  surname=True, vkwargs_FilterCluster={}, kwargs_FilterObjects={}):
+    def fetch_pandas(survey, plotmeasures, logs=None,  surname=True, keys="label", vkwargs_FilterCluster={}, kwargs_FilterObjects={}):
         """ Return a panda array generated from the survey catalogue 
         
         survey: A ClusterBusterSurvey
@@ -291,8 +291,7 @@ class Survey(object):
         datalist = []
     
         """ This very ugly steps just creates a List of (relic,GCL) from the survey
-        As in the future galaxy clusters will gain be a property of relcis again this step will be shorter  and more readable"""
-        
+        As in the future galaxy clusters will gain be a property of relics again this step will be shorter  and more readable"""
         for GCl in survey.FilterCluster(**vkwargs_FilterCluster):
                 GCl.updateInformation()
                 list_full.append([(GCl,relic) for relic in GCl.filterRelics()])
@@ -312,7 +311,11 @@ class Survey(object):
             datalist.append(datavalues)
 
         """ Create a pandas dataframe """
-        columns = [measure(relic).labels(log=log) for measure,log in zip(plotmeasures, logs)]
+        if keys == "label":
+            columns = [measure(relic).labels(log=log) for measure,log in zip(plotmeasures, logs)]
+        if keys == "dic":
+            columns = [measure(relic).dic for measure, log in zip(plotmeasures, logs)]
+
         pdframe = pd.DataFrame(datalist, columns=columns)
         if surname:
             pdframe['Survey'] = survey.name
@@ -339,7 +342,7 @@ class Galaxycluster(object):
     """             
 
     def __init__(self, name, RA, Dec, z, M200=1e14, M500=0, M100=0, Mvir = 0, Lx=0, Lx_lit=0, flux_ps=0, flux_lit=0,
-                 Prest100=0, relics=[], regions=[], halo=False, compacts=[], dinfo=None, ClassFlag=False, mockobs=None,
+                 Prest100=0, relics=[], regions=[], halo=False, dinfo=None, ClassFlag=False, mockobs=None,
                                       Image=np.zeros((2,2)), status=None, Histo=None, reference=None, mapdic=dict()):
       
         """
@@ -386,7 +389,7 @@ class Galaxycluster(object):
         self.dinfo    = replaceNone(dinfo, DetInfo())   # detection information --> One per radio map!  ... One to one ?
         self.histo    = Histo    # Histogramm of all binned objects, anyhow a future function could provide this right out of the image(s)
         self.mockobs  = replaceNone(mockobs, MockObs(0))  # mockobs   information --> One per radio map! One to one ?
-        self.compacts = compacts  # A list of (compact) sources that should be / were substacted
+        self.compacts = []  # A list of (compact) sources that were substacted. Used for NVSS
 
         #== 
         self.halo = halo                                     
@@ -401,7 +404,7 @@ class Galaxycluster(object):
         
         
         ## All Fluxes are in mJy
-        self.flux_lit   = dbc.measurand(flux_lit, 'F_lit' , un = 'mJy' , label='$F_\mathrm{lit}$')    # Literature flux
+        self.flux_lit   = dbc.measurand(flux_lit, 'F_lit', un='mJy', label='$F_\mathrm{lit}$')    # Literature flux
         self.Prest100   = Prest100
         #  contaminating sources:
         self.contSour  = []         # A list of contaminating sources, The source themself could be represented by objects   
@@ -462,7 +465,7 @@ class Galaxycluster(object):
             minflux = -1
             
         return [relic for relic in self.relics
-                if ((relic.flux() > minflux) and (relic.shape_advanced().value < maxcomp) and (relic.region.rtype.classi in regard))]
+                if ((relic.flux() > minflux) and (relic.region.rtype.classi in regard))] #and (relic.shape_advanced().value < maxcomp)
 
     def add_regions(self, regions, **filterargs):
        
@@ -941,10 +944,10 @@ class PreModel_Hoeft(RModel):
 
         """ Model of preexisting electrons, see internal .pdf description"""
         RModel.__init__(self, id, pre=True, **kwargs)
-        self.t0    = 0.5   # Minimal time since reacceleration
-        self.t1    = 5     # Maximal time since reacceleration
-        self.n0    = 1e-6  # Number density of accretion shocks
-        self.n1    = 1e-2  # Number density of 'core'
+        self.t0    = 0.5   # Minimal time since reacceleration in Gyr
+        self.t1    = 7     # Maximal time since reacceleration in Gyr
+        self.n0    = 1e-6  # Electron number density of accretion shocks
+        self.n1    = 1e-1  # Electron number density of 'core'
         self.ratio = 0.05  # Initial normalisation PRE and thermal at shockfront
 
 class PreModel_Gelszinnis(RModel):

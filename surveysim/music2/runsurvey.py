@@ -311,10 +311,10 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
             Rm.effList[0], Rm.B0, Rm.kappa, Rm.compress) + ' %+.4e %+.4e %+.4e %+.4e\n' % (
                            Rm.p0, Rm.p_sigma, Rm.sigmoid_0, Rm.sigmoid_width)
         elif len(ABC) == 6:
-            (lgeff, lgB0, kappa, t0, t1, ratio) = ABC
+            (lgeff, lgB0, kappa, lgt0, lgt1, lgratio) = ABC
             print(ABC)
             RModel = cbclass.PreModel_Hoeft(RModelID, effList=[10 ** lgeff], B0=10 ** lgB0, kappa=kappa,
-                                            compress=float(pase['compress']), t0=t0, t1=t1, ratio=ratio)
+                                            compress=float(pase['compress']), t0=10**t0, t1=10**t1, ratio=10**lgratio)
             Rm = RModel
             writestring += "Model #%7i parameters:" % (RModelID) + ' %+.4e %+.4e %+.4e %+.3f\n' % (
             Rm.effList[0], Rm.B0, Rm.kappa, Rm.compress) + ' %+.4e %+.4e %+.4e %+.4e\n' % (
@@ -384,7 +384,7 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
 
 
 
-def main_ABC(params, parfile='MUSIC2_NVSS02_SSD.parset', Clfile='clusterCSV/MUSIC2'):
+def main_ABC(params, parfile='MUSIC2_NVSS02_SSD.parset', Clfile='clusterCSV/MUSIC2', verbose=False):
     """ ' parfile='MUSIC2_NVSS02_SSD_small.parset' """
 
     """DEBUGGING
@@ -408,7 +408,7 @@ def main_ABC(params, parfile='MUSIC2_NVSS02_SSD.parset', Clfile='clusterCSV/MUSI
 #    return survey
     DEBUGGING END"""
 
-    survey = main(parfile, ABC=params, Clfile=Clfile)
+    survey = main(parfile, ABC=params, Clfile=Clfile, verbose=verbose)
 
     """ MUSIC-2 """
     #    print('runsurvey::main_ABC()::', survey.outfolder,survey.name) #DEBUGGING
@@ -1223,7 +1223,7 @@ def copy_ClusterOuts(snapfolder = '/data/ClusterBuster-Output/', copyfolder = '/
 
 
 def test_main_ABC():
-    test = main_ABC([-5,0]) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset
+    test = main_ABC([-7, -1.0, -2.0, -1.0, 0.0, -4.0], verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset
     print(type(test))
     print(test)
 

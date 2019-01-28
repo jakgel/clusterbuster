@@ -32,7 +32,7 @@ A1612,,191.93,-2.79,,,0.179,2.41,2012A+ARv..20...54F,1,FALSE,RR_A1612,62.8,2011A
 A1656,,194.9529,27.98056,,,0.023,3.99,2012A+ARv..20...54F,1,FALSE,NULL,260,2012A+ARv..20...54F,,"Coma, Missing short spacings, elongated, detectable? low surface brighteness   http://www.mpifr-bonn.mpg.de/1298937/Trasatti.pdf",FALSE,TRUE,,,,,,,,
 A1664,,195.93,-24.25,,,0.128,3.09,2012A+ARv..20...54F,1,FALSE,RR_A1664,107,2001A+A...376..803G,,roundish,TRUE,,,,,,,,,
 A1682,,196.707,46.55,,,0.226,7,2013A+A...551A..24V,3,FALSE,RR_A1682,26.9,2013A+A...551A..24V,,"http://adsabs.harvard.edu/abs/2013A%26A...551A..24V, the diffuse component is just to faint in NVSS, however the NW ridge can be measured",TRUE,TRUE,,,,,,,,
-A1758N,,203.167,50.55,,,0.28,7.6,1998MNRAS.301..881E,2,FALSE,RR_A1758N,12.8,2009A+A...507.1257G,,"http://www.aanda.org/articles/aa/pdf/2009/45/aa12667-09.pdf, http://adsabs.harvard.edu/abs/2011MmSAI..82..541G",TRUE,TRUE,FIRST,,,,,,,
+A1758N,,203.167,50.55,,,0.28,7.6,1998MNRAS.301..881E,2,FALSE,RR_A1758N,24.7,2018MNRAS.478..885B,,"http://www.aanda.org/articles/aa/pdf/2009/45/aa12667-09.pdf, http://adsabs.harvard.edu/abs/2011MmSAI..82..541G",TRUE,CAND,,,,,,,,
 A1758S,,203.3083,50.41333,,,0.279,,,1,FALSE,RR_A1758S,1.5,,,,FAINT,,,5.3,2009A+A...494..429B,,,,,
 A2034,,227.55,33.51,,,0.113,3.81,1998MNRAS.301..881E,1,FALSE,RR_A2034,24,2011A+A...533A..35V,,"http://www.aanda.org/articles/aa/pdf/2011/09/aa17149-11.pdf  Two relics, only one visible (peaks are compact soures) of faint one",TRUE,CAND,,,,,,,,
 A2048,,228.8188,4.37958,,,0.097,1.91,2011A+A...527A.114V,0,FALSE,RR_A2048,19,2011A+A...527A.114V,,"http://www.aanda.org/articles/aa/pdf/2011/03/aa15991-10.pdf, (AGN relic), http://www.prao.ru/conf/yerac2012/presentations/A.Shulevski.pdf (39mJy?)",CLASSI,,,,,,,,,

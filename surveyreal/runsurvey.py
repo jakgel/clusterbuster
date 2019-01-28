@@ -107,10 +107,8 @@ def survey_run(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/',
         # np.genfromtxt('Analysis_RORRS/ClusterRelics.csv'', delimiter=';')
         ClusterFile = infolder + 'ClusterList/ClusterAfterNuza2017_clusters.csv' 
         RegionFile  = infolder + 'ClusterList/ClusterAfterNuza2017_regions.csv' 
-        
-        
+
         Clusters = pd.read_csv(ClusterFile, comment='#', delimiter=',', quotechar='"')
-        
         Clusters.where(Clusters.notnull(), 0)
         
         """ Part of development: rpelace nan values with values that can be handled by clustebruster """
@@ -229,13 +227,13 @@ def survey_run(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/',
                 #pybdsm.catalog_type
                 #--< create .fits image ut of that, which you subtract from your image ....
                 smt(task='subtraction')
-                model            = np.zeros((image.shape))
-                model_conv       = np.zeros((image.shape))
+                model      = np.zeros(image.shape)
+                model_conv = np.zeros(image.shape)
                 use_list, use_im = (False, False)
                 if 'slist' in subtract:
                     slist = infolder + 'Sources/slist/%s.slist' % Cl_name
                     if os.path.isfile(slist):
-                        scL = iom.read_para_list( slist )
+                        scL = iom.read_para_list(slist)
 
                         for sc in scL:
 
@@ -246,8 +244,9 @@ def survey_run(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/',
                             freq_factor = (GCl.dinfo.nucen/1.4)**(-0.7)
                             COOp = iom.CoordinateToPixel(iom.J2000ToCoordinate(sc['dir']), spixel, center[0], center[1])
 
+                            GCl.compacts.append(sc)
                             #This is not good --> better create an unconcolved model and convolve it with the desired beam
-                            model += maput.ImageGaussian_inv(model.shape, sc['flux']*1e-3*freq_factor, g_size, [COOp[0]-1.,COOp[1]-1], theta = sc['theta'], FWHM=True)  #*gaussian_area
+                            model += maput.ImageGaussian_inv(model.shape, sc['flux']*1e-3*freq_factor, g_size, [COOp[0]-1, COOp[1]-1], theta=sc['theta'], FWHM=True)  #*gaussian_area
                             #model_conv += maput.ImageGaussian_inv(model_conv.shape, sc['flux']*1e-3*freq_factor, g_size, [COOp[0]-1.,COOp[1]-1], theta = sc['theta'], FWHM=True)  #*gaussian_area
                         model_conv = model
                         use_list = True
@@ -271,19 +270,19 @@ def survey_run(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/',
                         pad = 50
                         hdu_HR.data = np.lib.pad(hdu_HR.data, pad, maput.padwithtens)
                         
-                        FWHM2sigma     = 1/2.354
-                        FWHM_FIRST     = 5.4
-                        FWHM_conv      = np.sqrt(GCl.dinfo.beam[0]**2-FWHM_FIRST**2)
+                        FWHM2sigma = 1/2.354
+                        FWHM_FIRST = 5.4
+                        FWHM_conv  = np.sqrt(GCl.dinfo.beam[0]**2-FWHM_FIRST**2)
                         gaussian_2D_kernel = Gaussian2DKernel(FWHM_conv/s_pixel_HR[1]*FWHM2sigma)
-                        A_beam_old     = 1.133*((FWHM_FIRST/s_pixel_HR[1])**2)  # FIRST-beam
-                        A_beam         = 1.133*((GCl.dinfo.beam[0]/s_pixel_HR[1])**2)
+                        A_beam_old = 1.133*((FWHM_FIRST/s_pixel_HR[1])**2)  # FIRST-beam
+                        A_beam     = 1.133*((GCl.dinfo.beam[0]/s_pixel_HR[1])**2)
 
                         """
                         The copy action is very dangerous, because the corresponding .header object is cloned, so that
                         any change in hdu_HR_conv.header also influences hdu_HR.header
                         deepcopy() is not possible. Because of the we remove hdu_HR_conv from any changes in the header
                         """
-                        hdu_HR_conv      = copy(hdu_HR)
+                        hdu_HR_conv = copy(hdu_HR)
                         hdu_HR_conv.data = A_beam/A_beam_old*convolve(hdu_HR.data, gaussian_2D_kernel, normalize_kernel=True)
                         for hdu in [hdu_HR]:
 #                            hdu.data = np.expand_dims(hdu.data, axis=0)
@@ -299,7 +298,6 @@ def survey_run(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/',
 #                        hdu2 = fits.open(get_pkg_data_filename('galactic_center/gc_msx_e.fits'))[0]
 ###                      
                         for hdu in [hdu_raw, hdu_HR]:
-#                            print(hdu.header)
                             try:
                                 hdu.data = hdu_raw.data[0,0,:,:]
                             except:
@@ -320,8 +318,8 @@ def survey_run(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/',
                                 except:
                                     print('[%s] not found, so we cannot delete it from the .fits header' % (key))
                                     
-                            hdu.header['EPOCH'] = 2e3 #3e3
-                            hdu.header['EQUINOX'] = 2e3 #3e3
+                            hdu.header['EPOCH'] = 2e3
+                            hdu.header['EQUINOX'] = 2e3
                             print('====================')
 
 
@@ -330,13 +328,7 @@ def survey_run(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/',
 
 
                         print( 'WCS(hdu_raw.header).wcs.naxis, WCS(hdu2.header).wcs.naxis', WCS(hdu_raw.header).wcs.naxis, WCS(hdu_HR_conv.header).wcs.naxis )
-    
-                        #TODO: DEBUGGING
-                        #hdu_raw = fits.open(infolder + 'Images_%s/%s-%s_test2.fits' % ("FIRST", "FIRST", Cl_name))[0]
-                        #hdu_raw.data = hdu_raw.data.squeeze()
                         array, footprint = reproject_interp(hdu_HR_conv, hdu_raw.header) #hdu 2 image and systm, hdu1--> just the system
-#                        array, footprint = reproject_exact(hdu_HR_conv, hdu_raw.header) #does not solve the problem
-                        # From here on the coordinate
 
                         print('_______', np.sum(array), footprint)
                         print('_______________________________', array.shape, image.shape)
@@ -344,14 +336,10 @@ def survey_run(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/',
                         array[np.isnan(array)] = 0.
 
                         fitsut.map2fits(array, GCl.dinfo, infolder + 'Images_%s/%s-%s_test3.fits' % ("FIRST", "FIRST", Cl_name))
-                        squeezed = array.squeeze()  #could be removed
 
-                        print('fits_subtraction: np.sum(squeezed):', np.sum(squeezed), ', np.sum(array.squeeze()):', np.sum(array.squeeze()))
-                        
-                        model_conv = squeezed  # add up  OR replace!
+                        model_conv = array.squeeze()  # add up  OR replace!
+                        print('fits_subtraction: np.sum(model_conv):', np.sum(model_conv))
                         use_im = True
-#                    except:
-#                      warnings.warn("No .fits specified for %s. Alternatively the format of the .fits file causes problems."  % (Cl_name))
 
                 residuum = image-model_conv
 
@@ -359,27 +347,25 @@ def survey_run(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/',
                 extreme_res = True
                 residuum = maput.ContourMasking(residuum, [region.cnt[0] for region in GCl.regions])
                 
-
-                
-                print( '%30s source subtraction;  list: %5r; image: %5r'   % (Cl_name , use_list, use_im) )
-                GCl.maps_update(residuum, 'Diffuse', infolder + '%s/Images_%s/diffuse/%s-%s.fits'            % (topfolder, survey, survey, Cl_name))
+                print('%30s source subtraction;  list: %5r; image: %5r'   % (Cl_name , use_list, use_im) )
+                GCl.maps_update(residuum, 'Diffuse', infolder + '%s/Images_%s/diffuse/%s-%s.fits' % (topfolder, survey, survey, Cl_name))
                 if np.sum(model_conv) != 0 or extreme_res:      
-                    GCl.maps_update(image     , 'Raw'       , infolder + '%s/Images_%s/raw/%s-%s_res.fits'         % (topfolder, survey, survey, Cl_name))
-                    GCl.maps_update(model     , 'Modell'    , infolder + '%s/Images_%s/subtracted/%s-%s.fits'      % (topfolder, survey, survey, Cl_name))
+                    GCl.maps_update(image     , 'Raw'       , infolder + '%s/Images_%s/raw/%s-%s_res.fits' % (topfolder, survey, survey, Cl_name))
+                    GCl.maps_update(model     , 'Modell'    , infolder + '%s/Images_%s/subtracted/%s-%s.fits' % (topfolder, survey, survey, Cl_name))
                     GCl.maps_update(model_conv, 'Subtracted', infolder + '%s/Images_%s/subtracted/%s-%s_conv.fits' % (topfolder, survey, survey, Cl_name))
                 smt()
                 
                 #============= impose relic.search  =============#
                 for ii, region in enumerate(GCl.regions):
-                  smt(task='RelicExtr')
-                  relics = relex.RelicExtraction(residuum, z, GCl=GCl, dinfo=GCl.dinfo, rinfo = region, Imcenter=center, subtracted=model)[0:2]  # faintexcl=3.6
-                  smt()                                
-                  relics = sorted(relics, key=lambda x: x.flux, reverse=True)
-                  
-                  for relic in relics:
-                      relic.alpha.value = region.alpha
-                  
-                  GCl.add_relics(relics)   
+                    smt(task='RelicExtr')
+                    relics = relex.RelicExtraction(residuum, z, GCl=GCl, dinfo=GCl.dinfo, rinfo = region, Imcenter=center, subtracted=model)[0:2]  # faintexcl=3.6
+                    smt()
+                    relics = sorted(relics, key=lambda x: x.flux, reverse=True)
+
+                    for relic in relics:
+                        relic.alpha.value = region.alpha
+
+                    GCl.add_relics(relics)
 
                 # Add galaxy cluster to the list
                 ClList.append(GCl)

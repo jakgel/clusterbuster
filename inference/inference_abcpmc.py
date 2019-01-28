@@ -268,12 +268,12 @@ def plot_abctraces(pools, surveypath=''):
 
 if __name__ == "__main__":
     import clusterbuster.iout.misc as iom
-    surveypath ='/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_05/'
-    pools = iom.unpickleObject(surveypath+'launch_pools')
-    print('Acceptance ratios:', [pool.ratio for pool in pools])
+    #surveypath ='/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_06/'
+    #pools = iom.unpickleObject(surveypath+'launch_pools')
+    #print('Acceptance ratios:', [pool.ratio for pool in pools])
 
     #plot_abctraces(pools, surveypath=surveypath)
-    exit()
+    #exit()
 
     """ Full routines for parsing a combination of argparse, configparser and json"""
     parser = argparse.ArgumentParser(description='Evaluates the best solutions of survey simulations with the abc abbroach.')

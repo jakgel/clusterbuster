@@ -6,45 +6,39 @@ Created on Wed May 10 10:52:22 2017
 @author: jakobg
 """
 
-from __future__ import division,print_function
+from __future__ import division, print_function
 
 import surveysim.music2.interpolate as interpolate
-import surveysim.music2.loadsnap    as loadsnap                 
+import surveysim.music2.loadsnap as loadsnap
 
-import numpy                     as np
-import clusterbuster.mathut      as math
-import clusterbuster.iout.misc   as io
-import clusterbuster.surveyclasses  as cbclass
+import numpy as np
+import clusterbuster.mathut as math
+import clusterbuster.iout.misc as io
+import clusterbuster.surveyclasses as cbclass
 
 from scipy.special import expit
 
-#from   bisect import bisect_left
 
-
-#=== main functions
 def PrepareRadioCube(snap, psiFile='Hoeft_radio/mach_psi_table.txt', machFile='Hoeft_radio/q_mach_machr_table.txt', log=False):
     """ 
     This does some preparation steps that should be same, no matter, what model is used.
     I strongly recommend to use interpolated files like Hoeft_radio/mach_psi_tablefine(10,3).txt & Hoeft_radio/q_mach_machr_tablefine(10,3).txt
     - finner interpolation steps will slow down the computation."""
     
-    f         = 6.5                                               # Shock area fraction due to tab. 1 in  Hoeft+2008,  also consider M -> M *1.045 due to  Hoeft+2008
-    N_k       = 64.                                               # Sebastian Nuzas Smoothig Kernel for SHock detection (not equal the smoothing kernel for other stuff)
-    
-    
+    f   = 6.5    # Shock area fraction due to tab. 1 in  Hoeft+2008,  also consider M -> M *1.045 due to  Hoeft+2008
+    N_k = 64.    # Sebastian Nuzas Smoothig Kernel for SHock detection (not equal the smoothing kernel for other stuff)
+
     smt = io.SmartTiming(rate=5e4); smt(task='PrepareRadioCube')
-
-
     if log: print('###==== Step 0a:  Prepare cluster data cubes ====###')
     #==== Load psiFile   for psi factor & machfile for mach-numbers conversion factors
-    H_mach      = np.loadtxt(machFile,skiprows=0) 
-    H_psi       = np.loadtxt(psiFile,skiprows=0)[:,1::] # you wont get the temperature values ... this is why we read them separetely
+    H_mach   = np.loadtxt(machFile,skiprows=0)
+    H_psi    = np.loadtxt(psiFile,skiprows=0)[:,1::] # you wont get the temperature values ... this is why we read them separetely
 
     psi_x, psi_y = interpolate.LoadFile_psi(psiFile)
     
     # First: Apply a filter for points with mach number > psi_y[0] = 1.23 equivalent to the minimal value in the machlist
     # I implement a lower cut of m=1.5 just because it decreases the number of computed particles quite significantly
-    MF   = np.where(snap.mach > 1.5)
+    MF = np.where(snap.mach > 1.5)
     
     #==== Gets conversion factors
     rho_to_ne = loadsnap.conversion_fact_gadget_rho_to_nb( snap.head )*loadsnap.conversion_fact_ne_per_nb()  # [Msol parsec-3] com+h--> [electrons cm-3] physical
@@ -176,10 +170,8 @@ def CreateRadioCube( snapred, Rmodel, z,  nuobs=1.4, logging = True):
     """ The returned radio luminousity is the radio luminousity in the restframe; Compare Nuza+ 2012 Equ (1)
         Also see Section 5 Araya-Melo 2012 et al.  
      Please mind that the density (-->B) estimate is set to the redshift of the cluster snap, but Bcmb and observing frequency to the redshift of the mockobs
-     
-     
-     
     """
+
     compress = Rmodel.compress
     kappa    = Rmodel.kappa
     B0       = Rmodel.B0
@@ -189,45 +181,45 @@ def CreateRadioCube( snapred, Rmodel, z,  nuobs=1.4, logging = True):
     
     
     # Get the density right
-    nurest     = float(nuobs)*(1+z)  # [GHz] It differs from observing frequency!
-    z_snap     = 1/snap.head['aexpan'] -1
-    f_cor      = (z+1.)/(z_snap+1.)   # Now we compute the cube at the correct redshift ... we just have to compute a correction factor! :-)
+    nurest = float(nuobs)*(1+z)  # [GHz] It differs from observing frequency!
+    z_snap = 1/snap.head['aexpan'] -1
+    f_cor  = (z+1.)/(z_snap+1.)   # Now we compute the cube at the correct redshift ... we just have to compute a correction factor! :-)
 
-    rho_conv    = f_cor**3*loadsnap.conversion_fact_gadget_rho_to_nb( snap.head )*loadsnap.conversion_fact_ne_per_nb()*1e4 # in [electrons 10^-4 cm^-3] az z=z_obs
-    T_conv      = loadsnap.conversion_fact_gadget_U_to_keV(  snap.head )/8.61732814974056e-08     # K
+    rho_conv = f_cor**3*loadsnap.conversion_fact_gadget_rho_to_nb( snap.head )*loadsnap.conversion_fact_ne_per_nb()*1e4 # in [electrons 10^-4 cm^-3] az z=z_obs
+    T_conv   = loadsnap.conversion_fact_gadget_U_to_keV(  snap.head )/8.61732814974056e-08     # K
     # Compute magnetic field
     
-    if compress == -1: #Uses the scaling by Nuza+2016
-        R          = 1
-        rho_e      = rho_conv*snap.rdow[MF] #Downstream density
-        B          = B0*np.power(rho_e, kappa)  # in [muG] - using formula for B-field strength
+    if compress == -1:
+        """Uses the scaling by Nuza+2016"""
+        R = 1
+        rho_e = rho_conv*snap.rdow[MF] #Downstream density
+        B = B0*np.power(rho_e, kappa)  # in [muG] - using formula for B-field strength
     else:
-        R          = np.divide(snap.rdow[MF],snap.rup[MF])**compress  # Compress of 1 would show the same behavior like the Nuza model, just for an lower magnetic field
-        rho_e      = rho_conv*snap.rup[MF]        # Upstream density
+        R = np.divide(snap.rdow[MF],snap.rup[MF])**compress  # Compress of 1 would show the same behavior like the Nuza model, just for an lower magnetic field
+        rho_e = rho_conv*snap.rup[MF]        # Upstream density
 
         """ DEVELOPMENT """
         if Rmodel.B_para == 'press': 
-            B  = B0*np.power(rho_e*snap.u[MF]/1e6, kappa)*R  # in [muG] - using formula for B-field strength  and compression
+            B = B0*np.power(rho_e*snap.u[MF]/1e6, kappa)*R  # in [muG] - using formula for B-field strength  and compression
         elif Rmodel.B_para == 'dens': 
             """ Nuza+2017 parametrisation """
-            B  = B0*np.power(rho_e, kappa)*R  # in [muG] - using formula for B-field strength  and compression
+            B = B0*np.power(rho_e, kappa)*R  # in [muG] - using formula for B-field strength  and compression
         else:
             print('Parametrization of the magnetic field is unknown. Choose BFieldModel.B_para.') 
-        B[B > 1e5] = 1e5                          # set a maximumB field, this has to be done as in some cases for odd magnetic values, we get overflow of magnetic fields valus, as it seems .... 
+        B[B > 1e5] = 1e5    # set a maximumB field, this has to be done as in some cases for odd magnetic values, we get overflow of magnetic fields valus, as it seems ....
     
-    snap.B      = np.array(snap.u*0,dtype='float64')   #Used to initiate a numpy array of the same size and shape as the others; the large float currently comes from radio emision which is to high
-    snap.B[MF]  = B
-          
-    Bcmb      = 3.25*(1+z)**2.                    # in [muG] - taken from equ. shortly before 2.43 in  Galactic and Intergalactic Magnetic Fields by Ulrich Klein, Andrew Fletcher - 2014 , Science]
+    snap.B = np.array(snap.u*0,dtype='float64')   #Used to initiate a numpy array of the same size and shape as the others; the large float currently comes from radio emision which is to high
+    snap.B[MF] = B
+    Bcmb = 3.25*(1+z)**2.                    # in [muG] - taken from equ. shortly before 2.43 in  Galactic and Intergalactic Magnetic Fields by Ulrich Klein, Andrew Fletcher - 2014 , Science]
     # Compute additional factors needed for radio flux computations
-    factor_nu  = np.power( (nurest/1.4) , (-snap.s[MF]/2.) ) # GHz
-    factor_B   = np.power(B, 1.+snap.s[MF]/2.) / ( B**2. + Bcmb**2. )       # Magnetic field strength 
-    factor_fudge =   (f_cor)**3/(f_cor)**2 / (1+z)**0.0    #3.5             # First time for density factor, second term for area third term is just to make it fit ... It is set to 1 (no correction) as I interpret the radio emissivity in sebastians cube as the one for the observers frequency
+    factor_nu = np.power((nurest/1.4), (-snap.s[MF]/2.))   # GHz
+    factor_B = np.power(B, 1.+snap.s[MF]/2.) / (B**2. + Bcmb**2.)       # Magnetic field strength
+    factor_fudge = (f_cor)**3/(f_cor)**2 / (1+z)**0.0  # First time for density factor, second term for area third term is just to make it fit ... It is set to 1 (no correction) as I interpret the radio emissivity in sebastians cube as the one for the observers frequency
 
-    f_boost     = np.array(snap.rdow*0,dtype='float64')     
+    f_boost = np.array(snap.rdow*0,dtype='float64')
     """Is based on the idea of a boosting-factor, and is related to more recent discussion of our working group.
        The presumption is that an additional CR population exists. In the following model it is assumed that
-       it steems from accretion shocks. M.Hoeft deriffed a boosting factor 'f_boosed' based on this assumption.
+       it steems from accretion shocks. M.Hoeft derived a boosting factor 'f_boosed' based on this assumption.
        
        remark:
        Some authours say, that merger shocks put more energy (and even more highly relativistic particles) in the cluster. This model is not considered here
@@ -236,12 +228,17 @@ def CreateRadioCube( snapred, Rmodel, z,  nuobs=1.4, logging = True):
         
         if isinstance(Rmodel, cbclass.PreModel_Hoeft):
         
-            delta                  = np.log10(rho_e/Rmodel.n0)/np.log10(Rmodel.n1/Rmodel.n0)
-            taccr                  = delta*Rmodel.t1+(delta-1)*Rmodel.t0
-            taccr[rho_e<Rmodel.n0] = Rmodel.t0
-            taccr[rho_e>Rmodel.n1] = Rmodel.t1
-            gamma_boost            = 2.4e4/taccr/( (B/R)**2. + Bcmb**2.)  #Magnetic field before enhancement through compression
-            f_boost[MF]            = Rmodel.ratio*gamma_boost**(snap.s[MF]-2)
+            delta_n = np.log10(Rmodel.n0)-np.log10(Rmodel.n1)  # should be 5
+            delta_t = np.log10(Rmodel.t0)-np.log10(Rmodel.t1)  # should be < 0
+            slope = delta_t / delta_n
+
+            t_shocked = Rmodel.t0 * (rho_e / Rmodel.n0) ** slope
+            t_shocked[rho_e < Rmodel.n0] = Rmodel.t0
+            t_shocked[rho_e > Rmodel.n1] = Rmodel.t1
+            poisson_factor = math.nextTime(1)   # stochastic event
+            t_shocked   = t_shocked*poisson_factor
+            gamma_boost = 2.4e4/t_shocked/( (B/R)**2. + Bcmb**2.)  #Magnetic field before enhancement through compression
+            f_boost[MF] = Rmodel.ratio*gamma_boost**(snap.s[MF]-2)
         
         elif isinstance(Rmodel, cbclass.PreModel_Gelszinnis):
 
@@ -278,8 +275,8 @@ def PlotParticleFilter(snap, iL, savefile, particleW=lambda x: x.mach**2, labels
         
         It was added to facilitate a reasonable cut of particles in the phase space (density- u)
     """
-    fac   = loadsnap.conversion_fact_gadget_rho_to_nb( snap.head )*loadsnap.conversion_fact_ne_per_nb()
-    facU  = loadsnap.conversion_fact_gadget_U_to_keV(  snap.head )/8.61732814974056e-08  # to K
+    fac = loadsnap.conversion_fact_gadget_rho_to_nb(snap.head)*loadsnap.conversion_fact_ne_per_nb()
+    facU = loadsnap.conversion_fact_gadget_U_to_keV(snap.head)/8.61732814974056e-08  # to K
     import matplotlib.pyplot as plt
     import matplotlib as mpl
     
@@ -314,7 +311,7 @@ def PlotParticleFilter(snap, iL, savefile, particleW=lambda x: x.mach**2, labels
 
     kwargs = {}
     if labels: 
-        kwargs = {'norm':mpl.colors.LogNorm()}
+        kwargs = {'norm': mpl.colors.LogNorm()}
 
     plt.imshow(H_weighted, interpolation='nearest', origin='low',extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], **kwargs) #, norm=mpl.colors.LogNorm()
 #    
@@ -470,8 +467,8 @@ def PlotParticleFilter(snap, iL, savefile, particleW=lambda x: x.mach**2, labels
 
 if __name__ == "__main__":
     import clusterbuster.IOutil                    as iout
-    snap    = iout.unpickleObject('/data2/MUSIC-2/snaps/SHOCKS_00001/clusterSUBSET.00001.snap.014.shocks')   
-    iL      = np.where(snap.rup > 0)
+    snap = iout.unpickleObject('/data2/MUSIC-2/snaps/SHOCKS_00001/clusterSUBSET.00001.snap.014.shocks')
+    iL   = np.where(snap.rup > 0)
     PlotParticleFilter(snap, iL, '', summed=True)            
                 
 """          """

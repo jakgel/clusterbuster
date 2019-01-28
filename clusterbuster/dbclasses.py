@@ -12,29 +12,29 @@ import numpy as np
 
 class entry:
   
-  def __init__(self, val, dic, label=False,):
-    self.value  = val         # value e.g. zero moment
-    self.dic    = str(dic)    # Name of this variable
+    def __init__(self, val, dic, label=False,):
+        self.value = val       # value e.g. zero moment
+        self.dic = str(dic)    # Name of this variable
 
-    if label:
-       self.label = str(label)
-    else:
-       self.label = self.dic      #label of this variable, dictionary value if not stated otherwise
+        if label:
+            self.label = str(label)
+        else:
+            self.label = self.dic      #label of this variable, dictionary value if not stated otherwise
 
-  def __call__(self):
-    return self.value
+    def __call__(self):
+        return self.value
 
     
 class norm:
-    ''' A class for a normalizing constant '''
+    """ A class for a normalizing constant """
     def __init__(self, ntype='R200', Nexp=1):
-        self.ntype  = ntype
-        self.Nexp   = Nexp   
+        self.ntype = ntype
+        self.Nexp = Nexp
     
     
 class reference:
     
-    ''' This class was introduced to manage references '''
+    """ This class was introduced to manage references """
     
     def __init__(self, ident, rtype='text', page=None, nr=None):
 
@@ -44,10 +44,10 @@ class reference:
 
 class measurand(entry):
     
-    ''' 
+    """ 
     An class that inherits from 'entry' and describes measures wit units and errors.
     Inspired by http://www.python-course.eu/python3_magic_methods.php it also provides some magic operation functionalities that should make it more usable like float numbers.
-    '''
+    """
     
     def __init__(self, value, dic, label=False, std=0, skew=0, vrange=[None,None], vmin=None, vmax=None, un = 'arbitrary unit', distr='gauss', ref=None):
         
@@ -56,15 +56,16 @@ class measurand(entry):
         self.unit = un # A unit, here as a string
 
         #== variable range
-        self.vrange     = vrange
+        self.vrange = vrange
         self.set_vrange(vmin, vmax)
+
         #=== Errors
-        self.distr     = distr   # distribution type
+        self.distr = distr   # distribution type
         #self.distr = ['norm','linear','weird','lgnorm']
         
-        self.std       = self.set_std(std)   # first moment, can be one or two dimensional
-        self.skew      = skew            # second momnt
-        self.ref       = ref             #reference
+        self.std = self.set_std(std)   # first moment, can be one or two dimensional
+        self.skew = skew            # second momnt
+        self.ref = ref             #reference
     
     def set_vrange(self, vmin, vmax):
         if vmin is not None: self.vrange[0] = vmin
@@ -89,16 +90,18 @@ class measurand(entry):
             return '[%s]' % (self.unit)
 
     def labels(self, log=False):
-        ''' Returns the labels of measurand objects  
+        """ Returns the labels of measurand objects  
             Use 'log=True' if you want to indicate that you use the logarithmic values
-        '''
+        """
         if self.unit is None:
             unit = ''
         else:
             unit = ' %s' % (self.unit_string())
 
-        if log: return 'log$_{10}($%s%s$)$' % (self.label, unit)  
-        else:   return '%s%s'               % (self.label, unit)     
+        if log:
+            return 'log$_{10}($%s%s$)$' % (self.label, unit)
+        else:
+            return '%s%s' % (self.label, unit)
         
           
     def inrange(self, limits):
@@ -116,13 +119,13 @@ class measurand(entry):
         are added and the result will be the unit of 
         self. 
         """      
-        if  isinstance(other, measurand):   
+        if isinstance(other, measurand):
             return self.value + other.value
         else:
             return self.value + other 
 
     def __radd__(self, other):
-        return  self.__add__(other)    #measurand.__add__(self,other)  
+        return self.__add__(other)    #measurand.__add__(self,other)
 
     def __iadd__(self, other):
         """
@@ -220,7 +223,7 @@ class measurand(entry):
             self.value /= other
         return self
     
-    def __pow__(self, other):  #[, modulo]
+    def __pow__(self, other):
         """
         Power is only defined as a scalar division.
         """
@@ -230,9 +233,6 @@ class measurand(entry):
             return self.value ** other
 
     def __neg__(self):
-        #x        = self
-        #x.value *= -1
-        #x.std    = [self.std[1],self.std[0]]
         return -self.value
     
     def __pos__(self):
@@ -259,7 +259,7 @@ class measurand(entry):
 
 
     
-class Histogram:    
+class Histogram:
     
   def __init__(self, nbins=30, fromto = [0.,1.5]):
 
@@ -270,7 +270,7 @@ class Histogram:
     self.bins  = np.linspace(self.fromto[0]             , self.fromto[1]           , self.nbins+1) 
     self.ticks = np.linspace(self.fromto[0]+self.width/2, self.fromto[1]-self.width, self.nbins+0) 
     
-    self.hist  = np.zeros( (nbins,) )
+    self.hist = np.zeros( (nbins,) )
     
   def __str__(self):
     # return("The cluster %12s at dec=%6.2f and rec = %6.2f has an z of %5.3f" % (self.name, self.dec, self.rec, self.z))
@@ -282,7 +282,7 @@ class Histogram:
     
          
 class HistogramDD:
-  ''' By default it is an 3D Histogram '''
+  """ By default it is an 3D Histogram """
   # rather in die format dimensions x , each dimensions has a from, to and a number of bins, as same as the widh  
   def __init__(self, Ndims=None, nbins=[30,30,30], fromto = [[0.,1.5]]*3, axisM=( measurand(0.,''),measurand(0.,''),measurand(0.,'') ), norm=norm() ):
      
@@ -309,7 +309,7 @@ class HistogramDD:
   def _like(self):
       return HistogramDD(nbins=self.nbins, fromto= self.fromto, norm=self.norm )
     
-class Histogram2D(HistogramDD):    
+class Histogram2D(HistogramDD):
       
   # rather in die format dimensions x , each dimensions has a from, to and a number of bins, as same as the widh  
   def __init__(self, nbins=[30,30], fromto = [[0.,1.5]]*2, axisM=( measurand(0.,''),measurand(0.,'')), norm=norm() ) :
