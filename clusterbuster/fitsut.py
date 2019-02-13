@@ -1,18 +1,17 @@
-''' A two way road for a conversion from numpy arrays to -fits files with the correct format
+""" A two way road for a conversion from numpy arrays to -fits files with the correct format
     Currently the header is initialized by a template.fits which should be changed in the future!
     I could also provide the funtionality to provide CASA (standard radioastronomical software) readable images
-'''
+"""
 
 
 from __future__ import division,print_function
+from astropy.io import fits  #import pyfits as fits
 
-from   astropy.io import fits  #import pyfits as fits
 import os
 import warnings
 import clusterbuster
 import numpy as np
 import scipy.ndimage.morphology as morp #morp.binary_dilation(input, structure=None, iterations=1, mask=None, output=None, border_value=0, origin=0, brute_force=False)
-
 
 
 #====== Hickjacking the header from another NVSS image  
@@ -51,20 +50,20 @@ def fits2numpy (fitsfile) :
 
 
 def map2fits (array,dinfo,outfile):
-    '''
+    """
     Maps numpy info and detinfo directly to outfile
     This function uses some of the ObjectClass.py data, so it should in principle become part it.
     Detection info should be changed to mapinfo + detinfo (detection threshold etc.) 
     
     dinfo: ClusterBuster 
     
-    '''
+    """
     numpy2fits(array,outfile,dinfo.spixel,center=dinfo.center,pcenter=dinfo.pcenter, nuobs=dinfo.nucen,beam=dinfo.beam,telescope=dinfo.telescope)
     
 
 def numpy2fits ( array,  outfile, spixel, center=None, pcenter = None, oname='', nuobs=1.4, beam=[45/3600,45/3600,0],telescope='UnknownRadioTelescope') : #, header=hdutemplateHead.header
 
-    ''' Creates an FITS file out of an 2D numpy map 
+    """ Creates an FITS file out of an 2D numpy map 
    
        input: 
       
@@ -75,7 +74,7 @@ def numpy2fits ( array,  outfile, spixel, center=None, pcenter = None, oname='',
        
        Possible improvement: directly supply it as a function of a map class
        
-    '''
+    """
 
     #print hduTemplateHead.header   
       
@@ -93,8 +92,8 @@ def numpy2fits ( array,  outfile, spixel, center=None, pcenter = None, oname='',
 #    newarray   = array[: , :].astype(np.float32) #array[np.newaxis , np.newaxis, :, :]
 
     
-    '''=== This is a big designe desicion: Do I want to stick with two our four dimension. 
-    Four dimension seem to be needed for the astrply imager and cas. Two dimensions are needed for the rotation packgae '''
+    """=== This is a big designe desicion: Do I want to stick with two our four dimension. 
+    Four dimension seem to be needed for the astrply imager and cas. Two dimensions are needed for the rotation packgae """
     hdu        = fits.PrimaryHDU(newarray)
     hduHead    = hdu.header  # now add some modifications ...      
 #    hduHead    = hduTemplateHead.header   
@@ -215,7 +214,7 @@ def numpy2fits ( array,  outfile, spixel, center=None, pcenter = None, oname='',
     
     with warnings.catch_warnings(): # To catch the warning if an image is overwritten
        warnings.simplefilter('ignore')
-       fits.writeto( filename=outfile, data=newarray, header = hduHead, clobber = True, checksum=False)
+       fits.writeto( filename=outfile, data=newarray, header = hduHead, overwrite = True, checksum=False)
        
     return outfile
 
@@ -241,4 +240,38 @@ def numpy2mask ( array, cutoff, Ndil, outfile=False) : #, header=hdutemplateHead
     
  return array3
  
- 
+
+
+def sparse_array_to_fits(GCls, outfolder):
+
+    for GCl in GCls:
+        # bins in 45 arcsec
+        pixelwidth = 10  # arcsec for simulation
+        kpc_to_arcsec = 1/(GCl.cosmoPS)
+
+        GCl.dinfo.pcenter
+        bins = ((np.asarray(range(int(GCl.dinfo.pcenter[0]*2+1))) - GCl.dinfo.pcenter[0])+0.5) * GCl.dinfo.spixel  # np.linspace(-500,500,widht=1)
+
+        sparseA = []
+        sparseD = []
+        sparseW = []
+        array_full = np.zeros((int(GCl.dinfo.pcenter[0]*2), int(GCl.dinfo.pcenter[1]*2)))
+
+
+        for relic in GCl.relics:
+            sparseA.append(relic.sparseA) # in kpc ... we need arcseconds
+            sparseD.append(relic.sparseD)
+            sparseW.append(relic.sparseW)
+
+            x = np.sin(relic.sparseA) * relic.sparseD * kpc_to_arcsec
+            y = np.cos(relic.sparseA) * relic.sparseD * kpc_to_arcsec
+
+            array, x, y = np.histogram2d(x, y, bins=[bins, bins], weights=relic.sparseW)
+            x = x * pixelwidth
+            y = y * pixelwidth
+
+            array_full += array
+
+        mapname = "Diffuse"
+        fitsname = '%s/maps/diffuse/%s.fits' % (outfolder, GCl.name)
+        GCl.maps_update(array_full, mapname, fitsname)

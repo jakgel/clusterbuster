@@ -26,13 +26,13 @@ def PrepareRadioCube(snap, psiFile='Hoeft_radio/mach_psi_table.txt', machFile='H
     - finner interpolation steps will slow down the computation."""
     
     f   = 6.5    # Shock area fraction due to tab. 1 in  Hoeft+2008,  also consider M -> M *1.045 due to  Hoeft+2008
-    N_k = 64.    # Sebastian Nuzas Smoothig Kernel for SHock detection (not equal the smoothing kernel for other stuff)
+    N_k = 64.    # Smoothing Kernel for Shock detection (not equal the smoothing kernel for other properties)
 
     smt = io.SmartTiming(rate=5e4); smt(task='PrepareRadioCube')
     if log: print('###==== Step 0a:  Prepare cluster data cubes ====###')
     #==== Load psiFile   for psi factor & machfile for mach-numbers conversion factors
-    H_mach   = np.loadtxt(machFile,skiprows=0)
-    H_psi    = np.loadtxt(psiFile,skiprows=0)[:,1::] # you wont get the temperature values ... this is why we read them separetely
+    H_mach = np.loadtxt(machFile,skiprows=0)
+    H_psi  = np.loadtxt(psiFile,skiprows=0)[:,1::] # you wont get the temperature values ... this is why we read them separetely
 
     psi_x, psi_y = interpolate.LoadFile_psi(psiFile)
     
@@ -47,16 +47,17 @@ def PrepareRadioCube(snap, psiFile='Hoeft_radio/mach_psi_table.txt', machFile='H
     # Derive Temperatur (in subarray)
     T = U_to_keV*snap.udow[MF] # in [keV]
  
-    #==== Finding the closest corresponding value to table entries --> x is for Temperature, y stands for the mach number
+    """" Finding the closest corresponding value to table entries 
+        --> x is for Temperature, y stands for the mach number """
     results_x = math.find_closest(psi_x, T)
     results_y = math.find_closest(psi_y, snap.mach[MF]*1.045)
 
-    s = H_mach[results_y, 4] # Electron energy distribution spectral index as function of mach number
+    s = H_mach[results_y, 4]   # Electron energy distribution spectral index as function of mach number
      
-    # ... get an idea of the corresponding iluminated area  
-    h         = snap.hsml[MF]*1e-3                     # com+h [kpc] --> com+h [Mpc]  Hydrodynamical smoothing length, i.e. Size of kernel, determined as a measure of density  IMPORTANT: The term h^-1*expansion factor (because of comoving frame) is added later in CreateRadioCube!
-    factor_A  = loadsnap.comH_to_phys( snap.head )     # Smoothing kernel part B; 0.7 steems from h=0.7; 1/(1+z) is the expansion factor; second part of computing A_i
-    A_i       = f*h*h/N_k*factor_A**2                  # in [Mpc]^2 ... Inspired by equ 18 Hoeft+2008 (http://mnras.oxfordjournaloadsnap.org/content/391/4/1511.full.pdf)
+    """"... get an idea of the corresponding iluminated area """
+    h         = snap.hsml[MF]*1e-3                   # com+h [kpc] --> com+h [Mpc]  Hydrodynamical smoothing length, i.e. Size of kernel, determined as a measure of density  IMPORTANT: The term h^-1*expansion factor (because of comoving frame) is added later in CreateRadioCube!
+    factor_A  = loadsnap.comH_to_phys(snap.head)     # Smoothing kernel part B; 0.7 steems from h=0.7; 1/(1+z) is the expansion factor; second part of computing A_i
+    A_i       = f*h*h/N_k*factor_A**2                # in [Mpc]^2 ... Inspired by equ 18 Hoeft+2008 (http://mnras.oxfordjournaloadsnap.org/content/391/4/1511.full.pdf)
     
     
 #    """ DEBUGGING to infer the internal smoothing length and to compare it with other equations """
@@ -64,8 +65,8 @@ def PrepareRadioCube(snap, psiFile='Hoeft_radio/mach_psi_table.txt', machFile='H
 #             print(luck[0]*factor_A,luck[1]*rho_to_ne*1.e4)
              
     # Get other values for radio emission formula
-    rho_e     =  snap.rdow[MF]*rho_to_ne*1.e4 # in [electrons 10^-4 cm^-3] az z=0
-    Xi_e      =  1.                           # Xi_e : energy fraction of suprathermal electrons, around 10^(-6...-4)  by default set to one and rescalled later on
+    rho_e = snap.rdow[MF]*rho_to_ne*1.e4  # in [electrons 10^-4 cm^-3] az z=0
+    Xi_e  = 1.                            # Xi_e : energy fraction of suprathermal electrons, around 10^(-6...-4)  by default set to one and rescalled later on
     
     """ If the Gelszinnis-model if PREs is not used, this can be omitted """
     snap.DSAPsi = snap.rdow*0 
@@ -73,26 +74,26 @@ def PrepareRadioCube(snap, psiFile='Hoeft_radio/mach_psi_table.txt', machFile='H
     """==="""
     
     #=== Compute Radio Emission: Using Eq. 32 from Hoeft-Brueggen 2007
-    snap.radi = np.array(snap.rdow*0,dtype='float64')    #Used to initiate a numpy array of the same size and shape as the others; the large float currently comes from radio emision which is to high
+    snap.radi = np.array(snap.rdow*0, dtype='float64')    #Used to initiate a numpy array of the same size and shape as the others; the large float currently comes from radio emision which is to high
     if log: print("PrepareRadioCube (np.min(A_i),np.max(rho_e),np.max((Xi_e/0.05)),np.max((T/7)),np.max(H_psi[results_y,results_x]): %10.2e %10.2e %10.2e %10.2e %10.2e" % (np.min(A_i),np.max(rho_e),np.max((Xi_e/0.05)),np.max((T/7)),np.max(H_psi[results_y,results_x])))
 #    print(':::', np.sum(A_i), np.sum(rho_e), np.sum(Xi_e), np.sum(np.power(T/7.,1.5)), np.max(H_psi[results_y,results_x]) )
-    snap.radi[MF] =  6.4e34 * A_i * rho_e * (Xi_e/0.05) * np.power(T/7.,1.5)*snap.DSAPsi     # in  [erg/s/Hz] divided by (factur_nu*factor_B)
+    snap.radi[MF] = 6.4e34 * A_i * rho_e * (Xi_e/0.05) * np.power(T/7.,1.5)*snap.DSAPsi     # in  [erg/s/Hz] divided by (factur_nu*factor_B)
 #    print(':_:_:', np.sum(snap.radi[MF]) )
     
-    # The spectral index of the electron energies s / Equals two times the injection index
+    # The spectral index of the electron energies s / Equals two times the injection index, is defined > 0 in table
     snap.s     = snap.rdow*0 
     snap.s[MF] = s
    
     #=== Add the area
-    snap.area      = np.array(snap.rdow*0,dtype='float64')   #Used to initiate a numpy array of the same size and shape as the others; the large float currently comes from radio emision which is to high
-    snap.area[MF]  = A_i  
+    snap.area     = np.array(snap.rdow*0, dtype='float64')   #Used to initiate a numpy array of the same size and shape as the others; the large float currently comes from radio emision which is to high
+    snap.area[MF] = A_i
           
     
     # The spectral index of the (down stream integrated) radio emission is (1 - s)/2, SO THAT ALPHA FOR RADIO RELICS SHOULD BE NEGATIVE
     #snap.alpha =   snap.rdow*0
     #snap.alpha  = -(s-1.)/2.
 
-    return (snap, MF)  #better a suparray like snap.radi and snap.alpha
+    return snap, MF  # better a suparray like snap.radi and snap.alpha
     
     
 
@@ -145,22 +146,22 @@ def PiggyBagSnap_cut( snap, procsnap, cutradio=None, cutmask=None):
         cutmask = np.where( procsnap.radi > cutradio)
         
     # Pick the relvant data
-    cutsnap            = loadsnap.Snapshot(snap.name) 
-    cutsnap.name       = snap.name
-    cutsnap.head       = snap.head
-    cutsnap.rup        = snap.rup[cutmask]
-    cutsnap.rdow       = snap.rdow[cutmask]
-    cutsnap.mach       = snap.mach[cutmask] 
-    cutsnap.s          = snap.s[cutmask]
-    cutsnap.radi       = snap.radi[cutmask]
-    cutsnap.hsml       = snap.hsml[cutmask]
-    cutsnap.uup        = snap.uup[cutmask]
-    cutsnap.udow       = snap.udow[cutmask]
-    cutsnap.pos        = snap.pos[cutmask]
+    cutsnap      = loadsnap.Snapshot(snap.name)
+    cutsnap.name = snap.name
+    cutsnap.head = snap.head
+    cutsnap.rup  = snap.rup[cutmask]
+    cutsnap.rdow = snap.rdow[cutmask]
+    cutsnap.mach = snap.mach[cutmask]
+    cutsnap.s    = snap.s[cutmask]
+    cutsnap.radi = snap.radi[cutmask]
+    cutsnap.hsml = snap.hsml[cutmask]
+    cutsnap.uup  = snap.uup[cutmask]
+    cutsnap.udow = snap.udow[cutmask]
+    cutsnap.pos  = snap.pos[cutmask]
     
     """DEVELOPMENT II  Because in CreateMockOps, cuts are set due to the density and temperature of the projectile"""
-    cutsnap.rho    = snap.rho[cutmask]
-    cutsnap.u      = snap.u[cutmask]
+    cutsnap.rho = snap.rho[cutmask]
+    cutsnap.u   = snap.u[cutmask]
 
     return cutsnap
   
@@ -214,7 +215,7 @@ def CreateRadioCube( snapred, Rmodel, z,  nuobs=1.4, logging = True):
     # Compute additional factors needed for radio flux computations
     factor_nu = np.power((nurest/1.4), (-snap.s[MF]/2.))   # GHz
     factor_B = np.power(B, 1.+snap.s[MF]/2.) / (B**2. + Bcmb**2.)       # Magnetic field strength
-    factor_fudge = (f_cor)**3/(f_cor)**2 / (1+z)**0.0  # First time for density factor, second term for area third term is just to make it fit ... It is set to 1 (no correction) as I interpret the radio emissivity in sebastians cube as the one for the observers frequency
+    factor_fudge = f_cor**3/f_cor**2 / (1+z)**0.0  # First time for density factor, second term for area third term is just to make it fit ... It is set to 1 (no correction) as I interpret the radio emissivity in sebastians cube as the one for the observers frequency
 
     f_boost = np.array(snap.rdow*0,dtype='float64')
     """Is based on the idea of a boosting-factor, and is related to more recent discussion of our working group.
@@ -236,7 +237,7 @@ def CreateRadioCube( snapred, Rmodel, z,  nuobs=1.4, logging = True):
             t_shocked[rho_e < Rmodel.n0] = Rmodel.t0
             t_shocked[rho_e > Rmodel.n1] = Rmodel.t1
             poisson_factor = math.nextTime(1)   # stochastic event
-            t_shocked = t_shocked*poisson_factor
+            #t_shocked = t_shocked*poisson_factor
             gamma_boost = 2.4e4/t_shocked/((B/R)**2. + Bcmb**2.)  #Magnetic field before enhancement through compression
             f_boost[MF] = Rmodel.ratio*gamma_boost**(snap.s[MF]-2)
         
@@ -262,7 +263,7 @@ def CreateRadioCube( snapred, Rmodel, z,  nuobs=1.4, logging = True):
     snap.radi[MF] = ergSI * snap.radi[MF]*factor_nu*factor_B*factor_fudge     # in  [W/Hz]
     snap.radiPre  = snap.radi*f_boost                                         # in  [W/Hz]
     #print 'snap.s[MF]', snap.s[MF] DEBUGGING CHEAT here!
-    if logging: print('  Total radio power in cube: %5.2e W/Hz at %5.2f GHz rest frame frequency' %  ( np.sum(snap.radi[MF]), nurest))
+    if logging: print('  Total radio power in cube: %5.2e W/Hz at %5.2f GHz rest frame frequency' % (np.sum(snap.radi[MF]), nurest))
     radiofolder = 'ToImplement'  #strSn.replace('shocks','radio')  
     
     return (snap, smt, radiofolder)  # A tuple, only [0:2] is relevant

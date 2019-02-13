@@ -16,7 +16,7 @@ from __future__ import division,print_function
 import copy
 import os
 import warnings
-import aplpy # check https://aplpy.readthedocs.io/en/v0.9.9/_generated/aplpy.aplpy.FITSFigure.html  for comands
+import aplpy
 
 import clusterbuster.surveyclasses as cbclass
 import clusterbuster.dbclasses as dbc
@@ -232,7 +232,7 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=T
                 ax1.text(0.40, 0.90-3*dist_text_params, '$\Delta\\,\\mathrm{signal}  = %0.2f$ ' % (np.average(deviations)), **kwargs)
             if isinstance(mod, cbclass.PreModel_Hoeft):
                 ax1.text(0.40, 0.90-4*dist_text_params, '$t_{1;2}  = %0.3f\,;\,%0.3f$ '% (mod.t0, mod.t1), **kwargs)
-                ax1.text(0.40, 0.90-5*dist_text_params, 'ratio$\\mathrm{_{pre}}  = %0.2f$ '% mod.ratio, **kwargs)
+                ax1.text(0.40, 0.90-5*dist_text_params, 'ratio$\\mathrm{_{pre}}  = %.1e$ '% mod.ratio, **kwargs)
     
             
             if survey.Rmodel.pre:
@@ -384,8 +384,9 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
             f.axis_labels.set_ytext('Coordinate 2')
             f.tick_labels.hide()
         else:
-            f.tick_labels.set_xformat("dd:mm:ss")
-            f.tick_labels.set_yformat("dd:mm:ss") 
+            f.tick_labels.hide()
+            #f.tick_labels.set_xformat("dd:mm:ss")
+            #f.tick_labels.set_yformat("dd:mm:ss")
             f.axis_labels.hide()
 
         # The basic image
@@ -438,8 +439,9 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
             exponent = np.log(max(vmax/vmin, 1.0001))
             
             f.show_colorscale(vmid = vmid_xr, vmin=vmin_xr, vmax=vmax_xr,  stretch='log', exponent=exponent, cmap='afmhot') #gist_heat
-            if key_comp in GCl.mapdic:
-                f.show_contour(GCl.mapdic[key], linewidth=0.15, overlap = True, levels=levels, colors='green',filled=False)
+            print("key_comp in GCl.mapdic", key_comp in GCl.mapdic, key_comp)
+            if key in GCl.mapdic:
+                f.show_contour(GCl.mapdic[key], linewidth=0.15, overlap=True, levels=levels, colors='green',filled=False)
 
         print(subtracted, key_comp, GCl.mapdic)
         if key_comp in GCl.mapdic and subtracted:
@@ -534,7 +536,7 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
 
         nowfolder = '%s/Images/' % (survey.outfolder)
         iom.check_mkdir(nowfolder)
-        savefile = '%s/%s-%s%s' % (nowfolder,survey.name, GCl.name,'HR'*highres)
+        savefile = '%s/%s-%s%s' % (nowfolder, survey.name, GCl.name, 'HR'*highres)
         f.save('%s.png' % savefile, dpi=400)    
         f.save('%s.pdf' % savefile)
 #        circular_cutout(f, savefile)
@@ -658,7 +660,7 @@ def plot_fluxRatio_LAS(surveys):
     plt.clf()
 
 
-def create_Mass_redshift2( SurveySamples, zrange,colors, markers = np.asarray(['.','s']), log=[False,False], logplot=[True,True], lockedaxis=False):
+def create_Mass_redshift2(SurveySamples, zrange,colors, markers = np.asarray(['.','s']), log=[False,False], logplot=[True,True], lockedaxis=False):
 
     """
     Takes as inputs;
@@ -1111,7 +1113,9 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
     Input: SurveySamples ... there is currently no differnciation between different Survey Samples (symbol-wise or else)
     """
 
+
     df = [survey.fetch_pandas(plotmeasures, logs=logs, vkwargs_FilterCluster={"zborder":0.05}) for survey in SurveySamples]
+    original_keys = df[0].keys()
     df_combined = joinpandas(df)
     NSurveys = len(SurveySamples)
 
@@ -1133,15 +1137,16 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
     except:
         pass
 
+    df_combined = df_combined.reindex(columns=original_keys)
     print('df_combined.Survey.unique()', df_combined.Survey.unique())
     print(df_combined.keys())
 
     df_combined.to_csv(path_or_buf='/data/Test-%s.csv' % (SurveySamples[0].name))
 
     g = sns.PairGrid(df_combined, hue="Survey", palette="Set2", dropna=True)
-    g = g.map_upper(sns.regplot, scatter_kws={'edgecolors':"white", "linewidth":1, "alpha":0.5/np.sqrt(NSurveys)})  #plt.scatter , , edgecolor="white"
-    g = g.map_diag(sns.kdeplot, lw=3, legend=False, alpha=1.0/np.sqrt(NSurveys), shade=True)  #histtype="step"  {'cmap':['Blues_d','Blues']}
-    #g = g.map_diag(sns.distplot)  #, lw=3, legend=False, alpha=1.0/np.sqrt(NSurveys), shade=True
+    g = g.map_upper(sns.regplot, scatter_kws={'edgecolors': "white", "linewidth": 1, "alpha": 0.5/np.sqrt(NSurveys)})  #plt.scatter , , edgecolor="white"
+    #g = g.map_diag(sns.distplot)
+    g = g.map_diag(sns.kdeplot, lw=3, legend=False, alpha=1.0/np.sqrt(NSurveys), shade=True)  #histtype="step"  {'cmap':['Blues_d','Blues']},  ... distplot
 
     colormaps = ('BuGn', 'Oranges', 'Red') #("Blues", "Blues_d", "Blues_d") #
     #colormaps = sns.cubehelix_palette(8, start=2, rot=0, dark=0, light=.95, reverse=True)
@@ -1182,15 +1187,14 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
                 #g.axes[j, i].xaxis.set_label_text(xlabels[i])
                 #g.axes[j, i].yaxis.set_label_text(ylabels[j])
                 if i == j:
-                    g.axes[j, i].text(0.5, 0.1, '#%i' % (df_clean.shape[0]), zorder=1e10, horizontalalignment='center',
+                    g.axes[j, i].text(0.5, 0.1+numbered*0.07, '#%i' % (df_clean.shape[0]), zorder=1e10, horizontalalignment='left',
                                       verticalalignment='center', transform=g.axes[j, i].transAxes)
                 if i < j and abs(rho.values[i,j]) > 0.01:
-                    g.axes[j, i].text(0.5, 0.1+numbered*0.07, 'correlation: %0.2f' % rho.values[i,j], horizontalalignment='center',
+                    g.axes[j, i].text(0.5, 0.1+numbered*0.07, 'correlation: %0.2f' % rho.values[j,i], horizontalalignment='center',
                                       verticalalignment='center', transform=g.axes[j, i].transAxes)
                 if i > j:
                     pass
 
-            #exit()
     #import scipy.stats as stats
     #j = sns.jointplot('Num of A', ' Ratio B', data=data_df, kind='reg', height=8)
     #g.annotate(stats.pearsonr)
@@ -1209,3 +1213,147 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
 # Taken from https://stackoverflow.com/questions/40726733/plotting-multiple-datasets-on-a-seaborn-pairgrid-as-kdeplots-with-different-colo
 def make_kde(*args, **kwargs):
     sns.kdeplot(*args, cmap=next(make_kde.cmap_cycle), **kwargs)
+
+
+def create_shape_LAS_plot(surveys):
+    from scipy.stats import kde
+
+    mpl.rcParams['text.usetex'] = True
+    plt.style.use('default')
+    scale = 0.8
+    fig, ax = plt.subplots(figsize=(8 * scale, 4.7 * scale), dpi=200)
+
+    # Create a Rectangle patch
+
+    LAS_line = np.linspace(1, 30, num=50)
+    shape_line = np.power(LAS_line, -1.7) * 4.8
+
+    # rect = patches.Rectangle((0.35, 0.65), 0.7, 0.3, linewidth=1, edgecolor='green', angle=-50, alpha=0.2, facecolor='green',
+    #                         transform=plt.gca().transAxes) #facecolor='none',
+    # ax.add_patch(rect)
+
+
+    if len(surveys) > 1:
+        plotmeasures = [lambda x: x.LAS, lambda x: x.iner_rat]
+
+        for survey in surveys:
+            survey.seed_dropout=None
+
+        df = [survey.fetch_pandas(plotmeasures,  vkwargs_FilterCluster={"zborder": 0.05}, keys="dic") for survey in
+              surveys[1:]]
+        df_combined = joinpandas(df)
+        print(df_combined.keys())
+        data = df_combined[['LAS', 'iner_rat']]
+        print(data.shape, type(data))
+        x = data.values[:,0]
+        y = data.values[:,1]
+
+        #ax.scatter(x, y, alpha=1 / np.sqrt(len(surveys)), c='salmon')  # , lc='r'
+
+        # Evaluate a gaussian kde on a regular grid of nbins x nbins over data extents
+        nbins = 25
+        k = kde.gaussian_kde(data.T)
+        xi, yi = np.mgrid[x.min():x.max():nbins * 1j, y.min():y.max():nbins * 1j]
+        zi = k(np.vstack([xi.flatten(), yi.flatten()]))
+
+        # contour
+        ax.pcolormesh(xi, yi, zi.reshape(xi.shape), shading='gouraud', cmap=plt.cm.BuGn_r)
+        ax.contour(xi, yi, zi.reshape(xi.shape))
+        # ========
+
+    for survey in [surveys[0]]:
+        plotmeasures = [lambda x: x.LAS, lambda x: x.iner_rat]
+        df = survey.fetch_pandas(plotmeasures,  vkwargs_FilterCluster={"zborder": 0.05}, keys="dic")
+        print(data.shape, type(data))
+        shape = df["iner_rat"]
+        LAS = df["LAS"]
+        ax.scatter(LAS, shape, alpha=0.6, c='cornflowerblue', zorder=10)  # , lc='r'
+        ax.plot(np.log10(LAS_line), np.log10(shape_line), ls='--', lw=4, alpha=0.5, c="grey")
+
+    ax.tick_params(direction="in", which='both')
+    ax.set_xlim([0.1, 1.5])
+    ax.set_ylim([-1.55, 0])
+
+    #ax.set_xlim([0.2, 1.3])
+    #ax.set_ylim([-1.5, 0])
+    #ax.set_xticks([2, 3, 5, 7, 10], minor=True)
+
+    ax.text(0.28, 0.47, "Correlation", transform=plt.gca().transAxes)
+    ax.text(0.56, 0.60, "'Unusual roundish'", transform=plt.gca().transAxes)
+
+    plt.xlabel("$\\log_{10}(\mathrm{LAS [arcmin]}$")
+    plt.ylabel("$\\log_{10}(\mathrm{shape} s)")
+
+    nowfile = 'Shape-LAS'
+    nowfolder = surveys[-1].outfolder + '/PostProcessing/'
+    iom.check_mkdir(nowfolder)
+    print('Gonna save:  %s' % (nowfolder + nowfile))
+    plt.savefig('%s%s.png' % (nowfolder, nowfile), dpi=400)
+    plt.savefig('%s%s.pdf' % (nowfolder, nowfile))
+    plt.clf()
+
+
+def plot_cummulative_flux(surveys):
+    colors = ['cornflowerblue'] + ['salmon']*(len(surveys)-1)
+    mpl.rcParams['text.usetex'] = True
+    plt.style.use('default')
+    scale = 1.0
+    fig, ax = plt.subplots(figsize=(6 * scale, 5.5 * scale), dpi=200)
+    fig = plt.gcf()
+    min_vals, max_vals, cummulatives = [], [], []
+
+
+    for survey in [surveys[0]]:
+
+        mpl.rcParams['text.usetex'] = True
+        plt.style.use('default')
+
+        relics = survey.fetch_totalRelics()
+        fluxes = [np.log10(relic.flux()) for relic in relics]
+        data1 = np.array(fluxes)
+        data1.sort()
+        min_val = min(data1)  # min_val = floor(min(data1 + data2))
+        max_val = max(data1)  # max_val = ceil(max(data1 + data2))
+
+        # Cumulative distributions, stepwise:
+        ax.step(np.concatenate([data1, data1[[-1]]]), np.arange(data1.size + 1), label='$\mu=0, \sigma=5$', color="cornflowerblue", lw=8, zorder=1000)
+
+        min_vals.append(min_val)
+        max_vals.append(max_val)
+        cummulatives.append(data1.size)
+
+
+    if len(surveys) > 1:
+        for survey in surveys[1:]:
+            mpl.rcParams['text.usetex'] = True
+            plt.style.use('default')
+
+            relics = survey.fetch_totalRelics()
+            fluxes = [np.log10(relic.flux()) for relic in relics]
+            data1 = np.array(fluxes)
+            data1.sort()
+            min_val = min(data1)  # min_val = floor(min(data1 + data2))
+            max_val = max(data1)  # max_val = ceil(max(data1 + data2))
+
+            # Cumulative distributions, stepwise:
+            ax.step(np.concatenate([data1, data1[[-1]]]), np.arange(data1.size + 1), label='$\mu=0, \sigma=5$',
+                    color="salmon", lw=8, alpha=0.1)
+
+            min_vals.append(min_val)
+            max_vals.append(max_val)
+            cummulatives.append(data1.size)
+
+    plt.ylabel('Cumulative Count')
+    plt.xlabel('$\\log_{10}(F_\\nu$ [mJy])')
+    plt.legend([survey.name for survey in surveys[0:2]], loc='upper left')
+    plt.xlim([np.min(min_vals) - 0.05, np.max(max_vals) + 0.05])
+    plt.ylim([0, np.max(cummulatives) + 1])
+
+    plt.tick_params(direction="in", which='both')
+
+    nowfile = 'Flux-distr'
+    nowfolder = surveys[-1].outfolder + '/PostProcessing/'
+    iom.check_mkdir(nowfolder)
+    print('Gonna save:  %s' % (nowfolder + nowfile))
+    plt.savefig('%s%s.pdf' % (nowfolder, nowfile))
+    plt.clf()

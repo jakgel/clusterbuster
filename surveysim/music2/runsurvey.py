@@ -317,8 +317,7 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
                                             compress=float(pase['compress']), t0=10**lgt0, t1=10**lgt1, ratio=10**lgratio)
             Rm = RModel
             writestring += "Model #%7i parameters:" % (RModelID) + ' %+.4e %+.4e %+.4e %+.3f\n' % (
-            Rm.effList[0], Rm.B0, Rm.kappa, Rm.compress) + ' %+.4e %+.4e %+.4e\n' % (
-                           Rm.t0, Rm.t1, Rm.ratio)
+            Rm.effList[0], Rm.B0, Rm.kappa, Rm.compress) + ' %+.4e %+.4e %+.4e\n' % (Rm.t0, Rm.t1, Rm.ratio)
         else:
             print('RunSurvey::main: model unknown')
             return
@@ -534,7 +533,7 @@ def RadioAndMock_loaded(val, verbose=True):
             radiosnap.radiPre += realisations.PreNorm * radiosnap.radiPre
         elif isinstance(Rmodel, cbclass.PreModel_Hoeft):
             randfactor = 1  # get it from the other procedure
-            radiosnap.radiPre += realisations.PreNorm * radiosnap.radiPre
+            #radiosnap.radiPre += realisations.PreNorm * radiosnap.radiPre
             
         """ Here we compute the volume weighted radio emission """   
         radiosum      = np.sum(radiosnap.radi)
@@ -721,7 +720,7 @@ def mupro_RadioCuts( in_queue, output  ):
 #    from time import gmtime, strftime  
     smt(task='Queue_get')
     while True:  
-        val  = in_queue.get() #  
+        val = in_queue.get() #
         if val == POISON_PILL:
             break
         

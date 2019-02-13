@@ -44,8 +44,9 @@ def main_abcpmc_MUSIC2(conf, test=False):
     data = iom.unpickleObject(conf['paths']['surveyreal'])
     if test:
         dataMUSIC2 = iom.unpickleObject(conf['paths']['surveysim'])
+        print(type(dataMUSIC2.Rmodel), conf['paths']['surveysim'])
         surmet.abcpmc_dist_severalMetrices(dataMUSIC2, data, metrics=json.loads(conf['metrics']['used']),
-                                           delal=False, stochdrop=False)
+                                           delal=True, stochdrop=False, outpath='/data/',)
         return 0
 
     """ The abcpmc part starts: Define thetas i.e. parameter values to be inferred  and priors"""

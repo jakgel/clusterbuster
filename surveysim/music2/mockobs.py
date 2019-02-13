@@ -163,7 +163,7 @@ def Run_MockObs(bulked, GClrealisations, CASAmock=False, XRay=False, saveFITS = 
             iL = np.where(  ((8.9+  3.3 - np.log(snap.u*fac_T2) - 0.65*np.log10(snap.rho*fac_rho)) < 0) &
                             ((8.9- 11.0 - np.log(snap.u*fac_T2) - 3.5*np.log10(snap.rho*fac_rho))  < 0) &
                             ((8.9+  6.9 - np.log(snap.u*fac_T2) + 0.5*np.log10(snap.rho*fac_rho))  < 0) &
-                            (snap.mach   < 10) &
+                            (snap.mach < 10) &
                             (np.sqrt(snap.pos[:,0]**2+snap.pos[:,1]**2+snap.pos[:,2]**2)*fac_x < 1.5*gcl.R200())
                            )[0]
  
@@ -192,26 +192,26 @@ def Run_MockObs(bulked, GClrealisations, CASAmock=False, XRay=False, saveFITS = 
             scale_1 = 75  #100
             scale_2 = 300 #450
             
-            DoG1_filter        = copy.deepcopy(dinf)
-            DoG1_filter.beam   = [scale_1/gcl.cosmoPS, scale_1/gcl.cosmoPS, 0]
+            DoG1_filter      = copy.deepcopy(dinf)
+            DoG1_filter.beam = [scale_1/gcl.cosmoPS, scale_1/gcl.cosmoPS, 0]
             DoG1_filter.update_Abeam()
             
-            DoG2_filter        = copy.deepcopy(dinf)
-            DoG2_filter.beam   = [scale_2/gcl.cosmoPS, scale_2/gcl.cosmoPS, 0]
+            DoG2_filter      = copy.deepcopy(dinf)
+            DoG2_filter.beam = [scale_2/gcl.cosmoPS, scale_2/gcl.cosmoPS, 0]
             DoG2_filter.update_Abeam()
             
             DoG_mask           = np.ones_like(H1)
             for ii in range(3):
-                H2_first       = DoG1_filter.convolve_map(H1*DoG_mask)  ## gaussian convolution
-                H2_sec         = DoG2_filter.convolve_map(H1*DoG_mask)  ## gaussian convolution
+                H2_first  = DoG1_filter.convolve_map(H1*DoG_mask)  ## gaussian convolution
+                H2_sec    = DoG2_filter.convolve_map(H1*DoG_mask)  ## gaussian convolution
     #            with np.errstate(divide='ignore', invalid='ignore'):
-                DoG_rel        = np.divide(np.abs(H2_sec-H2_first)+1e-20,H2_sec+1e-20)
+                DoG_rel   = np.divide(np.abs(H2_sec-H2_first)+1e-20, H2_sec+1e-20)
                 DoG_mask[np.where(DoG_rel < thresh)] = 0          #0.03                                                   
-            H2_first           = DoG1_filter.convolve_map(H1)  ## gaussian convolution
-            H2_sec             = DoG2_filter.convolve_map(H1)  ## gaussian convolution                                
+            H2_first = DoG1_filter.convolve_map(H1)  ## gaussian convolution
+            H2_sec   = DoG2_filter.convolve_map(H1)  ## gaussian convolution
                          
                          
-            H2                 = dinf.convolve_map(H1*DoG_mask)
+            H2 = dinf.convolve_map(H1*DoG_mask)
 #            print('____ Masked/Unmasked flux (mJy):  %6.3f %6.3f' % (np.sum(H2)/dinf.Abeam[0]*1000,s_radio_SI*np.sum(snap.radi[iL])*1000))
                  
 
@@ -272,18 +272,18 @@ def Run_MockObs(bulked, GClrealisations, CASAmock=False, XRay=False, saveFITS = 
                 We also get the emission weighted density, as this works only on the bright parts it is fine to work with the subset of particles, yeah!
                 '''
 
-                Hmach,Hrho,Htemp,Harea,Halpha,Hmag,Hpre = None,None,None,None,None,None,None
+                Hmach,Hrho,Htemp,Harea,Halpha,Hmag,Hpre = None, None, None, None, None, None, None
 #                Hrho_down,Hrho_up,Htemp_down,Htemp_up  = None,None,None,None,
-                alpha_help            =  (snap.mach[iL]**2+1)/(snap.mach[iL]**2-1)
+                alpha_help = (snap.mach[iL]**2+1)/(snap.mach[iL]**2-1)
             
                 Hmach     = SPH_binning(snap, posrot, dinf, iL, immask=DoG_mask,HSize_z=hsize, nbins=nbins, weights=lambda x: s_radio_SI*x.radi[iL]*x.mach[iL])
                 Halpha    = SPH_binning(snap, posrot, dinf, iL, immask=DoG_mask,HSize_z=hsize, nbins=nbins, weights=lambda x: s_radio_SI*x.radi[iL]*alpha_help)
-                Hrho      = SPH_binning(snap, posrot, dinf, iL, immask=DoG_mask,HSize_z=hsize, nbins=nbins, weights=lambda x: s_radio_SI*x.radi[iL]*x.rho[iL] *fac_rho)
+                Hrho_up   = SPH_binning(snap, posrot, dinf, iL, immask=DoG_mask,HSize_z=hsize, nbins=nbins, weights=lambda x: s_radio_SI*x.radi[iL]*x.rup[iL] *fac_rho)
                 Htemp     = SPH_binning(snap, posrot, dinf, iL, immask=DoG_mask,HSize_z=hsize, nbins=nbins, weights=lambda x: s_radio_SI*x.radi[iL]*x.u[iL]   *fac_T)  
                 Harea     = SPH_binning(snap, posrot, dinf, iL, immask=DoG_mask,HSize_z=hsize, nbins=nbins, weights=lambda x: s_radio_SI*x.radi[iL]*x.area[iL])  
                 Hmag      = SPH_binning(snap, posrot, dinf, iL, immask=DoG_mask,HSize_z=hsize, nbins=nbins, weights=lambda x: s_radio_SI*x.radi[iL]*x.B[iL])  
-                Hpre      = SPH_binning(snap, posrot, dinf, iL, immask=DoG_mask,HSize_z=hsize, nbins=nbins, weights=lambda x: s_radio_SI*x.radiPre[iL])                
-#                Hrho_up   = SPH_binning(snap, posrot, dinf, iL, immask=DoG_mask,HSize_z=hsize, nbins=nbins, weights=lambda x: s_radio_SI*x.radi[iL]*x.rup[iL] *fac_rho)
+                Hpre      = SPH_binning(snap, posrot, dinf, iL, immask=DoG_mask,HSize_z=hsize, nbins=nbins, weights=lambda x: s_radio_SI*x.radiPre[iL])
+#                Hrho      = SPH_binning(snap, posrot, dinf, iL, immask=DoG_mask,HSize_z=hsize, nbins=nbins, weights=lambda x: s_radio_SI*x.radi[iL]*x.rho[iL] *fac_rho)
 #                Hrho_down = SPH_binning(snap, posrot, dinf, iL, immask=DoG_mask,HSize_z=hsize, nbins=nbins, weights=lambda x: s_radio_SI*x.radi[iL]*x.rdow[iL]*fac_rho)
 #                Htemp_up  = SPH_binning(snap, posrot, dinf, iL, immask=DoG_mask,HSize_z=hsize, nbins=nbins, weights=lambda x: s_radio_SI*x.radi[iL]*x.uup[iL] *fac_T)  
 #                Htemp_down= SPH_binning(snap, posrot, dinf, iL, immask=DoG_mask,HSize_z=hsize, nbins=nbins, weights=lambda x: s_radio_SI*x.radi[iL]*x.udow[iL]*fac_T)  
@@ -292,14 +292,14 @@ def Run_MockObs(bulked, GClrealisations, CASAmock=False, XRay=False, saveFITS = 
 
                 allflux = np.asarray([])
                 for relic in relics:    
-                    relic.wMach       =  Hmach[relic.pmask]     
-                    relic.wRho        =  Hrho [relic.pmask]  
-                    relic.wT          =  Htemp[relic.pmask] 
-                    relic.wArea       =  Harea[relic.pmask] 
-                    relic.wAlpha      =  Halpha[relic.pmask]      
-                    relic.wB          =  Hmag[relic.pmask]
-                    relic.wPre        =  Hpre[relic.pmask]
-#                    relic.wRho_up     =  Hrho_up[relic.pmask]  
+                    relic.wMach   = Hmach[relic.pmask]
+#                    relic.wRho        =  Hrho [relic.pmask]
+                    relic.wT      = Htemp[relic.pmask]
+                    relic.wArea   = Harea[relic.pmask]
+                    relic.wAlpha  = Halpha[relic.pmask]
+                    relic.wB      = Hmag[relic.pmask]
+                    relic.wPre    = Hpre[relic.pmask]
+                    relic.wRho_up = Hrho_up[relic.pmask]
 #                    relic.wRho_down   =  Hrho_down[relic.pmask]  
 #                    relic.wT_up       =  Htemp_up[relic.pmask]  
 #                    relic.wT_down     =  Htemp_down[relic.pmask]  

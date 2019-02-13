@@ -78,18 +78,14 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics=['numbers'],
             distances.append(distance)
                      
         print('surveymetrics::ABC_dist_severalMetrices::', SurveyA.name, 'VS', SurveyB.name, 'metric disimilarity:',
-              ['%s: %.3e' % (m,d) for (m,d) in zip(metrics,distances)] )
+              ['%s: %.3e' % (m,d) for (m,d) in zip(metrics,distances)])
             
         
         """ This puts the survey to a bagged survey folder and increases the counter.
         It might be interesting to know if this number is also the number of the runs.
         """
         if delal:
-
-            file_path = "%s/pickled/Survey.pickle" % (SurveyB.outfolder)        
-            if verbose:
-                print('surveymetrics::ABC_dist_severalMetrices:: SurveyB.name, surveyB.outfolder:', SurveyB.name, SurveyB.outfolder)
-                print('surveymetrics::ABC_dist_severalMetrices:: file_path, os.path.isfile(file_path)', file_path, os.path.isfile(file_path))
+            file_path = "%s/pickled/Survey.pickle" % (SurveyB.outfolder)
             if os.path.isfile(file_path):             
                 n = 0
                 while n < 10:  
@@ -99,19 +95,28 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics=['numbers'],
                         print('SURVEYCOUNT', SURVEYCOUNT) # Is implemented to write the correct survey output files for the ABC abbroach
                         with open('%s/count.txt' % (outpath), 'w') as f:
                             f.write(str(SURVEYCOUNT+1))
-                        iom.check_mkdir(outpath+'surveys/') 
-                        os.system("cp -rf %s/pickled/Survey.pickle %s/surveys/Survey_%05i.pickle" % (SurveyB.outfolder, outpath, SURVEYCOUNT))  
+
+                        SurveyB.name = "%s_%05i" % (SurveyB.name_short, SURVEYCOUNT)
+                        SurveyB.outfolder = '/data/ClusterBuster-Output/%s' % (SurveyB.name)
+
+                        if verbose:
+                            print('surveymetrics::ABC_dist_severalMetrices:: SurveyB.name, surveyB.outfolder:',
+                                  SurveyB.name, SurveyB.outfolder)
+                            print('surveymetrics::ABC_dist_severalMetrices:: file_path, os.path.isfile(file_path)',
+                                  file_path, os.path.isfile(file_path))
+
+                        iom.check_mkdir(outpath+'surveys/')
+                        iom.pickleObject(SurveyB, "%s/surveys/" % (outpath), "Survey_%05i" % (SURVEYCOUNT))  #obj, location, oname, append = False
+                        #os.system("cp -rf %s/pickled/Survey.pickle %s/surveys/Survey_%05i.pickle" % (SurveyB.outfolder, outpath, SURVEYCOUNT))
                         shutil.rmtree(SurveyB.outfolder) 
-                        n=10
+                        n = 10
                     except:
                         n += 1
                         time.sleep(0.2)
                         print('surveymetrics::ABC_dist_severalMetrices:: Could not write counter.')
                         print("___ cp -rf %s/pickled/Survey.pickle %s/surveys/Survey_unknown.pickle" % (SurveyB.outfolder, outpath))
                 os.system("rm -rf %s/pickled/Survey.pickle" % (SurveyB.outfolder))
-                    
-                
-            
+
             """ We increment the current logfile number by one ... just to show how much we have progressed """
             with open("%s/logfile.txt" % (outpath), "a") as f:
                 Rm  = SurveyB.Rmodel
@@ -121,9 +126,9 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics=['numbers'],
                 for dist in distances:
                     line += "%8.5e " % (dist)
                 line += '%7i %+.4e %+.4e %+.4e' % (SURVEYCOUNT, eff, Rm.B0, Rm.kappa)
-      
+
                 if isinstance(Rm, cbclass.PreModel_Hoeft):
-                    line += ' %+.4e +.4e %+.4e %+.4e %+.4e' % (Rm.ratio, Rm.t0, Rm.t1, Rm.n0, Rm.n1)
+                    line += ' %+.4e %+.4e %+.4e %+.4e %+.4e' % (Rm.t0, Rm.t1, Rm.ratio, Rm.n0, Rm.n1)
                 if isinstance(Rm, cbclass.PreModel_Gelszinnis):
                     line += ' %+.4e %+.4e %+.4e %+.4e' % (Rm.p0, Rm.p_sigma, Rm.sigmoid_0, Rm.sigmoid_width)
                 line += '\n'

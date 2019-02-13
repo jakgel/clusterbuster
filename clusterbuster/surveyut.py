@@ -261,7 +261,3 @@ def discovery_prop(relics, a=3, b=0.10):
     
     probs = logistic.cdf([np.log10(b/relic.shape_advanced().value)*a for relic in relics])
     return probs
-
-
-#   Take from [zstart to zend] take deltaV or delta Z --> Compute deltaV and mutliply with completeness sky  to get observed volume
-#   Use observed volume and 
