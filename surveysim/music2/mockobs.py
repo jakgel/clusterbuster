@@ -66,19 +66,22 @@ def Run_MockObs(bulked, GClrealisations, CASAmock=False, XRay=False, saveFITS = 
     smt = iom.SmartTiming(rate=5e4)  # logf=outf+'smt.log'  #;  print( '###==== Step2a:  Loading configuration files ====###'  )
 
     #  Units, conversion factors, and input variables
-    fac_rho = loadsnap.conversion_fact_gadget_rho_to_nb( snap.head)*loadsnap.conversion_fact_ne_per_nb()  #electrons/cm^-3
+    fac_rho = loadsnap.conversion_fact_gadget_rho_to_nb(snap.head)*loadsnap.conversion_fact_ne_per_nb()  #electrons/cm^-3
     fac_T   = loadsnap.conversion_fact_gadget_U_to_keV(  snap.head)  # in [keV]
     fac_T2  = loadsnap.conversion_fact_gadget_U_to_keV(  snap.head) / 8.61732814974056e-08  # to K
                            
     ''' determines if you want to change the galaxy cluster or not '''
-    if side_effects:  GClrealisations_used =               GClrealisations
-    else           :  GClrealisations_used = copy.deepcopy(GClrealisations)
+    if side_effects:
+        GClrealisations_used =               GClrealisations
+    else           :
+
+        GClrealisations_used = copy.deepcopy(GClrealisations)
 
     for jj, gcl in enumerate(GClrealisations_used):
         mockobs = gcl.mockobs
         z       = gcl.z.value
         hsize   = mockobs.hsize
-        dinf    = gcl.dinfo  #copy.deepcopy(gcl.dinfo) # A local realisation of dinfo. This is just because some parameters of dinfo could change, because of adaptive pixelsize etc.
+        dinf    = copy.deepcopy(gcl.dinfo) # A local realisation of dinfo. This is just because some parameters of dinfo could change, because of adaptive pixelsize etc.
         fac_x   = loadsnap.comH_to_phys(snap.head, z)
         
         if log: print('  Realisation #%i-%i for %i efficiencies. In total %i realisations' % (iii+1, jj+1, len(efflist),
@@ -381,7 +384,7 @@ def Run_MockObs(bulked, GClrealisations, CASAmock=False, XRay=False, saveFITS = 
     if writeClusters:
         '''This is here because some outputs get lost in a multiprocessing heavy input/output queue process'''
         for gcl in GClrealisations_used:
-            filename =  'GCl-%05i'  % (gcl.mockobs.id)
+            filename = 'GCl-%05i' % (gcl.mockobs.id)
             iom.pickleObject( (gcl, Rmodel), savefolder + '/pickled/', filename, append = False) 
 
 

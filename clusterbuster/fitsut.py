@@ -250,7 +250,7 @@ def sparse_array_to_fits(GCls, outfolder):
         kpc_to_arcsec = 1/(GCl.cosmoPS)
 
         GCl.dinfo.pcenter
-        bins = ((np.asarray(range(int(GCl.dinfo.pcenter[0]*2+1))) - GCl.dinfo.pcenter[0])+0.5) * GCl.dinfo.spixel  # np.linspace(-500,500,widht=1)
+        bins = ((np.asarray(range(int(GCl.dinfo.pcenter[0]*2+1))) - GCl.dinfo.pcenter[0])+0.25) * GCl.dinfo.spixel  # np.linspace(-500,500,widht=1)
 
         sparseA = []
         sparseD = []

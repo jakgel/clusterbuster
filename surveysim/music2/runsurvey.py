@@ -538,7 +538,7 @@ def RadioAndMock_loaded(val, verbose=True):
         """ Here we compute the volume weighted radio emission """   
         radiosum      = np.sum(radiosnap.radi)
         borders       = 2*realisations[0].R200*radiosnap.head ['hubble']/radiosnap.head ['aexpan']
-        whereR200     = np.where( np.sqrt(np.power(radiosnap.pos[:,0],2) + np.power(radiosnap.pos[:,1],2) + np.power(radiosnap.pos[:,2],2) ) < borders/2)
+        whereR200     = np.where(np.sqrt(np.power(radiosnap.pos[:,0],2) + np.power(radiosnap.pos[:,1],2) + np.power(radiosnap.pos[:,2],2) ) < borders/2)
         radiosum_R200 = np.sum(radiosnap.radi[whereR200])
         # update information on the total radio power (at the rest frame frequency) in the simulational volume
         realisations[kk].P_rest.value    = radiosum       # This is for a frequency differing from 1.4 GHz and an efficiency of 1, in PostProcessing.py we apply a further correction
@@ -554,7 +554,7 @@ def RadioAndMock_loaded(val, verbose=True):
         smt(task='Shed_DoMockObs')
         (nouse, subsmt, GClrealisation_used, Rmodel) = mockobs.Run_MockObs(radiocube, [realisation],
                                                                            saveFITS=survey.saveFITS,  savewodetect=survey.savewodetect,
-                                                                           side_effects =True)
+                                                                           side_effects=True)
         GClrealisations_used += GClrealisation_used
         smt.MergeSMT_simple(subsmt, silent=True)
         
