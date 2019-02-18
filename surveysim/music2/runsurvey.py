@@ -331,8 +331,8 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
         survey = cbclass.Survey(GClList, survey='%s' % (parfile.replace('.parset', '')),
                                 emi_max=float(pase['RMSnoise']) * 1e-3 * 200,
                                 cnt_levels=[float(pase['RMSnoise']) * 2 ** i for i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]],
-                                saveFITS=(ABC is None), savewodetect=suut.TestPar(pase['savewodetect']),
-                                surshort='MUSIC2', Rmodel=RModel, outfolder=outfolder, logfolder=logfolder)
+                                saveFITS=True, savewodetect=suut.TestPar(pase['savewodetect']),
+                                surshort='MUSIC2', Rmodel=RModel, outfolder=outfolder, logfolder=logfolder) #saveFITS=(ABC is None)
     #        survey.saveFITS = True
     #        iom.pickleObject(survey, survey.outfolder, 'surveyClass')
 
@@ -772,7 +772,7 @@ def DoRun( inputs, smt, verbose=False):
     """ Please mind that this procedure determines early if the number of detected relics becomes to large!"""  
     (pase, survey) = inputs
     #===
-    count, countmax = 0, 200
+    count, countmax = 0, 2000 #200
 
     realisations      = [] 
     realisations_list = [] # rotated realisations of one and the same cluster
@@ -1012,7 +1012,7 @@ def SheduleTasks(inputs, smt, ABC=False, verbose=False):
         smt.MergeSMT_simple(result)     
      
     np.save(survey.logfolder + '/TaskCube', Taskcube)     
-    iom.pickleObject(smt     , survey.outfolder + '/', 'smt')   
+    iom.pickleObject(smt, survey.outfolder + '/', 'smt')
     """ pickles a bunch of single galaxy clusters, they are latter joined into a survey """
     """ It should also pickle the corresponding fits images (in case of a detection) """
     
@@ -1143,10 +1143,6 @@ def ReloadSurvey(survey=None,parfrom='MUSIC2COOL_NVSS_SSD.parset', parto='MUSIC2
     survey.outfolder = savefolder +  survey.name
     survey.logfolder = savefolder +  survey.name
 
-#    survey.saveFITS  =1
-#          MUSIC2COOL_NVSS_SSD_00002 /data/ClusterBuster-Output/MUSIC2COOL_NVSS_SSD_00002  True
-#    return 0
-
     
 #    pase, _, _, _, _ = suut.interpret_parset(parfile, repository=workdir+'/parsets/', relative=(ABC is not None))
 #    misslist     = np.loadtxt('/home/jakobg/lib/ClusterBuster/surveysim/music2/AllMUSIC-AGN-missing.dat')   #pase['miscdata']+pase['missFile'])
@@ -1178,11 +1174,6 @@ def ReloadSurvey(survey=None,parfrom='MUSIC2COOL_NVSS_SSD.parset', parto='MUSIC2
             missing=False
     print(len(sorted([gcl.mockobs.id for gcl in survey.GCls])))
     survey.GCls = fitleredGCls
-#    print(len(survey.GCls))
-#    return 0
-
-
-
     
     if reform:
         parfile = parto 

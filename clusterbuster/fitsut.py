@@ -242,7 +242,7 @@ def numpy2mask ( array, cutoff, Ndil, outfile=False) : #, header=hdutemplateHead
  
 
 
-def sparse_array_to_fits(GCls, outfolder):
+def sparse_array_to_fits(GCls, outfolder, maptype = "Diffuse"):
 
     for GCl in GCls:
         # bins in 45 arcsec
@@ -272,6 +272,6 @@ def sparse_array_to_fits(GCls, outfolder):
 
             array_full += array
 
-        mapname = "Diffuse"
-        fitsname = '%s/maps/diffuse/%s.fits' % (outfolder, GCl.name)
+        mapname = maptype
+        fitsname = '%s/maps/%s/%s.fits' % (outfolder, maptype.lower(), GCl.name)
         GCl.maps_update(array_full, mapname, fitsname)
