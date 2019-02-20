@@ -70,7 +70,8 @@ def Run_MockObs(bulked, GClrealisations, CASAmock=False, XRay=False, saveFITS = 
         mockobs = gcl.mockobs
         z       = gcl.z.value
         hsize   = mockobs.hsize
-        dinf    = copy.deepcopy(gcl.dinfo) # A local realisation of dinfo. This is just because some parameters of dinfo could change, because of adaptive pixelsize etc.
+        dinf    = gcl.dinfo # Some parameters of dinfo could change, because of adaptive pixelsize etc.
+        # If not, use copy.deepcopy()
         fac_x   = loadsnap.comH_to_phys(snap.head, z)
 
         #  Load variables and setting survey parameters
@@ -109,9 +110,9 @@ def Run_MockObs(bulked, GClrealisations, CASAmock=False, XRay=False, saveFITS = 
             if filter_sp_phase:
                 """ Filteres the cooled particles that no longer belong to the hot-ICM"""
                 iL = np.where( (np.sqrt(snap.pos[:,0]**2+snap.pos[:,1]**2+snap.pos[:,2]**2)*fac_x < 2.0*gcl.R200()) &
-                                ((8.9+  3.3 - np.log(snap.u*fac_T2) - 0.65*np.log10(snap.rho*fac_rho)) < 0) &
-                                ((8.9- 11.0 - np.log(snap.u*fac_T2) - 3.5*np.log10(snap.rho*fac_rho))  < 0) &
-                                ((8.9+  6.9 - np.log(snap.u*fac_T2) + 0.5*np.log10(snap.rho*fac_rho))  < 0) &
+                                ((8.9+ 3.3 - np.log(snap.u*fac_T2) - 0.65*np.log10(snap.rho*fac_rho)) < 0) &
+                                ((8.9-11.0 - np.log(snap.u*fac_T2) - 3.50*np.log10(snap.rho*fac_rho)) < 0) &
+                                ((8.9+ 6.9 - np.log(snap.u*fac_T2) + 0.50*np.log10(snap.rho*fac_rho)) < 0) &
                                 (snap.mach < 10)
                                )[0]
             else:
@@ -121,7 +122,8 @@ def Run_MockObs(bulked, GClrealisations, CASAmock=False, XRay=False, saveFITS = 
                if log: print('Run_MockObs:: Ratio of PREs to total emission', ((np.sum(snap.radiPre[iL]))/(np.sum(snap.radi[iL])+np.sum(snap.radiPre[iL]))) )
                snap.radi += snap.radiPre
         
-            H1, xedges, yedges = np.histogram2d(-posrot[iL,0], -posrot[iL,1], weights=s_radio_SI*snap.radi[iL], range=[[-hsize,hsize], [-hsize,hsize]], bins=nbins) #norm=LogNorm(), ,  cmin=1e-3
+            H1, xedges, yedges = np.histogram2d(-posrot[iL,0], -posrot[iL,1], weights=s_radio_SI*snap.radi[iL],
+                                                range=[[-hsize,hsize], [-hsize,hsize]], bins=nbins)
             """ Difference of gaussians method - accomplishing a simple subtraction of compact sources"
             
             We do this iteratively three times to also remove those particles that where shadowed by other 
@@ -133,7 +135,7 @@ def Run_MockObs(bulked, GClrealisations, CASAmock=False, XRay=False, saveFITS = 
             scale_1: Smaller scale in kpc
             scale_2: Larger  scale in kpc        
             """
-            thresh  = 0.7
+            thresh = 0.7
             scale_1 = 75  #100
             scale_2 = 300 #450
             
@@ -145,12 +147,12 @@ def Run_MockObs(bulked, GClrealisations, CASAmock=False, XRay=False, saveFITS = 
             DoG2_filter.beam = [scale_2/gcl.cosmoPS, scale_2/gcl.cosmoPS, 0]
             DoG2_filter.update_Abeam()
             
-            DoG_mask          = np.ones_like(H1)
-            for ii in range(3):
+            DoG_mask = np.ones_like(H1)
+            for no_use in range(3):
                 convolved_sigma1 = DoG1_filter.convolve_map(H1*DoG_mask)  ## gaussian convolution
                 convolved_sigma2 = DoG2_filter.convolve_map(H1*DoG_mask)  ## gaussian convolution
                 DoG_rel = np.divide(np.abs(convolved_sigma2-convolved_sigma1)+1e-20, convolved_sigma2+1e-20)
-                DoG_mask[np.where(DoG_rel < thresh)] = 0
+                DoG_mask[np.where(DoG_rel < thresh)] = 0.4
             convolved_sigma1 = DoG1_filter.convolve_map(H1)  ## gaussian convolution
             convolved_sigma2 = DoG2_filter.convolve_map(H1)  ## gaussian convolution
 
@@ -177,7 +179,7 @@ def Run_MockObs(bulked, GClrealisations, CASAmock=False, XRay=False, saveFITS = 
                 #6. Python. Create masked .fits mock imagename
                 #7  Python. Extract radio relics """
             else:
-                if log: print('  ###====          - Using the simple convolved image ====###')
+                if log: print('###====          - Using the simple convolved image ====###')
                 IM0 = H2  #(fits.open(simpleconv))[0].data 
                 
             smt(task='CreateMask_[sub]'); #print( '###==== Step 6:  Create masked .fits mock image ====###'
@@ -199,15 +201,6 @@ def Run_MockObs(bulked, GClrealisations, CASAmock=False, XRay=False, saveFITS = 
                 if log: print('  ++The brightest relic found has a flux density of %f mJy' % (relics[0].flux))  #Could producese errors, once there is no relict in the list
                 iom.check_mkdir(savefolder + '/maps/z%04.f' % (gcl.mockobs.z_snap*1000))
 
-                """ I couldn't come up with something better to take the inverse """
-                mask = np.ones(snap.rho.shape, dtype=bool)
-                mask[iL] = 0
-                Subtracted, xedges, yedges = np.histogram2d(-posrot[mask,0], -posrot[mask,1], weights=s_radio_SI*snap.radi[mask],
-                                                            range=[[-hsize,hsize], [-hsize,hsize]], bins=nbins)
-
-                Subtracted += H1*(1-DoG_mask)
-                SubConv = dinf.convolve_map(Subtracted)
- 
                 """ Part to derive additional relic information like average and  mach number and alpha. We also get the 
                 emission weighted density, as this works only on the bright parts it is fine to work with the subset of 
                 particles
@@ -241,9 +234,23 @@ def Run_MockObs(bulked, GClrealisations, CASAmock=False, XRay=False, saveFITS = 
 #                    relic.wT_down     =  Htemp_down[relic.pmask]  
                     
                     relic.wDoG_rel = DoG_rel[relic.pmask]
-                    
                     allflux = np.concatenate((relic.sparseW, allflux), axis=0)
                     relic.averages_quantities()
+
+
+                """ I couldn't come up with something better to take the inverse """
+                mask = np.ones(snap.rho.shape, dtype=bool)
+                mask[iL] = 0
+                Subtracted, xedges, yedges = np.histogram2d(-posrot[mask,0], -posrot[mask,1], weights=s_radio_SI*snap.radi[mask],
+                                                            range=[[-hsize,hsize], [-hsize,hsize]], bins=nbins)
+
+                Subtracted += H1*(1-DoG_mask)
+                Subtracted_conv = dinf.convolve_map(Subtracted)
+                relics_subtracted = relex.RelicExtraction(Subtracted_conv, z, GCl=gcl, dinfo=dinf,
+                                                          rinfo=cbclass.RelicRegion('', [], rtype=1))  # , faintexcl=0.4, Mach=Hmach, Dens=Hdens,
+                gcl.compacts = relics_subtracted
+
+
                     
                 """Save maps"""
                 allflux = allflux.flatten()    
@@ -257,14 +264,14 @@ def Run_MockObs(bulked, GClrealisations, CASAmock=False, XRay=False, saveFITS = 
                     gcl.maps_update(H1        , 'Raw'      , '%s/maps/z%04.f/%s-%04i_native.fits'          % parlist)
                     gcl.maps_update(IM1       , 'Diffuse'  , '%s/maps/z%04.f/%s-%04i.fits'                 % parlist)
                     gcl.maps_update(Subtracted, 'CompModell', '%s/maps/z%04.f/%s-%04i_compact.fits'         % parlist)
-                    gcl.maps_update(SubConv   , 'Subtrated', '%s/maps/z%04.f/%s-%04i_compactObserved.fits' % parlist)
+                    gcl.maps_update(Subtracted_conv, 'Subtracted', '%s/maps/z%04.f/%s-%04i_compactObserved.fits' % parlist)
                     if len(relics) > 0:
-                        gcl.maps_update(gcl.Mask_Map(Hmach, normalize=allflux, eff=eff), 'Mach', '%s/maps/z%04.f/%s-%04i_mach.fits' % parlist)
-                        gcl.maps_update(gcl.Mask_Map(Hrho_up, normalize=allflux, eff=eff), 'RhoUp', '%s/maps/z%04.f/%s-%04i_rhoup.fits' % parlist)
-                        gcl.maps_update(gcl.Mask_Map(Htemp, normalize=allflux, eff=eff), 'Temp', '%s/maps/z%04.f/%s-%04i_temp.fits' % parlist)
-                        gcl.maps_update(gcl.Mask_Map(Hmag, normalize=allflux, eff=eff), 'B', '%s/maps/z%04.f/%s-%04i_B.fits' % parlist)
-                        gcl.maps_update(gcl.Mask_Map(Hpre, normalize=allflux, eff=eff), 'PreRatio', '%s/maps/z%04.f/%s-%04i_prerat.fits' % parlist)
-                    gcl.maps_update(DoG_rel , 'DoG_rel', '%s/maps/z%04.f/%s-%04i_DoG_rel.fits' % parlist)
+                        gcl.maps_update(gcl.Mask_Map(Hmach, normalize=allflux), 'Mach', '%s/maps/z%04.f/%s-%04i_mach.fits' % parlist)
+                        gcl.maps_update(gcl.Mask_Map(Hrho_up, normalize=allflux), 'RhoUp', '%s/maps/z%04.f/%s-%04i_rhoup.fits' % parlist)
+                        gcl.maps_update(gcl.Mask_Map(Htemp, normalize=allflux), 'Temp', '%s/maps/z%04.f/%s-%04i_temp.fits' % parlist)
+                        gcl.maps_update(gcl.Mask_Map(Hmag, normalize=allflux), 'B', '%s/maps/z%04.f/%s-%04i_B.fits' % parlist)
+                        gcl.maps_update(gcl.Mask_Map(Hpre, normalize=allflux), 'PreRatio', '%s/maps/z%04.f/%s-%04i_prerat.fits' % parlist)
+                    gcl.maps_update(DoG_rel, 'DoG_rel', '%s/maps/z%04.f/%s-%04i_DoG_rel.fits' % parlist)
                     gcl.maps_update(DoG_mask, 'DoG_mask', '%s/maps/z%04.f/%s-%04i_DoG_mask.fits' % parlist)
 
 

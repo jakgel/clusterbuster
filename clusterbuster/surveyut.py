@@ -71,8 +71,8 @@ def interpret_parset(parfile, repository='/parsets/', default='default.parset', 
         elif Path(repository + default).is_file():
             relative = False
              
-    def_dict  = iom.parset2dict(repository + default, relative=relative) # relative=relative
-    new_dict  = iom.parset2dict(repository + parfile, relative=relative)
+    def_dict = iom.parset2dict(repository + default, relative=relative) # relative=relative
+    new_dict = iom.parset2dict(repository + parfile, relative=relative)
      
     
     comb_dict = def_dict.copy()

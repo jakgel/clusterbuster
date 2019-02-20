@@ -390,7 +390,7 @@ class Galaxycluster(object):
         self.dinfo    = replaceNone(dinfo, DetInfo())   # detection information --> One per radio map!  ... One to one ?
         self.histo    = Histo    # Histogramm of all binned objects, anyhow a future function could provide this right out of the image(s)
         self.mockobs  = replaceNone(mockobs, MockObs(0))  # mockobs   information --> One per radio map! One to one ?
-        self.compacts = []  # A list of (compact) sources that were substacted. Used for NVSS
+        self.compacts = []  # A list of (compact) sources that were substacted. One to many
 
         #== 
         self.halo = halo                                     
@@ -816,7 +816,7 @@ class Galaxycluster(object):
     def stoch_drop(self, seed_dropout):
         """ stochasticaly drops cluster objects based on  discovery_prop_cluster()"""
         if seed_dropout is None:
-            return True
+            return (len(self.relics)>0) and (len(self.filterRelics()) > 0)
         return self.discovery_prop_cluster() > seed_dropout.uniform(0, 1)
     
     def discovery_prop_cluster(self):

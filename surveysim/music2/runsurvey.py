@@ -56,22 +56,12 @@ par.add_argument('--par',                 default='MUSIC2COOL_NVSS',  help='pars
 
 args, unknown = par.parse_known_args()
 
-
-#==== Internal parameters, also those which specifiy the parallel run
-""" This is the experimental use of global variable sto speed up multiprocessing in case of a single survey """
-
-global_snaps  = (None for none in range(24))
-
-
-
 #=========================================================================================================================================================  
 POISON_PILL = "STOP"
-#FILEMA      = MU.filemanager()
 
 
-"""Originaly main() and SheduleTasks() where designed as independent functions because I want to prevent the buffer to overflow.
+"""Originally main() and SheduleTasks() where designed as independent functions because I wanted to prevent the buffer to overflow.
    Now I use these two functions as the one that controls the ABC (main) and the one that does the computation (shedule task)"""
-
 
 def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None, Clfile='clusterCSV/MUSIC2-AGN',
          processTasks=True):
@@ -87,7 +77,6 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
     For future: - delete survey findings (or add for different detection parameter)
                 or make the Rmodel changeable
 
-
     If pase['default'] is False then a run will be made with one shell and one single cluster realisation per snapshot
 
     For abcpmc MUSIC-2 vanilla use MUSIC2-AGN for clusterCSV and MUSIC2_NVSS02_SSD.parset for parset
@@ -101,16 +90,12 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
     """also possible : np.random.seed(seed=None) 
     ... this here is only to save the seed, which is not needed, because all the random stuff can be reconstructed from the cluster statistics
 
-
     processes from random are well seeded even without this, somehow numpy needs this kind of seed
     but only in abcpmc and not ABC
 
     import random
     random.randrange(sys.maxsize)
-
     """
-
-    """ Except from pase these information are outdated!!!! """
 
     # ===  Read parset; then extract fundamental parameters ... Parset OBLIGATORY has be saved as  'parsets/*.parset'
     if workdir is None: workdir = os.path.dirname(__file__) + '/'
@@ -188,7 +173,6 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
         DCMRs = cosmo.comoving_volume(shells_z).value / 1e9
         count = 0
 
-        # choosens = np.zeros(len(zsnap_list))
         for (zlow, zhigh, VCMlow, VCMhigh) in zip(shells_z[0:-1], shells_z[1:], DCMRs[0:-1], DCMRs[1:]):
 
             """ Iterate through each shell of the observed volume 
@@ -205,11 +189,6 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
                                         skycoverage=float(pase['surv_compl']), Vsimu=Vsimu, use_list=use_list,
                                         fake=(not suut.TestPar(pase['default'])), logmode=None)
 
-            # choosens = np.array(choosen) + choosens
-            # print('_________', choosens)
-            # continue
-
-            #print('len(choosen)', len(choosen))
             for (snap, kk) in choosen:
                 l = all_clusters[(all_clusters["clID"] == clusterIDs[kk])
                                  & (all_clusters["snapID"] == snapidlist[snap])]
@@ -266,9 +245,8 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
         now = datetime.datetime.now()
         writestring = 'y%i m%02i d%02i %02i:%02i:%02i ' % (now.year, now.month, now.day,
                                                            now.hour, now.minute, now.second)
-
         if ABC is None:
-            """ISSUE: The issue with the currently used ABC routines is that you have to give them arrays. Which is why 
+            """CAVEAT: The issue with the currently used ABC routines is that you have to give them arrays. Which is why 
                the corresponding model associated has to be defined at this layer.
                Giving the procedure a function which would create this array would allow all of this to be defined 
                in the top layer of ABC
@@ -294,7 +272,7 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
             RModel.effList[0], RModel.B0, RModel.kappa, RModel.compress)
             print('#== Begin Processing task')
         elif len(ABC) == 3:
-            """ Varies the standart model """
+            """ Varies the standard model """
             (lgeff, lgB0, kappa) = ABC
             RModel = cbclass.RModel(RModelID, effList=[10 ** lgeff], B0=10 ** lgB0, kappa=kappa,
                                     compress=float(pase['compress']))
@@ -663,10 +641,6 @@ def RadioCuts(val, compradio=False):
              realisations[kk].Prest_vol.value  = radiosum_R200  # This is for a frequency differing from 1.4 GHz and an efficiency of 1, in PostProcessing.py we apply a further correction
     else:
         (snap, MF) = snapMF
-    
-
-    
-#    print('snap',snap.header)
 
     smt(task='Shed_DoMockObs_misc')
     if suut.TestPar(pase['redSnap']): 
@@ -690,7 +664,7 @@ def mupro_RadioAndMock( in_queue, output ):
 #    from time import gmtime, strftime  
     smt(task='Queue_get')
     while True:  
-        val  = in_queue.get() #  
+        val  = in_queue.get()
         if val == POISON_PILL:
             break
         
@@ -713,14 +687,13 @@ def mupro_RadioAndMock( in_queue, output ):
 
 
 
-def mupro_RadioCuts( in_queue, output  ):
+def mupro_RadioCuts(in_queue, output):
     """ Does computation of the radio_cube, only the output is put into another function """
     
-    smt = iom.SmartTiming(); 
-#    from time import gmtime, strftime  
+    smt = iom.SmartTiming();
     smt(task='Queue_get')
     while True:  
-        val = in_queue.get() #
+        val = in_queue.get()
         if val == POISON_PILL:
             break
         
@@ -746,7 +719,7 @@ def mupro_Output_NicePickleClusters( in_queue, output):
         outputMod = output #+ '_%05i/' % (Rmodel.id)
         iom.check_mkdir(outputMod + '/pickled')
         for GCl in Clrealisations:
-           filename =  'MonsterPickle-Snap%02i'  % (GCl.mockobs.snap)
+           filename = 'MonsterPickle-Snap%02i' % (GCl.mockobs.snap)
            iom.pickleObject( (GCl, Rmodel), outputMod + '/pickled/', filename, append = True) 
     return
 
@@ -755,25 +728,24 @@ def mupro_Output( in_queue, out_queue ):
 # Here we need a lock for other procecces to make sure that the output is not getting corrupted (through simultaneous writing) !!!!
     smt = iom.SmartTiming(rate=5e4); smt(task='Output_[writes,sub]');print(' ___ Writing Output_[writes,sub]')
     while True:  
-        val  = in_queue.get() #  
+        val = in_queue.get()
         if val == POISON_PILL:
             break
         (stage_list, savefolder, ImageOut, pickleClusters) = val
-        print('"mupro_Output": %i objects are considered in the output.' %( len(stage_list) ))
+        print('"mupro_Output": %i objects are considered in the output.' % len(stage_list) )
         
-        mupro_Output_NicePickleClusters( stage_list,   savefolder ) #Sometimes an error occurs during that
+        mupro_Output_NicePickleClusters( stage_list,   savefolder) #Sometimes an error occurs during that
         out_queue.put( smt )
         
     return 
  
   
     
-def DoRun( inputs, smt, verbose=False):
+def DoRun( inputs, smt, verbose=False, countmax=250):
     """ Please mind that this procedure determines early if the number of detected relics becomes to large!"""  
     (pase, survey) = inputs
     #===
-    count, countmax = 0, 2000 #200
-
+    count  = 0
     realisations      = [] 
     realisations_list = [] # rotated realisations of one and the same cluster
     survey.GCls = sorted(survey.GCls, key= iom.Object_natural_keys)
@@ -828,6 +800,7 @@ def DoRun( inputs, smt, verbose=False):
                 In this case I should let the procedure stop early and  give it the minimum score in the metric ...(also in the metric test)
             """
             for gcl_test in realisations:
+                print(survey.outfolder, gcl_test.stoch_drop(survey.seed_dropout))
                 countW = int(gcl_test.stoch_drop(survey.seed_dropout))
                 count += countW
                 if count > countmax:
@@ -1139,9 +1112,9 @@ def ReloadSurvey(survey=None,parfrom='MUSIC2COOL_NVSS_SSD.parset', parto='MUSIC2
         survey = iom.unpickleObject('%s/%s/pickled/Survey' % (savefolder, surveyname))
         
     """ reform is [-1,0,1] and is used to convert from the different snapshot numbering systems"""
-    survey.name      = parto.replace('.parset','') + '_%05i' % (index_new)
-    survey.outfolder = savefolder +  survey.name
-    survey.logfolder = savefolder +  survey.name
+    survey.name      = parto.replace('.parset', '') + '_%05i' % (index_new)
+    survey.outfolder = savefolder + survey.name
+    survey.logfolder = savefolder + survey.name
 
     
 #    pase, _, _, _, _ = suut.interpret_parset(parfile, repository=workdir+'/parsets/', relative=(ABC is not None))
@@ -1165,7 +1138,7 @@ def ReloadSurvey(survey=None,parfrom='MUSIC2COOL_NVSS_SSD.parset', parto='MUSIC2
         snap = GCl.mockobs.snap
         """ Exclude missing snapshots """
         for miss in misslist:
-            if ((miss[0] == ids) and (miss[1] == snap)):
+            if (miss[0] == ids) and (miss[1] == snap):
                 missing=True
 
         if not missing:

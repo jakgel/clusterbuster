@@ -249,14 +249,16 @@ def sparse_array_to_fits(GCls, outfolder, maptype = "Diffuse"):
         pixelwidth = 10  # arcsec for simulation
         kpc_to_arcsec = 1/(GCl.cosmoPS)
 
-        GCl.dinfo.pcenter
+
+
+        print(GCl.dinfo.pcenter[0])
         bins = ((np.asarray(range(int(GCl.dinfo.pcenter[0]*2+1))) - GCl.dinfo.pcenter[0])+0.25) * GCl.dinfo.spixel  # np.linspace(-500,500,widht=1)
 
         sparseA = []
         sparseD = []
         sparseW = []
         array_full = np.zeros((int(GCl.dinfo.pcenter[0]*2), int(GCl.dinfo.pcenter[1]*2)))
-
+        print(GCl.dinfo.pcenter, array_full.shape)
 
         for relic in GCl.relics:
             sparseA.append(relic.sparseA) # in kpc ... we need arcseconds

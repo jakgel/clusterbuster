@@ -1,5 +1,0 @@
-    s            dir                 |   f flux   | s fluxunit  |  s   freq   |  s  shape    |  f  majoraxis  | f minoraxis  |  s axisunit  | f theta  |  s comment
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-   J2000 11h42m23.84s +58d32m01.9s   |    74.56    |      mJy    |    1400MHz  |  Point  |      0.201      |      0.073     |    arccmin   |     0      |  source 114223+583201 in FIRST
-   J2000 11h42m13.94s +58d31m25.4s   |    10.03    |      mJy    |    1400MHz  |  Point  |      0.091      |      0.000     |    arccmin   |    20      |  source 114213+583125 in FIRST
-   J2000 11h42m23.10s +58d31m24.9s   |     7.25    |      mJy    |    1400MHz  |  Point  |      0.060      |      0.034     |    arccmin   |   100      |  source 114223+583124 in FIRST

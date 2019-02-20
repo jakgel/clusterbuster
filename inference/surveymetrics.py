@@ -59,7 +59,7 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics=['numbers'],
 #                print('metric', metric)
 
             if metric == 'number':
-                distance = ABC_summaryStatistics_numbers([SurveyA,SurveyB])
+                distance = ABC_summaryStatistics_number_relics([SurveyA,SurveyB])
             if metric == 'flux_kolm':
                 distance = ABC_summaryStatistics_flux_komogorov([SurveyA,SurveyB])
             if metric == 'polarHisto':
@@ -97,6 +97,7 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics=['numbers'],
                             f.write(str(SURVEYCOUNT+1))
 
                         SurveyB.name = "%s_%05i" % (SurveyB.name_short, SURVEYCOUNT)
+                        outfolder_old = SurveyB.outfolder
                         SurveyB.outfolder = '/data/ClusterBuster-Output/%s' % (SurveyB.name)
 
                         if verbose:
@@ -107,15 +108,13 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics=['numbers'],
 
                         iom.check_mkdir(outpath+'surveys/')
                         iom.pickleObject(SurveyB, "%s/surveys/" % (outpath), "Survey_%05i" % (SURVEYCOUNT))  #obj, location, oname, append = False
-                        #os.system("cp -rf %s/pickled/Survey.pickle %s/surveys/Survey_%05i.pickle" % (SurveyB.outfolder, outpath, SURVEYCOUNT))
-                        shutil.rmtree(SurveyB.outfolder) 
+                        shutil.rmtree(outfolder_old)
                         n = 10
                     except:
                         n += 1
                         time.sleep(0.2)
                         print('surveymetrics::ABC_dist_severalMetrices:: Could not write counter.')
                         print("___ cp -rf %s/pickled/Survey.pickle %s/surveys/Survey_unknown.pickle" % (SurveyB.outfolder, outpath))
-                os.system("rm -rf %s/pickled/Survey.pickle" % (SurveyB.outfolder))
 
             """ We increment the current logfile number by one ... just to show how much we have progressed """
             with open("%s/logfile.txt" % (outpath), "a") as f:
@@ -145,7 +144,7 @@ def Clusters_discovery_prop(survey, discovery_prop=None, maxcomp=None, verbose=F
            or      a GalaxyClusterLists including relics
            and the efficiency at which to count the relics
            optional: the function of the discovery prop that is a shape&LAS dependent discovery probability
-    It allows to filter for cetain shape regimes      
+    It allows to filter for certain shape regimes
     Returns
     ------
     distance: float
@@ -229,7 +228,7 @@ def ABC_summaryStatistics_polarHisto_simple(Surveys):
     return deviation
 
 
-def ABC_summaryStatistics_2DKS(Surveys, eff, verbose=False, parA=lambda x: x.M200, parB = lambda y: y.P_rest):
+def ABC_summaryStatistics_2DKS(Surveys, verbose=False, parA=lambda x: x.M200, parB = lambda y: y.P_rest):
     """ Compares survey B (simulation) with survey A (real world survey)
     input: either  2 Clusterbuster Class Surveys
     """
@@ -239,12 +238,12 @@ def ABC_summaryStatistics_2DKS(Surveys, eff, verbose=False, parA=lambda x: x.M20
 #    import scipy.stats.mstats as mstats
     if isinstance(A, cbclass.Survey) and isinstance(B, cbclass.Survey):
         """ Assume to work with surveys """
-        cl_A = [gcl.updateInformation()        for gcl in A.GCls]
-        cl_B = [gcl.updateInformation(eff=eff) for gcl in B.filteredClusters]
+        cl_A = [gcl.updateInformation() for gcl in A.GCls]
+        cl_B = [gcl.updateInformation() for gcl in B.filteredClusters]
     else:
         """ Asume to work with lists of galaxy clusters """
-        cl_A = [gcl.updateInformation()        for gcl in A]
-        cl_A = [gcl.updateInformation(eff=eff) for gcl in B]
+        cl_A = [gcl.updateInformation() for gcl in A]
+        cl_A = [gcl.updateInformation() for gcl in B]
         
     x1 = np.asarray([parA(gcl).value for gcl in cl_A])
     y1 = np.asarray([parB(gcl).value for gcl in cl_A])
@@ -280,7 +279,7 @@ def ABC_summaryStatistics_2DKS(Surveys, eff, verbose=False, parA=lambda x: x.M20
         print('surveymetrics::ABC_summaryStatistics_2DKS()::access', access)
     return np.log10(1/access)
 
-def ABC_summaryStatistics_numbers(Surveys, maxcomp=None, verbose = False):
+def ABC_summaryStatistics_number_relics(Surveys, maxcomp=None, verbose = False):
     """ Compares survey B (simulation) with survey A (real world survey)
     input: either  2 Clusterbuster Class Surveys
            or      2 GalaxyClusterLists including relics
