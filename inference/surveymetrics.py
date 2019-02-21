@@ -107,7 +107,8 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics=['numbers'],
                                   file_path, os.path.isfile(file_path))
 
                         iom.check_mkdir(outpath+'surveys/')
-                        iom.pickleObject(SurveyB, "%s/surveys/" % (outpath), "Survey_%05i" % (SURVEYCOUNT))  #obj, location, oname, append = False
+                        iom.pickleObject(SurveyB, "%s/surveys/" % outpath, "Survey_%05i" % SURVEYCOUNT)  #obj, location, oname, append = False
+                        print("shutil.rmtree:", outfolder_old)
                         shutil.rmtree(outfolder_old)
                         n = 10
                     except:
@@ -117,13 +118,13 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics=['numbers'],
                         print("___ cp -rf %s/pickled/Survey.pickle %s/surveys/Survey_unknown.pickle" % (SurveyB.outfolder, outpath))
 
             """ We increment the current logfile number by one ... just to show how much we have progressed """
-            with open("%s/logfile.txt" % (outpath), "a") as f:
+            with open("%s/logfile.txt" % outpath, "a") as f:
                 Rm  = SurveyB.Rmodel
                 eff = SurveyB.Rmodel.effList[0]
 
                 line = ''
                 for dist in distances:
-                    line += "%8.5e " % (dist)
+                    line += "%8.5e " % dist
                 line += '%7i %+.4e %+.4e %+.4e' % (SURVEYCOUNT, eff, Rm.B0, Rm.kappa)
 
                 if isinstance(Rm, cbclass.PreModel_Hoeft):
@@ -180,7 +181,6 @@ def ABC_summaryStatistics_polarHisto(Surveys):
     zborder = 0.05
     ztype = '>'
 
-    print('ABC_summaryStatistics_polarHisto _____ A')
     norm = dbc.norm('R200', Nexp=1.0)         # In the past I used 1.5 ... because this could be a better scaling
     for Survey in Surveys:
         Survey.hist_main = dbc.Histogram2D(nbins=(32,30), fromto=[[0,2.*np.pi], [0,1.5]], norm=norm)     # angle_projected(rad), D_proj(R200)
@@ -191,7 +191,6 @@ def ABC_summaryStatistics_polarHisto(Surveys):
         HiB = 0
     else:
         HiB = polar[1][0]
-    print('ABC_summaryStatistics_polarHisto _____ B')
     HiA = SurveyA.polar(zborder=zborder, ztype=ztype, normalize=True)[1][0]
     deviation = np.sum(np.abs(HiA-HiB))
     

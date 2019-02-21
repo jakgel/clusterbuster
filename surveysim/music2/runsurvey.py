@@ -309,8 +309,8 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
         survey = cbclass.Survey(GClList, survey='%s' % (parfile.replace('.parset', '')),
                                 emi_max=float(pase['RMSnoise']) * 1e-3 * 200,
                                 cnt_levels=[float(pase['RMSnoise']) * 2 ** i for i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]],
-                                saveFITS=True, savewodetect=suut.TestPar(pase['savewodetect']),
-                                surshort='MUSIC2', Rmodel=RModel, outfolder=outfolder, logfolder=logfolder) #saveFITS=(ABC is None)
+                                saveFITS=(ABC is None), savewodetect=suut.TestPar(pase['savewodetect']),
+                                surshort='MUSIC2', Rmodel=RModel, outfolder=outfolder, logfolder=logfolder)
     #        survey.saveFITS = True
     #        iom.pickleObject(survey, survey.outfolder, 'surveyClass')
 
@@ -800,7 +800,7 @@ def DoRun( inputs, smt, verbose=False, countmax=250):
                 In this case I should let the procedure stop early and  give it the minimum score in the metric ...(also in the metric test)
             """
             for gcl_test in realisations:
-                print(survey.outfolder, gcl_test.stoch_drop(survey.seed_dropout))
+                # print(survey.outfolder, gcl_test.stoch_drop(survey.seed_dropout))
                 countW = int(gcl_test.stoch_drop(survey.seed_dropout))
                 count += countW
                 if count > countmax:

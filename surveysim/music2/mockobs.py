@@ -38,8 +38,8 @@ def SPH_binning(snap, posrot, dinf, iL, immask=1, HSize_z=1000, nbins=100, weigh
     return H
 
 
-def Run_MockObs(bulked, GClrealisations, CASAmock=False, XRay=False, saveFITS = False, writeClusters = False,
-                savewodetect=False, log=False, iii=0, side_effects=False, filter_sp_phase=False):
+def Run_MockObs(bulked, GClrealisations, CASAmock=False, saveFITS=False, writeClusters=False,
+                savewodetect=False, log=False, side_effects=False, filter_sp_phase=False, extract_subtracted=True):
     """ Runs a mock observation
         side_effects: put   True if you want the input galaxy cluster to be changed,
                             False if you want only a copy to be influenced """
@@ -135,9 +135,9 @@ def Run_MockObs(bulked, GClrealisations, CASAmock=False, XRay=False, saveFITS = 
             scale_1: Smaller scale in kpc
             scale_2: Larger  scale in kpc        
             """
-            thresh = 0.7
-            scale_1 = 75  #100
-            scale_2 = 300 #450
+            thresh = 0.75
+            scale_1 = 50  #75  #100
+            scale_2 = 200 #300 #450
             
             DoG1_filter      = copy.deepcopy(dinf)
             DoG1_filter.beam = [scale_1/gcl.cosmoPS, scale_1/gcl.cosmoPS, 0]
@@ -152,7 +152,7 @@ def Run_MockObs(bulked, GClrealisations, CASAmock=False, XRay=False, saveFITS = 
                 convolved_sigma1 = DoG1_filter.convolve_map(H1*DoG_mask)  ## gaussian convolution
                 convolved_sigma2 = DoG2_filter.convolve_map(H1*DoG_mask)  ## gaussian convolution
                 DoG_rel = np.divide(np.abs(convolved_sigma2-convolved_sigma1)+1e-20, convolved_sigma2+1e-20)
-                DoG_mask[np.where(DoG_rel < thresh)] = 0.4
+                DoG_mask[np.where(DoG_rel < thresh)] = 0.4*DoG_mask[np.where(DoG_rel < thresh)]
             convolved_sigma1 = DoG1_filter.convolve_map(H1)  ## gaussian convolution
             convolved_sigma2 = DoG2_filter.convolve_map(H1)  ## gaussian convolution
 
@@ -237,6 +237,9 @@ def Run_MockObs(bulked, GClrealisations, CASAmock=False, XRay=False, saveFITS = 
                     allflux = np.concatenate((relic.sparseW, allflux), axis=0)
                     relic.averages_quantities()
 
+                """Save maps"""
+                allflux = allflux.flatten()
+
 
                 """ I couldn't come up with something better to take the inverse """
                 mask = np.ones(snap.rho.shape, dtype=bool)
@@ -246,34 +249,55 @@ def Run_MockObs(bulked, GClrealisations, CASAmock=False, XRay=False, saveFITS = 
 
                 Subtracted += H1*(1-DoG_mask)
                 Subtracted_conv = dinf.convolve_map(Subtracted)
-                relics_subtracted = relex.RelicExtraction(Subtracted_conv, z, GCl=gcl, dinfo=dinf,
-                                                          rinfo=cbclass.RelicRegion('', [], rtype=1))  # , faintexcl=0.4, Mach=Hmach, Dens=Hdens,
-                gcl.compacts = relics_subtracted
+                if extract_subtracted:
+                    relics_subtracted = relex.RelicExtraction(Subtracted_conv, z, GCl=gcl, dinfo=dinf,
+                                                              rinfo=cbclass.RelicRegion('', [], rtype=1))  # , faintexcl=0.4, Mach=Hmach, Dens=Hdens,
+                    for relic in relics_subtracted:
+                        relic.wMach = Hmach[relic.pmask]
+                        relic.wT = Htemp[relic.pmask]
+                        relic.wArea = Harea[relic.pmask]
+                        relic.wAlpha = Halpha[relic.pmask]
+                        relic.wB = Hmag[relic.pmask]
+                        relic.wPre = Hpre[relic.pmask]
+                        relic.wRho_up = Hrho_up[relic.pmask]
+                        #                    relic.wRho        =  Hrho [relic.pmask]
+                        #                    relic.wRho_down   =  Hrho_down[relic.pmask]
+                        #                    relic.wT_up       =  Htemp_up[relic.pmask]
+                        #                    relic.wT_down     =  Htemp_down[relic.pmask]
+
+                        relic.wDoG_rel = DoG_rel[relic.pmask]
+                        relic.averages_quantities()
+                    gcl.compacts = relics_subtracted
 
 
-                    
-                """Save maps"""
-                allflux = allflux.flatten()    
+
+
+
                 if saveFITS:
                     """ Here the maps are already masked with the detection region """
-                    
+
                     smt(task='WriteFits_[writes,sub]')
-                    if log: print( '###==== Step 4:  Preparing FITS file & folders ====###' )
-                    
-                    parlist = (savefolder, gcl.mockobs.z_snap*1000, gcl.name, Rmodel.id)
-                    gcl.maps_update(H1        , 'Raw'      , '%s/maps/z%04.f/%s-%04i_native.fits'          % parlist)
-                    gcl.maps_update(IM1       , 'Diffuse'  , '%s/maps/z%04.f/%s-%04i.fits'                 % parlist)
-                    gcl.maps_update(Subtracted, 'CompModell', '%s/maps/z%04.f/%s-%04i_compact.fits'         % parlist)
-                    gcl.maps_update(Subtracted_conv, 'Subtracted', '%s/maps/z%04.f/%s-%04i_compactObserved.fits' % parlist)
+                    if log: print('###==== Step 4:  Preparing FITS file & folders ====###')
+
+                    parlist = (savefolder, gcl.mockobs.z_snap * 1000, gcl.name, Rmodel.id)
+                    gcl.maps_update(H1, 'Raw', '%s/maps/z%04.f/%s-%04i_native.fits' % parlist)
+                    gcl.maps_update(IM1, 'Diffuse', '%s/maps/z%04.f/%s-%04i.fits' % parlist)
+                    gcl.maps_update(Subtracted, 'CompModell', '%s/maps/z%04.f/%s-%04i_compact.fits' % parlist)
+                    gcl.maps_update(Subtracted_conv, 'Subtracted',
+                                    '%s/maps/z%04.f/%s-%04i_compactObserved.fits' % parlist)
                     if len(relics) > 0:
-                        gcl.maps_update(gcl.Mask_Map(Hmach, normalize=allflux), 'Mach', '%s/maps/z%04.f/%s-%04i_mach.fits' % parlist)
-                        gcl.maps_update(gcl.Mask_Map(Hrho_up, normalize=allflux), 'RhoUp', '%s/maps/z%04.f/%s-%04i_rhoup.fits' % parlist)
-                        gcl.maps_update(gcl.Mask_Map(Htemp, normalize=allflux), 'Temp', '%s/maps/z%04.f/%s-%04i_temp.fits' % parlist)
-                        gcl.maps_update(gcl.Mask_Map(Hmag, normalize=allflux), 'B', '%s/maps/z%04.f/%s-%04i_B.fits' % parlist)
-                        gcl.maps_update(gcl.Mask_Map(Hpre, normalize=allflux), 'PreRatio', '%s/maps/z%04.f/%s-%04i_prerat.fits' % parlist)
+                        gcl.maps_update(gcl.Mask_Map(Hmach, normalize=allflux), 'Mach',
+                                        '%s/maps/z%04.f/%s-%04i_mach.fits' % parlist)
+                        gcl.maps_update(gcl.Mask_Map(Hrho_up, normalize=allflux), 'RhoUp',
+                                        '%s/maps/z%04.f/%s-%04i_rhoup.fits' % parlist)
+                        gcl.maps_update(gcl.Mask_Map(Htemp, normalize=allflux), 'Temp',
+                                        '%s/maps/z%04.f/%s-%04i_temp.fits' % parlist)
+                        gcl.maps_update(gcl.Mask_Map(Hmag, normalize=allflux), 'B',
+                                        '%s/maps/z%04.f/%s-%04i_B.fits' % parlist)
+                        gcl.maps_update(gcl.Mask_Map(Hpre, normalize=allflux), 'PreRatio',
+                                        '%s/maps/z%04.f/%s-%04i_prerat.fits' % parlist)
                     gcl.maps_update(DoG_rel, 'DoG_rel', '%s/maps/z%04.f/%s-%04i_DoG_rel.fits' % parlist)
                     gcl.maps_update(DoG_mask, 'DoG_mask', '%s/maps/z%04.f/%s-%04i_DoG_mask.fits' % parlist)
-
 
                 """ PhD feature --> plot the DoF images in a subplot
 ##                import matplotlib.pyplot as plt   

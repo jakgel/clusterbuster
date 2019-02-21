@@ -1154,7 +1154,8 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
         for i in range(df_clean.shape[1]):  # rows are the number of rows in the matrix.
             for j in range(df_clean.shape[1]):
                 if df_clean.keys()[i] != "Survey" and df_clean.keys()[j] != "Survey":
-                    JonI = pd.ols(y=df_clean.iloc[:,i], x=df_clean.icol(j), intercept=True)
+                    print(i,j, df_clean.shape)
+                    JonI = pd.ols(y=df_clean.iloc[:,i], x=df_clean.iloc[:,j], intercept=True)
                     pval[i, j] = JonI.f_stat['p-value']
                     print("Scatterplot, pval for %s-%s" % (df_clean.keys()[i], df_clean.keys()[j]), pval[i, j])
 
