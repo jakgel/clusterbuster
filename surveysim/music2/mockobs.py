@@ -136,8 +136,8 @@ def Run_MockObs(bulked, GClrealisations, CASAmock=False, saveFITS=False, writeCl
             scale_2: Larger  scale in kpc        
             """
             thresh = 0.75
-            scale_1 = 50  #75  #100
-            scale_2 = 200 #300 #450
+            scale_1 = 100  #100
+            scale_2 = 400 #300 #450
             
             DoG1_filter      = copy.deepcopy(dinf)
             DoG1_filter.beam = [scale_1/gcl.cosmoPS, scale_1/gcl.cosmoPS, 0]

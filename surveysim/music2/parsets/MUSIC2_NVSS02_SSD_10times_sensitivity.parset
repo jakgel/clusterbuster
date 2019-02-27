@@ -1,0 +1,54 @@
+# Computing Run parameter:
+Nfree     =   8             # Number of cores left free for any specific task
+default   =   True          # Choose 'True' if you want to create the mockobs library, 'False' if you just want to compute the radiocubes and measure their total flux brightenes
+
+# Specify model parameters A:  B-field models
+eff       =   2e-4          # Xi_e as energy fraction of suprathermal electrons, around 10^(-5...-3)
+B0        =   3.00          # muG for a particle density of 1e-4/cm^3 
+kappa     =   0.50          # The compression factor
+compress  =   0.85          # 0.85 ... Exponent for effective increase of B with respect to the compresion ratio. Take 2/3 if adiabatic, 1 if emission is very sensitive to parallel field component, -1 if Nuza2016+ model, ... 0.85
+premodel  =   False
+
+#Model Hoeft
+t0      = 0.3   # Minimal time since reacceleration
+t1      = 2.0   # Maximal time since reacceleration
+n0      = 1e-6  # Number density of accretion shocks
+n1      = 1e-2  # Number density of 'core'
+ratio   = 0.05  # Initial normalisation PRE and thermal at shockfront
+
+# Specify used survey A: clusters 
+surv_compl      = 0.82                                              # If < 1 seen as coverage, If > 1 seen as number of clusters (roundet to int)
+z_range         = [0.05,0.7]                                        # Gives the lower and higher boundary for z of the cosmic slice
+empicut = False
+# Because of Z_range and eff_cover a filter should be generated to choose objects out of the list
+
+# Specify used survey B: observational parameters
+S_beam         =  45      # FWHM arcsec
+S_pixel        =  10      # arcsec
+RMSnoise       =  45      # muJy
+Detthresh      =   2      # times RMS-noise
+nu_obs         = 1.4      # obsfrequency in GHz
+
+# MockObs parameters
+  alpha        = 1.3        #  fixed our due to shockmaps ...
+S_pixel        =  10        # arcsec
+binmax         = 800        #  maximal image size in pixel [can modify S_pixel!] 
+ hsize         = 6000       #  size of cube in kpc
+  
+# Specify output
+FITSout        = True       # Save fits files?
+pickleClusters = True       # Pickle Clusters?
+Mach           = True       # Add MachNumberImage        ?
+snapfolder     = /data2/MUSIC-2/snaps/           #folder where the clustersnapshots are stored
+xrayfolder     = /radioarchive/MergerTrees/Clusters/snaps/           #folder where the full X-ray data is stored
+headerC        = Mpc                                           #Unit of the central header coordinates
+Output         = [spearman,angles,relicpixels] # list of tasks
+smarttime_sub  = 1800     # '' for default
+outf           = /data/ClusterBuster-Output/ # outfile, Is going to get tweaked
+
+#Non default radio cubes
+useMiniCube    = True          # Uses a cube with an reduced number of particles for radio combinations. This is to fasten up the loading & binning
+cutradio       = False         # Cuts particles below this radio power in W/Hz for the given frequency and an frequency of one. Put False if you dont want to cut the cube
+snaplistz      = [4.000,2.333,1.500,1.000,0.818,0.667,0.538,0.429,0.333,0.240,0.176,0.111,0.053,0.000]
+snapidlist     = [1,2,3,4,5,6,7,8,9,10,11,12,13,14]
+#There has to be a line break after the arguments, else the last character of the last argument will be cut away!

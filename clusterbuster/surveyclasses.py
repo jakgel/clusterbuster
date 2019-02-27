@@ -35,6 +35,7 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.cosmology import FlatLambdaCDM   # from astropy.cosmology import WMAP9 as cosmo
 from scipy import sparse
+from scipy.ndimage.filters import gaussian_filter1d
 
 
 def get_truth(inp, relate, cut):
@@ -118,11 +119,11 @@ class Survey(object):
             GCl.histo = histo
         
     def polar(self, aligned=True, normalize=True, minrel=1,  positive=False,  mirrored=False, mode='flux', zborder=0,
-              ztype='>', **kwargs):
-          
+              ztype='>', conv=0.127,  **kwargs):
+
         """ 
         Input: needs to histogram of the survey to be set, radial axis: 2 N, polar axis: 4 M
-        
+        conv: sigma of convolution of the radial bin in R200
         
         Returns the weighted polar Histogramm of the survey, currently in Output class 
         
@@ -134,9 +135,7 @@ class Survey(object):
           halfHist_plot           : halfHist for plotting purposses, shape may change depending on the output format
           sigstats (float)       :  total accumulated signal
           mesh                    :  total accumulated signal along
-        
-        
-        BUG: For a very low angular bin size the estimate of the projected flux ratio of pro and anti axis changes!
+
         """
           
         """DEVELOPMENT"""
@@ -159,7 +158,7 @@ class Survey(object):
                 Histo = GCl.histo
                 hist_shift = np.roll(Histo.hist.T, -int(aligned*(GCl.relic_pro_index)), axis=1)  # This was a bug:/ AreaHist**(self.expA)
                 """ The scale is very important, it would be good to normalize the flux we do this by implementing the expScale parameter.
-                This is flexible enough to give different weights to bright/faitn relics. Another question for statistical analysis is, if
+                This is flexible enough to give different weights to bright/faint relics. Another question for statistical analysis is, if
                 the average  or an integrated value is more interesting.
                 """  
                 
@@ -201,9 +200,11 @@ class Survey(object):
                 radial = np.sum( (part1, part2), axis=0)  # I would like to have np.flip
                 ticks_r = [h for h in Histo.ticks[1]]
             else:
-                radial = np.concatenate( (part1, part2) , axis=0 )  # I would like to have np.flip
+                radial = np.concatenate( (part1, part2), axis=0)  # I would like to have np.flip
                 ticks_r = [-h for h in reversed(Histo.ticks[1])]+[h for h in Histo.ticks[1]]
-                                                   
+
+            radial = gaussian_filter1d(radial, conv/self.hist_main.width[1], mode='constant') #1274
+            #radial = radial/np.sum(radial)
             return halfHist, (radial, ticks_r), halfHist_plot, sigstats, mesh
         else:
             return None, (None, None), None, None, None
@@ -1122,7 +1123,7 @@ class RadioSource(ephem.FixedBody):
         ephem.FixedBody.__init__(self)
         self._ra  = ra
         self._dec = dec
-        self.ha   = ha
+        self.ha = ha
         self.apper = [ApperanceAtFrequ(flux, frequ, major, minor, posangle=0)]
     
     def AddObs(self, apperance):
@@ -1276,7 +1277,6 @@ class Relic:
                              label='shape$_\mathrm{PC_1}$', un=None)
                   
 
-      
     def averages_quantities(self):
         """ flux weighted properties """
         if self.wMach is not None:
@@ -1311,7 +1311,7 @@ class Relic:
         # All radio luminosities are in 10^24 W/Hz, factor 1e-29 -->  1e-3 Jy/mJy  *  (1e-26 W/(Hz m^2)) / Jy
         # All radio luminosities are in W/Hz
         # See Nuza et all. 2012
-        self.bw_cor = 1./(1.+GCl.z.value)     # Bandwidth quenching not covered by Luminosity distancre
+        self.bw_cor = 1./(1.+GCl.z.value)     # Bandwidth quenching not covered by luminousity distance
         P           = self.bw_cor * self.flux.value*GCl.flux2power_woRedening()
         self.P      = dbc.measurand(P, 'P', label='$P_\\mathrm{obs}$', un="W/Hz",
                                       std=P*np.sqrt( (self.flux.std[0]/self.flux.value)**2 + ( self.region.alpha_err*np.log(1+GCl.z.value)*(1+GCl.z.value)**self.alpha_z() )**2) )  # include z error
@@ -1324,7 +1324,6 @@ class Relic:
 
         self.Dproj     = dbc.measurand( np.linalg.norm(self.vec_GCl)*3600*GCl.cosmoPS, 'Dproj', label='$D_\\mathrm{proj}$', un='kpc')
         self.Dproj_rel = dbc.measurand( np.linalg.norm(self.vec_GCl)*3600*GCl.cosmoPS, 'Dproj', label='$D_\\mathrm{proj}$', un='kpc')
-    #            self.Dproj.std  = self.Dproj.std( min(max(0.1*self.Dproj(),100.),0.99*self.Dproj()) )
 
         if self.Dproj > 1e4:
             self.Dproj.value = 0
@@ -1335,7 +1334,6 @@ class Relic:
         else:
             self.theta_elong = False
             self.theta_rel   = False
-        # Please mind that for the physical scale (LLS/area) the error will go with ^2 or ^4, depending on how z effects the scale (maybe a local gradient would be better)
 
     def alpha_z(self, default=True):
         if default or self.alpha is None:

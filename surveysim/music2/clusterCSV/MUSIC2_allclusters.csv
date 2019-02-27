@@ -863,7 +863,6 @@
 861,20,4,1,100000000000003,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00020/cluster.00020.snap.004.shocks
 862,21,4,1,141253754462281,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00021/cluster.00021.snap.004.shocks
 863,22,4,1,125892541179421,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00022/cluster.00022.snap.004.shocks
-864,23,4,1,79432823472430.5,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00023/cluster.00023.snap.004.shocks
 865,24,4,1,398107170553518,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00024/cluster.00024.snap.004.shocks
 866,25,4,1,79432823472430.5,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00025/cluster.00025.snap.004.shocks
 867,26,4,1,446683592150987,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00026/cluster.00026.snap.004.shocks
@@ -1124,7 +1123,6 @@
 1122,281,4,1,70794578438415.8,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00281/cluster.00281.snap.004.shocks
 1123,282,4,1,79432823472430.5,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00282/cluster.00282.snap.004.shocks
 1124,1,5,0.81818177877379,141253754462281,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00001/cluster.00001.snap.005.shocks
-1125,2,5,0.81818177877379,125892541179421,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00002/cluster.00002.snap.005.shocks
 1126,3,5,0.81818177877379,158489319246118,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00003/cluster.00003.snap.005.shocks
 1127,4,5,0.81818177877379,10000000000000,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00004/cluster.00004.snap.005.shocks
 1128,5,5,0.81818177877379,354813389233593,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00005/cluster.00005.snap.005.shocks
@@ -1167,7 +1165,6 @@
 1165,43,5,0.81818177877379,223872113856844,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00043/cluster.00043.snap.005.shocks
 1166,44,5,0.81818177877379,177827941003900,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00044/cluster.00044.snap.005.shocks
 1167,45,5,0.81818177877379,112201845430200,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00045/cluster.00045.snap.005.shocks
-1168,46,5,0.81818177877379,89125093813377.3,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00046/cluster.00046.snap.005.shocks
 1169,47,5,0.81818177877379,398107170553518,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00047/cluster.00047.snap.005.shocks
 1170,48,5,0.81818177877379,158489319246118,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00048/cluster.00048.snap.005.shocks
 1171,49,5,0.81818177877379,158489319246118,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00049/cluster.00049.snap.005.shocks
@@ -1192,8 +1189,6 @@
 1190,68,5,0.81818177877379,141253754462281,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00068/cluster.00068.snap.005.shocks
 1191,69,5,0.81818177877379,316227766016853,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00069/cluster.00069.snap.005.shocks
 1192,70,5,0.81818177877379,199526231496896,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00070/cluster.00070.snap.005.shocks
-1193,71,5,0.81818177877379,56234132519036.3,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00071/cluster.00071.snap.005.shocks
-1194,72,5,0.81818177877379,56234132519036.3,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00072/cluster.00072.snap.005.shocks
 1195,73,5,0.81818177877379,281838293126459,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00073/cluster.00073.snap.005.shocks
 1196,74,5,0.81818177877379,281838293126459,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00074/cluster.00074.snap.005.shocks
 1197,75,5,0.81818177877379,100000000000003,/radioarchive/MergerTrees/Clusters//snaps//SHOCKS_00075/cluster.00075.snap.005.shocks

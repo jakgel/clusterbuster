@@ -357,8 +357,8 @@ def ABC_summaryStatistics_alpha(Surveys):
         relicsB = [gcl.filterRelics() for gcl in B]
 
         # Get mach-numbers and remove nans
-    A = np.array([relic.alpha() for relic in relicsA])
-    B = np.array([relic.alpha() for relic in relicsB])
+    A = np.array([max(-1, relic.alpha()) for relic in relicsA])
+    B = np.array([max(-1, relic.alpha()) for relic in relicsB])
 
     mA = A[~np.isnan(A)].mean()
     mB = B[~np.isnan(B)].mean()

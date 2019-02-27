@@ -1,16 +1,4 @@
 #!/usr/bin/env python
-# This function is used to shedule and create MockObservational Tasks
-# Possible issues I  encountered
-# http://bugs.python.org/issue8426 , Queue's pipe blocked
-# ...
-
-# Call funcion via e.g. python2 RunSurvey.py --par 'FullRun_testNuza2B'
-# 
-# import glio and its functionalities could be used to load, access and save  gadget-like snapshots. It is only NOT used, because one of our collaborators uses a custom format which 
-# not writen in the gadget-2 notation (would be a good idea to be fixed in the future)
-
-# File dependencies: 
-# pase.par
 
 """
 Until the 18 Apr 2017 there is no version of abcpmc that allows for np.random seeds within multiprocessing processes! 
@@ -18,7 +6,6 @@ The alternative astroABC that can handle this. One simple workaround is to set t
 """
 
 from __future__ import division,print_function
-
 import argparse
 import time
 import datetime
@@ -60,7 +47,7 @@ args, unknown = par.parse_known_args()
 POISON_PILL = "STOP"
 
 
-"""Originally main() and SheduleTasks() where designed as independent functions because I wanted to prevent the buffer to overflow.
+"""Originally main() was designed as independent functions because I wanted to prevent the buffer to overflow.
    Now I use these two functions as the one that controls the ABC (main) and the one that does the computation (shedule task)"""
 
 def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None, Clfile='clusterCSV/MUSIC2-AGN',
@@ -114,8 +101,6 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
     # Constants
     # ==== Cosmological Parameter - MUSIC-2
     Omega_M = 0.27  # Matter density parameter
-    Omega_vac = 1 - Omega_M  # Dark energy density parameter
-    restarted = -1
 
     # === Create folder if needed
     iom.check_mkdir(savefolder)
@@ -127,7 +112,8 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
     # === Create detection information
     dinfo = cbclass.DetInfo(beam=[float(pase['S_beam']), float(pase['S_beam']), 0], spixel=float(pase['S_pixel']),
                             rms=float(pase['RMSnoise']) * 1e-6,
-                            limit=float(pase['RMSnoise']) * float(pase['Detthresh']) * 1e-6)
+                            limit=float(pase['RMSnoise']) * float(pase['Detthresh']) * 1e-6,
+                            nucen=float(pase['nu_obs']), center=(0, 0), survey='UVcoverage')
 
     if survey is None:
         """Create all galaxy clusters:
@@ -221,12 +207,7 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
                     phi = 0
                     psi = 0
 
-                # Create additional class objects and the galaxyCluster_simulation
-                dinfo = cbclass.DetInfo(beam=[float(pase['S_beam']), float(pase['S_beam']), 0],
-                                        spixel=float(pase['S_pixel']),
-                                        rms=float(pase['RMSnoise']) * 1e-6,
-                                        limit=float(pase['RMSnoise']) * float(pase['Detthresh']) * 1e-6,
-                                        nucen=float(pase['nu_obs']), center=(0, 0), survey='UVcoverage')
+                # Create mockObs and the galaxyCluster_simulation
                 mockObs = cbclass.MockObs(count, theta=theta, phi=phi, psi=psi, snap=snapidlist[snap],
                                           z_snap=zsnap_list[snap], clid=ids,
                                           snapfolder=pase['xrayfolder'], xrayfolder=pase['xrayfolder'],
@@ -311,9 +292,6 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
                                 cnt_levels=[float(pase['RMSnoise']) * 2 ** i for i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]],
                                 saveFITS=(ABC is None), savewodetect=suut.TestPar(pase['savewodetect']),
                                 surshort='MUSIC2', Rmodel=RModel, outfolder=outfolder, logfolder=logfolder)
-    #        survey.saveFITS = True
-    #        iom.pickleObject(survey, survey.outfolder, 'surveyClass')
-
     else:
         """ If you directly loaded a survey, just use its internal Rmodel """
         RModel = survey.Rmodel
@@ -346,17 +324,14 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
 
     """ This is the most important task! """
     while processTasks:
-        restarted += 1
         if ABC is None:
             processTasks, smt = SheduleTasks((pase, survey, RModel), smt, verbose=verbose)
         else:
             processTasks, smt = DoRun((pase, survey), smt, verbose=verbose)
 
-    if verbose:
-        print("main('%s') program terminated. Sub-routine was restarted %i times." % (surveyN, restarted))
     print('RModelID %i of run %s finished' % (RModelID, surveyN))
 
-    return survey  # (pase['outf'], '%s_%05i' % (surveyN,RModelID) )
+    return survey
 
 
 
@@ -656,61 +631,6 @@ def RadioCuts(val, compradio=False):
     return ((realisations, Rmodel), smt)
 
 
-def mupro_RadioAndMock( in_queue, output ):
-    """ Does computation of the radio cube and mockobs at once, only the output is put into another function """
-    
-    
-    smt = iom.SmartTiming(); 
-#    from time import gmtime, strftime  
-    smt(task='Queue_get')
-    while True:  
-        val  = in_queue.get()
-        if val == POISON_PILL:
-            break
-        
-        try:
-            (outp, subsmt) = RadioAndMock(val)
-            smt.MergeSMT_simple(subsmt, silent=True)
-            
-            """Workaround for process lost """
-            output.put( (None, smt) )
-            """ originaly: output.put( (outp, smt) ) """
-        except Exception as e:
-            tb = traceback.format_exc()
-            with open('/data/TestLog.txt',"a") as f:
-                f.write(traceback.print_exc()+ '\n')
-            raise e
-            print(tb)
-
-#            error, traceback = p.exception
-    return
-
-
-
-def mupro_RadioCuts(in_queue, output):
-    """ Does computation of the radio_cube, only the output is put into another function """
-    
-    smt = iom.SmartTiming();
-    smt(task='Queue_get')
-    while True:  
-        val = in_queue.get()
-        if val == POISON_PILL:
-            break
-        
-        try:
-            (outp, subsmt) = RadioCuts(val)
-            smt.MergeSMT_simple(subsmt, silent=True)
-            output.put( (outp, smt) )
-#        except:
-#            tb = traceback.format_exc()
-#            print(tb)
-        except Exception as e:
-            traceback.print_exc()
-            raise e   
-            
-    return
-
-
 def mupro_Output_NicePickleClusters( in_queue, output):
 # Just pickles the relic for the highest efficiency, mechanism: It asks for the image   
 
@@ -724,23 +644,6 @@ def mupro_Output_NicePickleClusters( in_queue, output):
     return
 
 
-def mupro_Output( in_queue, out_queue ):
-# Here we need a lock for other procecces to make sure that the output is not getting corrupted (through simultaneous writing) !!!!
-    smt = iom.SmartTiming(rate=5e4); smt(task='Output_[writes,sub]');print(' ___ Writing Output_[writes,sub]')
-    while True:  
-        val = in_queue.get()
-        if val == POISON_PILL:
-            break
-        (stage_list, savefolder, ImageOut, pickleClusters) = val
-        print('"mupro_Output": %i objects are considered in the output.' % len(stage_list) )
-        
-        mupro_Output_NicePickleClusters( stage_list,   savefolder) #Sometimes an error occurs during that
-        out_queue.put( smt )
-        
-    return 
- 
-  
-    
 def DoRun( inputs, smt, verbose=False, countmax=250):
     """ Please mind that this procedure determines early if the number of detected relics becomes to large!"""  
     (pase, survey) = inputs
@@ -816,184 +719,7 @@ def DoRun( inputs, smt, verbose=False, countmax=250):
     if verbose: smt(forced=True)
 
     return False, smt
-  
-    
-def SheduleTasks(inputs, smt, ABC=False, verbose=False):
 
-    (pase, survey, Rmodel) = inputs
-    smt(task='Output_[writes,sub]'); smt('Wait_joined'); smt('Bin_radio_[sub]'); smt('RelicHandling_[sub]'); smt('Wait_main');  
-    smt(task='Shed_DoMockObs_misc'); smt(task='Shed_DoMockObs_RunMockObs'); smt() #First smt, just to put it into the list
-            
-    ##==== Determines the number of cores allowed for usage
-    Nworker = max(1, mupro.cpu_count() -  int(pase['Nfree'])) #mupro.cpu_count()*2 
-    print('Number of workers:', Nworker)
-
-    # create a manager - it lets us share native Python object types like
-    # lists and dictionaries without worrying about synchronization - 
-    # the manager will take care of it
-    manager = mupro.Manager()
-    
-    # now using the manager, create our shared data structures
-    stage1_queue = manager.Queue()
-    stage2_queue = manager.Queue()
-    
-    #stage1_list = manager.list()
-    stage1_list = []
-    
-    stage1_out = manager.Queue()
-    stage2_out = manager.Queue() 
-    
-    # lastly, create our pool of workers - this spawns the processes, 
-    # but they don't start actually doing anything yet
-    pool1 = mupro.Pool(Nworker, maxtasksperchild=100) # maxtasksperchild=1000 --> http://stackoverflow.com/questions/21485319/high-memory-usage-using-python-multiprocessing
-#    pool2 = mupro.Pool(1, maxtasksperchild=50) # NWokrer = 1 is effectively like locking
-    
-    #=== Reload data
-    Taskcube =   np.load(survey.logfolder + '/TaskCube.npy')
-    
-
-    # now that the processes are running and waiting for their queues
-    # let's give them some work to do by iterating
-    # over our data and putting them into the queues
-    survey_bones       = copy.deepcopy(survey)
-    survey_bones.GCls  = []
-    realisations       = [] # rotated realisations of one and the same cluster
-#    scippedTotal = 0  #Counts skipped entries in the Taskcube
-    
-    #=== Decide which mock clusters belong to which snapshot
-#    print('type(Taskcube):', type(Taskcube), ' ... Taskcube.shape: ', Taskcube.shape)
-#    survey.GCls = [hgcl for hgcl in survey.GCls if hgcl.name == 'MUSIC200190-000014-000015']
-#    print('_',[hgcl for hgcl in survey.GCls if hgcl.name == 'MUSIC200190-000014-000015'])
-
-    """DEVELOPMENT"""
-    realisations      = []
-    realisations_list = []
-    survey.GCls = sorted(survey.GCls, key= iom.Object_natural_keys)
-    for gcl in survey.GCls:
-        if (len(realisations) == 0 or gcl.mockobs.clid != realisations[0].mockobs.clid or gcl.mockobs.snap != realisations[0].mockobs.snap):
-            if len(realisations) > 0:
-                realisations_list.append(realisations)
-            realisations = [gcl] 
-        else: 
-            realisations.append(gcl)   
-            
-    realisations_list.append(realisations)       
-
-    for realisations in realisations_list:
-        realisations_use = copy.deepcopy(realisations)
-        
-
-        """ now we'll assign two functions to the pool for them to run - 
-            one to handle stage 1, one to handle stage 2 """
-        
-        if suut.TestPar(pase['redSnap']):
-            inargs  = (pase, realisations_use, survey_bones)  #(radiocube, B0, kappa, z, strSn, interpolate)  # , int(TestPar(pase['default']))
-            RadioCuts(inargs)
-#                    pool1.apply_async(mupro_RadioCuts, (stage1_queue, stage1_out) )
-#                    stage1_queue.put(inargs)
-            print(Rmodel, 'sheduled at queue position #', stage1_queue.qsize())
-        else:    
-            inargs  = (pase, realisations_use, survey_bones)  #(radiocube, B0, kappa, z, strSn, interpolate)  # , int(TestPar(pase['default']))
-            if suut.TestPar(pase['debug']):
-                stage1_outSmall = RadioAndMock( inargs )[0]
-
-            pool1.apply_async(mupro_RadioAndMock, (stage1_queue, stage1_out) )
-            stage1_queue.put(inargs)
-            print(Rmodel, 'sheduled at queue position #', stage1_queue.qsize())  
-
-        """ Output 1: Triggers output queue when a new cube is loaded 
-            Fix of https://bugs.python.org/issue23582 applied to avoid loss of outputs"""
-        if verbose:
-            print('    We came so far in the stage I', stage1_out, 'stage1_out.qsize()', stage1_out.qsize(), 'Len stage1_list:', len(stage1_list))
-        pool_wait( [stage1_queue], int(1.5 * Nworker), affix='Wait_unjoined') # Wait until there is no computation left for stage1
-#            if stage1_out.empty():
-#                print('Stage I no results...')
-#            while not stage1_out.empty():
-#                result = stage1_out.get()
-#                smt.MergeSMT_simple(result[1])
-#                stage1_list.append( result[0] )
-
-        while stage1_out.qsize():                                                         
-            try:                                                                 
-                result = stage1_out.get_nowait() 
-                smt.MergeSMT_simple(result[1])
-                """ Workaround """
-                stage1_list.append( result[0] )
-                """ formerly: stage1_list.append( result[0] ) """                        
-            except:               #Empty                                         
-                pass 
- 
-        #while q.qsize():                                                         
-        #    try:                                                                 
-        #        item = q.get_nowait()                                                   
-        #    except Empty:                                                        
-        #        pass
-            
-        del stage1_list[:]  
-        """Workaround: removal of code, uncommented output queue:
-        inargs = copy.deepcopy(stage1_list), survey.outfolder, suut.TestPar(pase['FITSout']), suut.TestPar(pase['pickleClusters'])
-        
-        if len(stage1_list) > 0:
-            for stage in stage1_list:
-                count += len(stage[0])  #Number of simulated galaxy clusters
-        print('___________', count)
-        
-        pool2.apply_async(mupro_Output, (stage2_queue, stage2_out) )
-        stage2_queue.put(inargs)
-        if stage2_out.empty():
-           print('Stage II (writing files), ... nothing newly finished.')
-        while not stage2_out.empty():
-           result =  stage2_out.get()
-           smt.MergeSMT_simple(result)         
-        """  
-           
-        """ Output 1 end """
-   
-    smt('Wait_joined')    
-
-    """ Output 2: Last chance for output """
-    for ii in [None] * Nworker:
-         """ We make sure that every worker is killed """
-         stage1_queue.put(POISON_PILL)
-    pool_wait( [stage1_queue, stage2_queue], Nworker, affix='Wait_joined', tmax=6e3)
-    import time
-    time.sleep(16)
-    if stage1_out.empty():
-        print('Stage I no results...')
-    while not stage1_out.empty():
-        result = stage1_out.get()
-        smt.MergeSMT_simple(result[1])
-        stage1_list.append( result[0] )
-        
-    """Workaround: removal of code, uncommented output queue:    
-    inargs = copy.deepcopy(stage1_list), survey.outfolder, suut.TestPar(pase['FITSout']), suut.TestPar(pase['pickleClusters'])
-    if len(stage1_list) > 0:
-        for stage in stage1_list:
-            count += len(stage[0])
-    print('!!___________', count)
-    del stage1_list[:] 
-    pool2.apply_async(mupro_Output, (stage2_queue, stage2_out) )
-    stage2_queue.put(inargs) 
-    
-    
-    pool_wait( [stage2_queue], 0, affix='Wait_joined', tmax=6e3)        
-    """    
-    
-    """Save the final logfile """
-    while not stage2_out.empty():
-        result    = stage2_out.get()
-        smt.MergeSMT_simple(result)     
-     
-    np.save(survey.logfolder + '/TaskCube', Taskcube)     
-    iom.pickleObject(smt, survey.outfolder + '/', 'smt')
-    """ pickles a bunch of single galaxy clusters, they are latter joined into a survey """
-    """ It should also pickle the corresponding fits images (in case of a detection) """
-    
-    print("#=== Proccesses completed. Please check for the data output.'")
-    smt(forced=True)
-
-    return False, smt
-  
 
 def create_ClusterLibrary(snapfolder='/radioarchive/MergerTrees/Clusters/snaps/', Clfile = 'clusterCSV/MUSIC2', copyfolder = '/data2/MUSIC-2/',
                           clusters =range(1,283), snaps =range(3,18), add=''):
@@ -1216,35 +942,8 @@ if __name__ == "__main__":
 #    snap   = loadsnap.Loadsnap('/radioarchive/MergerTrees/Clusters/snaps/SHOCKS_00001/cluster.00001.snap.004.shocks')      #,headerc='Mpc'
 #    print( snap.head)
 #    print( np.mean(snap.pos[:,0]), np.mean(snap.pos[:,1]), np.mean(snap.pos[:,2]), snap.head )
-##
-#    survey = main('MUSIC2_NVSS02_SSD.parset', Clfile = 'clusterCSV/AllMUSIC', verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset
-#    time.sleep(16)
-#    suut.AddFilesToSurvey(survey, savefolder=survey.outfolder, verbose=False,clusterwise=True)
-    
-    
-    
-#    main('MUSIC2COOL_NVSS_SSD.parset', Clfile = 'clusterCSV/AllMUSIC-AGN', verbose=False) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset  
-#    main('MUSIC2_statisticsMassesPower.parset', Clfile = 'clusterCSV/AllMUSIC-AGN', verbose=False) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset   
-#
-#    time.sleep(30)   
 
-#    suut.MergeFilesToSurvey('/data/ClusterBuster-Output/'+'MUSIC2COOL_NVSS_SSD_%05i' % (2),'MUSIC2COOL_NVSS_SSD_%05i' % (2), verbose=False,clusterwise=True) 
-#    time.sleep(3)   
-#   main_ABC([-5,0,0], parfile='MUSIC2COOL_NVSS_SSD.parset') #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset
-#   main_ABC([-5,0.5,0.5], Clfile = 'clusterCSV/AllMUSIC') #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset
-  
-#misc
-#    for index_new in [18]: 
-#        ReloadSurvey(parfrom='MUSIC2COOL_NVSS_SSD.parset',parto='MUSIC2COOL_NVSS_SSD.parset'  , index=7,index_new=8,reform=True)
-#        ReloadSurvey(parto='MUSIC2COOL_NVSS_SSD.parset', index=2,index_new=index_new,reform=False)
-#        ReloadSurvey(parto='MUSIC2_NVSS02_SSD.parset'  , index=13518,index_new=index_new,reform=True)
-#        ReloadSurvey(parfrom='MUSIC2_NVSS02_SSD.parset', parto='MUSIC2_NVSS02_SSD.parset'  , index=13518,index_new=index_new,reform=False)
-#    iom.plot_smt(folder, 'smt', log=True, rel=True)
-    
-    
-#    main('MUSIC2COOL_NVSS_SSD.parset', Clfile = 'clusterCSV/AllMUSIC-AGN', verbose=False) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset  
-#    ReloadSurvey()    
-#       time.sleep(3)             
+
 #    main_ABC([-5,0,0]) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset
 #        index
    
@@ -1255,12 +954,4 @@ if __name__ == "__main__":
 
 #    survey = main('ShockTest_prep.parset', Clfile = 'clusterCSV/ShockTest', verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset
     test_main_ABC()
-    exit()
-
-    survey = main('MUSIC2_NVSS02_SSD.parset', Clfile='clusterCSV/MUSIC2',
-              verbose=True)  # FullRun_testNuza3.parset') #NVSS_Berlin00C.parset
-    exit()
-    survey = main('ShockTest.parset', Clfile='clusterCSV/ShockTest', verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset
-    time.sleep(10)
-    suut.AddFilesToSurvey(survey, savefolder=survey.outfolder, verbose=False, clusterwise=True)
 

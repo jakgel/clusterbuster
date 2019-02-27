@@ -17,6 +17,7 @@ import copy
 import os
 import warnings
 import aplpy
+import collections  # to assert if we deal with an list of surveys or a single object
 
 import clusterbuster.surveyclasses as cbclass
 import clusterbuster.dbclasses as dbc
@@ -25,17 +26,23 @@ import clusterbuster.maput as maput
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
-import math as math
 import numpy as np
 
+
 from matplotlib import cm
+from matplotlib.pyplot import tight_layout
 from matplotlib.ticker import NullFormatter
-from scipy import stats
+from matplotlib import rc
+from astropy import units as u
 import matplotlib.patches as patches
 from matplotlib import transforms as mtransforms
 
 import surveysim.music2.mockobsxray as Xray
 from PyPDF2 import PdfFileMerger
+
+
+plt.rc('text', usetex=True)
+plt.rc('font', family='serif')
 
 
 # ============== Reads relic information out of an ds9 region file
@@ -72,13 +79,13 @@ def readDS9relics(regfile, spixel, center, pixref, Test=False):
 def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=True, additive=False,
                              aligned=False, cbar=True, addinfo=False, mirrored=False, minrel=1,
                              zborder=0.05, ztype = '>', plottype='flux', title="Polar binned radio relic flux",
-                             dpi=None, add_pi=1/2, Histo=dbc.Histogram2D(), suffix=''):
+                             dpi=None, add_pi=1/2, Histo=dbc.Histogram2D(), suffix='', conv=0.127):
     """ possible inprovements: http://stackoverflow.com/questions/22562364/circular-histogram-for-python
     minrel : minimal number of relics to be consided for the histogram
 
     if surveys is a list of surveys this function will plot averaged quantities
     """
-    import collections  # to assert if we deal with an list of surveys or a single object
+    plt.style.use('default')
     if not isinstance(surveys, collections.Iterable):   surveys = [surveys]
 
     if surveys[0].hist_main is not None:
@@ -95,13 +102,23 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=T
     radials   = []
     stats     = []
     outformats = ['pdf', 'png']
-      
+
+
     if compsurvey is not None:
-        _ , comprad, comppol, _ , _= compsurvey.polar(zborder = zborder, ztype=ztype)
-        comprad = compsurvey.polar(zborder=zborder, ztype=ztype)[1][0]    #comprad[1]
+        _ , (comprad, _), comppol, _, _ = compsurvey.polar(zborder=zborder, ztype=ztype, conv=conv)
+        #comprad = compsurvey.polar(zborder=zborder, ztype=ztype, conv=conv)[1][0]    #comprad[1]
         deviations = []
-          
+
     for survey in surveys:
+
+        halfes={'First': Histo.bins[0][int(len(Histo.bins[0]) / 2):],
+                'Second': Histo.bins[0][0:int(len(Histo.bins[0]) / 2) + 1]}
+        if mirrored:
+            half_main = halfes['First']
+            half_seco = halfes['Second']
+        else:
+            half_main = halfes['Second']
+            half_seco = halfes['First']
 
         survey.set_binning(Histo)
         nowfolder = '%s/Relics_polar/' % survey.outfolder
@@ -136,17 +153,19 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=T
                             ax.text(0.3, 0.87, 'Ratio pro: %.2e  anti: %.2e' %(GCl.ratio_pro(), GCl.ratio_anti()), fontsize=20, transform=ax.transAxes, color='w')
                         if title is not None: 
                             ax.set_title(title, va='bottom')
-                        ax.set_yticks(yticks)
+                        ax.set_rticks(yticks)
                         ax.tick_params(axis='x', labelsize=25)
-                        ax.tick_params(axis='y', colors='white', labelsize=25)
+                        ax.tick_params(axis='y', colors='white', labelsize=25, pad=23)
+                        ax.set_rlabel_position(89.9)
                         ax.grid(True)
+                        tight_layout()
                         for ftype in outformats:
                             plt.savefig('%s%s-polar%s.%s' % (nowfolder, GCl.name, suffix, ftype))
 
                         fig.clf()
 
         if additive:
-            _, (radial, radial_tickz), halfHist, stat, mesh = survey.polar(aligned=True, minrel=minrel, mirrored=mirrored, mode=plottype, zborder=zborder, ztype=ztype)
+            _, (radial, radial_tickz), halfHist, stat, mesh = survey.polar(aligned=True, minrel=minrel, mirrored=mirrored, mode=plottype, zborder=zborder, ztype=ztype, conv=conv)
 
             if halfHist is not None:
                 fig, ax = plt.subplots(figsize=(14, 14), subplot_kw=dict(projection='polar'), dpi=dpi)  #,subplot_kw=dict(projection='polar')
@@ -159,11 +178,24 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=T
                     meshed = ax.pcolormesh(Histo.bins[0][0:int(len(Histo.bins[0])/2)+1], Histo.bins[1], halfHist, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot), vmax=near_max) #, norm=colors.SymLogNorm(linthresh=0.03, linscale=0.03, vmin=-1.0, vmax=1.0),cmap='RdBu_r'
                     if compsurvey:
                         ax.pcolormesh(Histo.bins[0][int(len(Histo.bins[0])/2):], Histo.bins[1], comppol, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot), vmax=near_max)
+
+
+                #meshed = ax.pcolormesh(half_main, Histo.bins[1], halfHist, cmap=cmap,
+                #                       norm=colors.PowerNorm(gamma=expPlot), vmax=near_max)
+                #if compsurvey is None:
+                #    ax.set_thetamin(0)
+                #    ax.set_thetamax(180)
+                #else:
+                #    ax.pcolormesh(half_seco, Histo.bins[1], comppol, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot),
+                #                  vmax=near_max)
+
                 ax.set_theta_offset(addangle)
-                ax.set_yticks(yticks)
+                ax.set_rticks(yticks)
                 ax.tick_params(axis='x',                 labelsize=25)
-                ax.tick_params(axis='y', colors='white', labelsize=25)
+                ax.tick_params(axis='y', colors='white', labelsize=25, pad=23)
+                ax.set_rlabel_position(89.9)
                 ax.grid(True)
+                tight_layout()
                 if addinfo:
                     ax.text(0.3, 0.9, 'Summed relic flux: %.2e Jy (all cluster)' % stat, fontsize=20, transform=ax.transAxes, color='w')
                 if cbar:
@@ -190,67 +222,72 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=T
     if len(radials) > 0:
 
         """ Radial plot """
-        fig, (ax1) = plt.subplots(1, 1, figsize=(7,4.2), dpi=dpi)
+        scale = 0.8
+        plt.rcParams['figure.figsize'] = [7 * scale, 4 * scale]
+        plt.subplots_adjust(hspace=0.4)
+
+
+        scaling=1
+        fig, (ax1) = plt.subplots(1, 1, figsize=(7*scaling,4.2*scaling), dpi=dpi)
         ax1.set_xlabel('Distance [$R_{200}$] along pro-relic axis')
-        ax1.set_ylabel('Weighted signal W')
-    
-        if compsurvey is not None: 
-            ax1.plot(radial_tickz, comprad, alpha=0.6, color='blue')  
-            
+        ax1.set_ylabel('Weighted signal S')
+
+        if compsurvey is not None:
+            ax1.plot(radial_tickz, comprad, alpha=0.6, color='blue')
+            ax1.fill_between(radial_tickz, comprad, color="blue", alpha=0.2)
+
+            patch1 = patches.Patch(color='blue', alpha=0.2, label=compsurvey.name_short)
+            patch2 = patches.Patch(color='red', alpha=0.2, label=survey.name_short)
+            plt.legend(handles=[patch1,patch2])
+
         for radial in radials:
             ax1.plot(radial_tickz, radial, alpha=np.sqrt(1/len(radials)), c='grey')   # color=cmap(0.0)
+            ax1.fill_between(radial_tickz, radial, color="red", alpha=0.2)
 
-        ax1.fill_between(radial_tickz, radial, color="red", alpha=0.3)
-        ax1.set_xticks(yticks + [0] + [-y for y in yticks]) 
+        #ax1.set_xticks(yticks + [0] + [-y for y in yticks])
         ax1.set_xlim(-Histo.bins[1][-1],Histo.bins[1][-1])
+        ax1.set_ylim(bottom=0)
+        ax1.tick_params(direction="in", which='both')
+        ax1.tick_params(direction="in", which='major', right=False, top=True, labelright=False)
 
         """ Textlabels """
         if modeltext and survey.Rmodel.simu:
-            mod = survey.Rmodel 
-            kwargs = {'verticalalignment':'bottom', 'horizontalalignment':'right', 'transform':ax1.transAxes, 'color':'black', 'fontsize':15, 'alpha':0.8}
-            ax1.text(0.40, 0.90, '$\log_{10}(eff) =%+.2f$,' % (np.log10(mod.effList[0])),   **kwargs)
-            ax1.text(0.40, 0.90-1*dist_text_params, '$\log_{10}(B_0) =%+.2f$,' % (np.log10(mod.B0)),**kwargs)
-            ax1.text(0.40, 0.90-2*dist_text_params, '$\kappa       = %+0.2f$ ' % (mod.kappa),       **kwargs)
-            if compsurvey is not None: 
-                ax1.text(0.40, 0.90-3*dist_text_params, '$\Delta\\,\\mathrm{signal}  = %0.2f$ ' % (np.average(deviations)), **kwargs)
+            mod = survey.Rmodel
+            kwargs = {'verticalalignment':'bottom', 'horizontalalignment':'right', 'transform':ax1.transAxes, 'color':'black', 'fontsize':12, 'alpha':0.8}
+            ax1.text(0.35, 0.90, '$\log_{10}(eff) =%+.2f$,' % (np.log10(mod.effList[0])),   **kwargs)
+            ax1.text(0.35, 0.90-1*dist_text_params, '$\log_{10}(B_0) =%+.2f$,' % (np.log10(mod.B0)),**kwargs)
+            ax1.text(0.35, 0.90-2*dist_text_params, '$\kappa       = %+0.2f$,' % (mod.kappa),       **kwargs)
             if isinstance(mod, cbclass.PreModel_Hoeft):
-                ax1.text(0.40, 0.90-4*dist_text_params, '$t_{1;2}  = %0.3f\,;\,%0.3f$ '% (mod.t0, mod.t1), **kwargs)
-                ax1.text(0.40, 0.90-5*dist_text_params, 'ratio$\\mathrm{_{pre}}  = %.1e$ '% mod.ratio, **kwargs)
+                ax1.text(0.35, 0.90-4*dist_text_params, '$t_{1;2}  = %0.3f\,;\,%0.3f$,'% (mod.t0, mod.t1), **kwargs)
+                ax1.text(0.35, 0.90-5*dist_text_params, 'ratio$\\mathrm{_{pre}}  = %.1e$,' % mod.ratio, **kwargs)
+            if compsurvey is not None:
+                ax1.text(0.35, 0.90-3*dist_text_params, '$\Delta\\,\\mathrm{signal}  = %0.2f$ ' % (np.average(deviations)), **kwargs)
 
             if survey.Rmodel.pre:
                 """ NOT implemented yet """
-#                print( p0, pre, p_sigma, sigmoid_0, sigmoid_width )        
+#                print( p0, pre, p_sigma, sigmoid_0, sigmoid_width )
     #            ax2.set_yscale('log')
 
         for ftype in outformats:
             plt.savefig('%s/%s-sumprofile%s.%s' % (nowfolder, survey.name, suffix, ftype))
             plt.savefig('%s/%s-sumprofile%s.%s' % (buckedfolder, survey.name, suffix, ftype))
 
-        
+
         # Statistics, contribution
         fig, (ax1) = plt.subplots(1, 1, figsize=(7, 4), dpi=dpi)
-        
+
         for stat in stats:
             statistic = np.divide(stat, np.sum(stat))
             ax1.hist(statistic, color='b', alpha=1/len(stats), bins='auto')  # arguments are passed to np.histogram
         for ftype in outformats:
             plt.savefig('%s/%s-sumsstats%s.%s' % (nowfolder, survey.name, suffix, ftype))
             plt.savefig('%s/%s-sumsstats%s.%s' % (buckedfolder, survey.name, suffix, ftype))
-            
-        
+
+
         """ Polar plot"""
         halfHist = np.sum(halfHists, axis=0)/len(halfHists)
         fig, ax = plt.subplots(figsize=(14,14), subplot_kw=dict(projection='polar'), dpi=dpi)  #,subplot_kw=dict(projection='polar')
         near_max = np.percentile(halfHist, 99)
-
-        halfes={'First': Histo.bins[0][int(len(Histo.bins[0]) / 2):],
-                'Second': Histo.bins[0][0:int(len(Histo.bins[0]) / 2) + 1]}
-        if mirrored:
-            half_main = halfes['First']
-            half_seco = halfes['Second']
-        else:
-            half_main = halfes['Second']
-            half_seco = halfes['First']
         meshed = ax.pcolormesh(half_main, Histo.bins[1], halfHist, cmap=cmap,
                                norm=colors.PowerNorm(gamma=expPlot), vmax=near_max)
         if compsurvey is None:
@@ -260,10 +297,12 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=T
             ax.pcolormesh(half_seco, Histo.bins[1], comppol, cmap=cmap, norm=colors.PowerNorm(gamma=expPlot), vmax=near_max)
 
         ax.set_theta_offset(addangle)
-        ax.set_yticks(yticks)
-        ax.tick_params(axis='x',                 labelsize=25)
-        ax.tick_params(axis='y', colors='white', labelsize=25)
+        ax.set_rticks(yticks)
+        ax.tick_params(axis='x',                 labelsize=25, pad=23)
+        ax.tick_params(axis='y', colors='white', labelsize=25, pad=23)
+        ax.set_rlabel_position(89.9)
         ax.grid(True)
+        tight_layout()
         if addinfo:
             ax.text(0.3, 0.9, 'Summed relic flux: %.2e Jy (all cluster)' % stat, fontsize=20, transform=ax.transAxes, color='w')
         if cbar:
@@ -274,10 +313,11 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=T
             plt.savefig('%s/%s-polar-sums%s.%s' % (nowfolder, survey.name, suffix, ftype))
             plt.savefig('%s/%s-polar-sums%s.%s' % (buckedfolder, survey.name, suffix, ftype))
 
-        fig.clf()   
+        fig.clf()
+
 
     """From https://stackoverflow.com/questions/51871420/matplotlib-polar-histogram-has-shifted-bins/51876418
-    Includes the binning and rotation of pixelized images"""
+    Includes the binning and rotation of pixelized images ... could be doable with the to fits function"""
     if 1 == 2:
         plt.clf()
         bins_number = 10
@@ -320,15 +360,15 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
                   xray=False, highres=False, show_rot=False, vectors=False, label_sheme='balanced',
                   filterargs={'zborder': 0, 'ztype': '>', 'minimumLAS': 4, 'GClflux': 20, 'index': None}):
 
-    import seaborn as sns;
     sns.set(style="white", color_codes=True)
     pdfs = []
-#    cmap  = 'afmhot'   #'BuPu'   #
-#    norm  = MPLcolors.PowerNorm(gamma=2) #CW uses a gamma of 2
-    #cmap =plt.cm.get_cmap('RdYlBu')
     laargs = {'color': '#DDDDDD'}      # line arguments
     ciargs = {'color': '#DDDDDD'}      # arguments for the circle/centre area
     baargs = {'color': '#DDDDDD'}      # argument for the scale bar
+    cmap = 'afmhot'
+    cnt_color = 'green'
+    cnt_color_sub = 'red'
+    color_offset = [0,0]
     if label_sheme == 'dark':
         laargs.update({'color': 'black'})
         ciargs.update({'color': '#111111'})
@@ -337,27 +377,35 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
         laargs.update({'color': 'w'})
         ciargs.update({'color': 'w'})
         baargs.update({'color': 'w'})
+    elif label_sheme == 'balanced':
+        laargs.update({'color': 'snow'})
+        ciargs.update({'color': 'snow'})
+        baargs.update({'color': 'snow'})
+        cmap = "cubehelix" #"gnuplot"
+        cnt_color = "honeydew" #greenyellow
+        cnt_color_sub = 'darkred' #'salmon'
+        color_offset = [1,4]
 
 
     for GCl in survey.FilterCluster(**filterargs):
 
         # Outdated? Because else changes will influence all galaxy clusters, you knwo class referencing in python, i.e.
         GCl = copy.deepcopy(GCl)
-        if xray:  
-            """X-Ray""" 
-            if 'Brems' not in GCl.mapdic:     
+        if xray:
+            """X-Ray"""
+            if 'Brems' not in GCl.mapdic:
                 savefolder = survey.outfolder
-                Xray.Run_MockObs_XRay(GCl, savefolder, verbose=False)  
+                Xray.Run_MockObs_XRay(GCl, savefolder, verbose=False)
                 """ Is the mapdic updated ? """
                 GCl.mapdic['Background'] = GCl.mapdic['Brems']
         else:
             GCl.mapdic['Background'] = GCl.mapdic['Diffuse']
-        
+
         #=== Sets some plotting parameters
         kpc = GCl.cosmoPS*3600  # kiloparsec per degree
-         
-        R200 = GCl.R200()  
-        if R200 <= 0:  
+
+        R200 = GCl.R200()
+        if R200 <= 0:
             print('For GCl %s no mass proxy and hence no virial radius is known. For plottting issues we set R200=1600 kpc.' % (GCl.name))
             R200 = 1600
         radius = R200/kpc
@@ -400,6 +448,12 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
             key = "Diffuse"
             key_comp = "Subtracted"
 
+
+
+        if key_comp in GCl.mapdic and subtracted:
+            f.show_contour(GCl.mapdic[key_comp], linewidth=0.15, overlap=True, levels=levels, colors=cnt_color_sub)
+
+
         if not xray:
             cbar_text = 'flux density in [Jy/beam}'
 
@@ -409,33 +463,28 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
                 wcscnts = np.asarray([ (x,y) for x,y in zip(wcscnts[0],wcscnts[0]) ]).T
                 f.show_polygons([wcscnts], lw=2, color='white')
             addargs = {'vmid': vmid, 'vmin': vmin, 'vmax': vmax, 'stretch': 'log', 'exponent': exponent}
-            
+
             """ It seems like you can only have one interactive contours """
             print(vmin,vmid,vmax)
-            f.show_colorscale(vmid=vmid, vmin=vmin, vmax=vmax,  stretch='log', exponent=exponent, cmap='afmhot')
+            f.show_colorscale(vmid=vmid, vmin=vmin, vmax=vmax,  stretch='log', exponent=exponent, cmap=cmap)
             print(levels, survey.cnt_levels)
-            f.show_contour(GCl.mapdic['Diffuse'], linewidth=0.15, overlap=True, levels=levels, colors='green', smooth=1)
+            f.show_contour(GCl.mapdic['Diffuse'], linewidth=0.15, overlap=True, levels=levels, colors=cnt_color, smooth=1)
         else:
             cbar_text = '$\log_{10}(P_\\mathrm{Brems,bol}$ in restframe) [arbitrary unit]'
             if 'MUSIC' in survey.name or 'Threehundret' or 'ShockTest' in survey.name:
-                vmin_xr = 2.5
-                vmax_xr = 9.7     #6.2
+                vmin_xr = 2.5+color_offset[0]
+                vmax_xr = 9.7+color_offset[1]     #6.2
                 vmid_xr = -1.5
             else:
-                vmin_xr = -2
-                vmax_xr = 5.
+                vmin_xr = -2+color_offset[0]
+                vmax_xr = 5.+color_offset[1]
                 vmid_xr = -4.5
-            
-            exponent = np.log(max(vmax/vmin, 1.0001))
-            
-            f.show_colorscale(vmid=vmid_xr, vmin=vmin_xr, vmax=vmax_xr,  stretch='log', exponent=exponent, cmap='afmhot')  #gist_heat
-            print("key_comp in GCl.mapdic", key_comp in GCl.mapdic, key_comp)
-            if key in GCl.mapdic:
-                f.show_contour(GCl.mapdic[key], linewidth=0.15, overlap=True, levels=levels, colors='green')
 
-        print(key_comp, key_comp in GCl.mapdic, subtracted)
-        if key_comp in GCl.mapdic and subtracted:
-            f.show_contour(GCl.mapdic[key_comp], linewidth=0.15, overlap=True, levels=levels, colors='red')
+            exponent = np.log(max(vmax/vmin, 1.0001))
+
+            f.show_colorscale(vmid=vmid_xr, vmin=vmin_xr, vmax=vmax_xr,  stretch='log', exponent=exponent, cmap=cmap)  #gist_heat
+            if key in GCl.mapdic:
+                f.show_contour(GCl.mapdic[key], linewidth=0.15, overlap=True, levels=levels, colors=cnt_color)
 
         if shapes:
             for relic in GCl.filterRelics(maxcomp=100):
@@ -449,15 +498,15 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
             GCl.relics_polarDistribution(histo=survey.hist_main)
             P1 = [GCl.RA() - np.cos(GCl.relic_pro_angle)*radius*1.05/np.cos(np.radians(GCl.Dec())), GCl.Dec() + np.sin(GCl.relic_pro_angle)*radius*1.0]
             P2 = [GCl.RA() + np.cos(GCl.relic_pro_angle)*radius*1.05/np.cos(np.radians(GCl.Dec())), GCl.Dec() - np.sin(GCl.relic_pro_angle)*radius*1.0]
-            
+
             P1b = [GCl.RA() - np.cos(GCl.relic_anti_angle)*radius*1.0/np.cos(np.radians(GCl.Dec())), GCl.Dec() + np.sin(GCl.relic_anti_angle)*radius*1.0]
             P2b = [GCl.RA() + np.cos(GCl.relic_anti_angle)*radius*1.0/np.cos(np.radians(GCl.Dec())), GCl.Dec() - np.sin(GCl.relic_anti_angle)*radius*1.0]
             f.show_lines([np.array(zip(P1, P2))], color='w', lw=2., linestyle=':')
             f.show_lines([np.array(zip(P1b, P2b))], color='r', lw=2., linestyle=':')
-            
+
             if GCl.ratio_relics() > GCl.ratio_relics.vrange[0]:  # Plot if multiple relic
                 f.add_label(P1[0], P1[1],  'ratio= %.1e' % (GCl.ratio_relics()), size='x-large', **ciargs)
-        
+
         # Workaround ... in future it would be better to take the image information from the image and read the contours directly
         try:
             _, center, spixel = maput.FITS2numpy(GCl.mapdic['Raw'])
@@ -468,13 +517,13 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
             #contours, contourinfos = iom.readDS9regions('Regions/RR_%s.reg'% (GCl.name), spixel, center[0], center[1], pixelcoords=False)
             styles = ['--', ':', '-', '-', '-']
             f.show_polygons( [np.transpose(np.squeeze(region.cnt_WCS)) for region in GCl.regions], lw=2, linestyle=styles[GCl.relics[0].region.rtype.classi+1], **laargs) # , alpha=1.0, facecolor='orange'
-        
+
         if DS9regions:
             # Load a regions file into APLpy plot
             f.show_regions('Regions/RR_%s.reg' % (GCl.name))
-           
+
         f.add_scalebar(1)
-        f.scalebar.show(1000./kpc, linestyle='solid', linewidth=3., alpha=0.7, **baargs)  
+        f.scalebar.show(1000./kpc, linestyle='solid', linewidth=3., alpha=0.7, **baargs)
         f.scalebar.set_corner('bottom right')
         f.scalebar.set_label('1 Mpc')
         f.scalebar.set_font(size='large', weight='medium', stretch='normal', family='sans-serif',  style='normal', variant='normal')
@@ -482,16 +531,17 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
         if beam:
             f.add_beam()
             f.beam.show()
-#            f.beam.set_major(GCl.dinfo.beam[0] * u.arcsecond)
-#            f.beam.set_minor(GCl.dinfo.beam[1] * u.arcsecond)
-#            f.beam.set_angle(GCl.dinfo.beam[2])  # degrees
-            f.beam.set(facecolor='#BBBBBB', alpha=0.8, edgecolor='black')
+            f.beam.set_major(GCl.dinfo.beam[0] * u.arcsecond)
+            f.beam.set_minor(GCl.dinfo.beam[1] * u.arcsecond)
+            f.beam.set_angle(GCl.dinfo.beam[2])  # degrees
+            f.beam.set(facecolor=baargs['color'], alpha=0.8, edgecolor='black')
+            f.beam.set_color(baargs['color'])
 
-        if show_rot:     
+        if show_rot:
             f.add_label(0.97, 0.12, '$\\theta=%.3f$' % (GCl.mockobs.theta), relative=True, style='oblique', size='large', horizontalalignment='right', **laargs) #-0.01*len(Cl_name)
             f.add_label(0.97, 0.08, '$\\phi  =%.3f$' % (GCl.mockobs.phi)  , relative=True, style='oblique', size='large', horizontalalignment='right', **laargs) #-0.01*len(Cl_name)
             f.add_label(0.97, 0.04, '$\\psi  =%.3f$' % (GCl.mockobs.psi)  , relative=True, style='oblique', size='large', horizontalalignment='right', **laargs) #-0.01*len(Cl_name)
-                  
+
         if infolabel:
             f.add_label(0.97, 0.95, '  %s'     % (GCl.name.replace('_', ' ')), relative=True, style='oblique', size='xx-large', horizontalalignment='right', **laargs) #-0.01*len(Cl_name)
             f.add_label(0.97, 0.90, '$z=%.2f$' % (GCl.z()),  relative=True, style='oblique', size='xx-large', horizontalalignment='right', **laargs) #-0.01*len(Cl_name)
@@ -523,7 +573,7 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
         nowfolder = '%s/Images/' % (survey.outfolder)
         iom.check_mkdir(nowfolder)
         savefile = '%s/%s-%s%s' % (nowfolder, survey.name, GCl.name, 'HR'*highres)
-        f.save('%s.png' % savefile, dpi=400)    
+        f.save('%s.png' % savefile, dpi=400)
         f.save('%s.pdf' % savefile)
 #        circular_cutout(f, savefile)
         pdfs.append('%s.pdf' % savefile)
@@ -532,26 +582,26 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
         print(len(pdfs))
 
 
-        
+
     merger = PdfFileMerger()
-    
+
     for pdf in pdfs:
         merger.append(pdf)
-    
+
     merger.write('%s/%s-All%s.pdf' % (survey.outfolder,survey.name,'HR'*highres))
-        
+
 
 
 def circular_cutout(f, savefile):
-    
+
     """
     Demo of image that's been clipped by a circular patch.
     """
-    
+
     fig, ax = plt.subplots()
     patch = patches.Circle((260, 200), radius=200, transform=ax.transData)
     f._figure.set_clip_path(patch)
-    
+
     ax.axis('off')
     f.save(savefile+'_circular.png')
 
@@ -613,8 +663,7 @@ def plot_fluxRatio_LAS(surveys):
     ax.set_ylabel('$F_\\mathrm{1.4,\\,NVSS} / F_\\mathrm{1.4,\\,lit}$')
     ax.tick_params(direction="in", which='both')
     #ax.set_aspect(1.0/ax.get_data_ratio())
-     
-     
+
     """
      beam         0.75
      1Mpc z=0.10  8.98
@@ -655,18 +704,18 @@ def create_Mass_redshift2(SurveySamples, zrange,colors, markers = np.asarray(['.
     parB         - a lambda function to a measurand attribute of a class
     **args       - optional parameter
     Returns a scatter plot (a fig object) for further modification: linear or logarithmic, in the variables (you have to specify) and saves it under the variable specific name
-    
-    inspired by : http://www.astrobetter.com/blog/2014/02/10/visualization-fun-with-python-2d-histogram-with-1d-histograms-on-axes/  
+
+    inspired by : http://www.astrobetter.com/blog/2014/02/10/visualization-fun-with-python-2d-histogram-with-1d-histograms-on-axes/
              and: http://matplotlib.org/examples/pylab_examples/scatter_hist.html
     """
-    
+
     # (r.iner_rat/(r.LAS/(r.dinfo.beam[0]/60.)))
     parA = lambda x: x.z
     parB = lambda x: x.M200
-    
+
     cm = plt.cm.get_cmap('RdYlBu')
     z_symbols = ['o','>']
-    z_snaps   = [0.0,0.5]  
+    z_snaps   = [0.0,0.5]
 
 
 
@@ -874,11 +923,11 @@ def create_Test( SurveySamples, symbolsism, R200exp=False, markers = np.asarray(
     Surveysample - a list of galaxyclusters
     **args       - optional parameter
     Returns a scatter plot (a fig object) for further modification: linear or logarithmic, in the variables (you have to specify) and saves it under the variable specific name
-    
-    inspired by : http://www.astrobetter.com/blog/2014/02/10/visualization-fun-with-python-2d-histogram-with-1d-histograms-on-axes/  
+
+    inspired by : http://www.astrobetter.com/blog/2014/02/10/visualization-fun-with-python-2d-histogram-with-1d-histograms-on-axes/
              and: http://matplotlib.org/examples/pylab_examples/scatter_hist.html
     """
-    
+
     (zrange,colors,z_symbols) = symbolism
 
 #    parA = lambda x: x.Mach
@@ -886,13 +935,13 @@ def create_Test( SurveySamples, symbolsism, R200exp=False, markers = np.asarray(
     plotpairs = [(lambda x: x.Rho   ,  lambda x: x.P_rest, 'Rho_Power'),
                  (lambda x: x.Mach  ,  lambda x: x.P_rest, 'Mach_Power'),
                  (lambda x: x.T     ,  lambda x: x.P_rest, 'T_Power'),
-                 (lambda x: x.Area  ,  lambda x: x.P_rest, 'Area_Power'),       
+                 (lambda x: x.Area  ,  lambda x: x.P_rest, 'Area_Power'),
                  (lambda x: x.Area_av,  lambda x: x.P_rest, 'Area_av_Power')
                  ]
-    
+
     cm = plt.cm.get_cmap('RdYlBu')
-    
-    
+
+
     for parA,parB,craftname in plotpairs:
 
         titlepost = ''
@@ -1038,7 +1087,6 @@ def create_Test( SurveySamples, symbolsism, R200exp=False, markers = np.asarray(
         """  Histo"""
         for Histkwargs, data_x, data_y in zip(SurveyHistkwargs, Data_x, Data_y):
 
-
             if len(data_x) > 0:
 
                 axHistx.hist(data_x, bins=np.logspace( np.log10(axScatter.get_xlim()[0]), np.log10(axScatter.get_xlim()[1]), 10)                            ,  weights=[1./max(len(data_x),1)]*len(data_x) ,  **Histkwargs)
@@ -1065,24 +1113,25 @@ def create_Test( SurveySamples, symbolsism, R200exp=False, markers = np.asarray(
         nowfile = 'CraftyPlot_%s' % (craftname)
         # ask for the surveys model
         # nowfolder  = Survey.outfolder + '/PostProcessing/%s_%s' % ( parA(meas).dic, parB(meas).dic )   #parA(meas).name, parB(meas).name)
-        nowfolder  = SurveySamples[0].outfolder + '/PostProcessing/'
+        nowfolder = SurveySamples[0].outfolder + '/PostProcessing/'
         iom.check_mkdir(nowfolder)
-        print('Gonna save:  %s' % (nowfolder + nowfile) )
-        fig.savefig('%s%s_scatter.png' % (nowfolder,nowfile)) #filename
-        fig.savefig('%s%s_scatter.pdf' % (nowfolder,nowfile)) #filename	    #fig.clf()
+        print('Gonna save:  %s' % (nowfolder + nowfile))
+        fig.savefig('%s%s_scatter.png' % (nowfolder, nowfile)) #filename
+        fig.savefig('%s%s_scatter.pdf' % (nowfolder, nowfile)) #filename	    #fig.clf()
 
         fig.clf()
-            
-  
-"""=== Section of single object analysis ==="""   
+
+
+"""=== Section of single object analysis ==="""
 """========================================="""
 import seaborn as sns;
 from itertools import cycle
 from pandas.tools.plotting import scatter_matrix
+from scipy.stats import norm
 
 def joinpandas(df):
     df_combined = None
-    
+
     for pdframe in df:
         if df_combined is None:
             df_combined = pdframe
@@ -1099,7 +1148,6 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
     Input: SurveySamples ... there is currently no differnciation between different Survey Samples (symbol-wise or else)
     """
 
-
     df = [survey.fetch_pandas(plotmeasures, logs=logs, vkwargs_FilterCluster={"zborder":0.05}) for survey in SurveySamples]
     original_keys = df[0].keys()
     df_combined = joinpandas(df)
@@ -1114,7 +1162,6 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
          cmap = sns.light_palette(color, as_cmap=True)
          plt.imshow(np.abs([x,y].corr()), cmap=cmap, **kwargs) 
     """
-
 
     try:
         df_combined['$\\alpha_\mathrm{int}$'] = df_combined['$\\alpha_\mathrm{int}$'].fillna(df_combined['$\\alpha$'])
@@ -1137,7 +1184,7 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
     #colormaps = sns.cubehelix_palette(8, start=2, rot=0, dark=0, light=.95, reverse=True)
 
     make_kde.cmap_cycle = cycle(colormaps[0:len(df_combined.Survey.unique())])    #,
-        
+
     g = g.map_lower(make_kde, alpha=1.0/np.sqrt(NSurveys), shade=True, shade_lowest=False)
 
     # from https://stackoverflow.com/questions/52118245/python-seaborn-jointplot-does-not-show-the-correlation-coefficient-and-p-value-o
@@ -1145,7 +1192,7 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
         df = survey.fetch_pandas(plotmeasures, logs=logs, vkwargs_FilterCluster={"zborder": 0.05})
         print('Keys:', df.keys())
 
-        # from https://stackoverflow.com/questions/25571882/pandas-columns-correlation-with-statistical-significance
+        # from https://stackoverflow.com/questions/289.971882/pandas-columns-correlation-with-statistical-significance
         # construct two arrays, one of the correlation and the other of the p-vals
         import pandas as pd
         df_clean = df.dropna()
@@ -1171,7 +1218,9 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
             for j in range(len(ylabels)):
                 #g.axes[j, i].xaxis.set_label_text(xlabels[i])
                 #g.axes[j, i].yaxis.set_label_text(ylabels[j])
-                #if i == j:
+                if i == j:
+                    mu, std = norm.fit(df_clean.iloc[:,j])
+                    print("Fit results: mu = %.2f,  std = %.2f" % (mu, std))
                 #    g.axes[j, i].text(0.5, 0.1+numbered*0.07, '#%i' % (df_clean.shape[0]), zorder=1e10, horizontalalignment='left',
                 #                      verticalalignment='center', transform=g.axes[j, i].transAxes)
                 if i < j and abs(rho.values[i,j]) > 0.01:
@@ -1184,7 +1233,7 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
     nowfile = 'Scattermatrix'
     nowfolder = SurveySamples[-1].outfolder + '/PostProcessing/'
     iom.check_mkdir(nowfolder)
-    print('Gonna save:  %s' % (nowfolder + nowfile)  )                         
+    print('Gonna save:  %s' % (nowfolder + nowfile)  )
     plt.savefig('%s%s%s.png' % (nowfolder, nowfile, suffix), dpi=400)
     plt.savefig('%s%s%s.pdf' % (nowfolder, nowfile, suffix))
 
@@ -1212,51 +1261,78 @@ def create_shape_LAS_plot(surveys):
     LAS_line = np.linspace(1, 30, num=50)
     shape_line = np.power(LAS_line, -1.7) * 4.8
 
-    if len(surveys) > 1:
-        plotmeasures = [lambda x: x.LAS, lambda x: x.iner_rat]
-        df = [survey.fetch_pandas(plotmeasures,  vkwargs_FilterCluster={"zborder": 0.05}, keys="dic") for survey in
-              surveys[1:]]
-        df_combined = joinpandas(df)
-        print(df_combined.keys())
-        data = df_combined[['LAS', 'iner_rat']]
-        print(data.shape, type(data))
-        x = data.values[:,0]
-        y = data.values[:,1]
 
-        #ax.scatter(x, y, alpha=1 / np.sqrt(len(surveys)), c='salmon')  # , lc='r'
 
-        # Evaluate a gaussian kde on a regular grid of nbins x nbins over data extents
-        nbins = 35
-        k = kde.gaussian_kde(data.T)
-        xi, yi = np.mgrid[xmin:xmax:nbins * 1j, ymin:ymax:nbins * 1j]
-        zi = k(np.vstack([xi.flatten(), yi.flatten()]))
+    plotmeasures = [lambda x: x.LAS, lambda x: x.iner_rat]
 
-        # contour
-        ax.pcolormesh(xi, yi, zi.reshape(xi.shape), shading='gouraud', cmap=plt.cm.BuGn_r)
-        ax.contour(xi, yi, zi.reshape(xi.shape))
-        # ========
 
-    for survey in [surveys[0]]:
-        plotmeasures = [lambda x: x.LAS, lambda x: x.iner_rat]
-        df = survey.fetch_pandas(plotmeasures,  vkwargs_FilterCluster={"zborder": 0.05}, keys="dic")
-        shape = df["iner_rat"]
-        LAS = df["LAS"]
-        ax.scatter(LAS, shape, alpha=0.6, c='cornflowerblue', zorder=10)  # , lc='r'
+    df = [survey.fetch_pandas(plotmeasures, vkwargs_FilterCluster={"zborder": 0.05}, keys="dic", logs=[True,True]) for survey in
+          surveys]
+    df_combined = joinpandas(df)
+    print(df_combined.keys())
+    data = df_combined[['LAS', 'iner_rat']]
+    print(data.shape, type(data))
+    # Bin sample according to seaborn
+    print(data.keys())
+    df_NVSS = df_combined[df_combined['Survey'] == 'NVSS']
+    df_ELSE = df_combined[df_combined['Survey'] != 'NVSS']
+
+    if not df_ELSE.empty:
+        with sns.axes_style("white"):
+            g = sns.jointplot(x=df_ELSE['LAS'], y=df_ELSE['iner_rat'], kind="scatter", alpha=0.8, ratio=5);  #color="k",
+    with sns.axes_style("white"):
+        g = sns.jointplot(x=df_NVSS['LAS'], y=df_NVSS['iner_rat'], kind="scatter", alpha=0.8, ratio=5, color="cornflowerblue")
+
+    # Seaborn figures are square height = X (times X)
+    #g.ax_joint.set_xscale('log')
+    #g.ax_joint.set_yscale('log')
+
+    if 1 == 2:
+        if len(surveys) > 1:
+            df = [survey.fetch_pandas(plotmeasures, vkwargs_FilterCluster={"zborder": 0.05}, keys="dic") for survey in
+                  surveys[1:]]
+            df_combined = joinpandas(df)
+            print(df_combined.keys())
+            data = df_combined[['LAS', 'iner_rat']]
+            print(data.shape, type(data))
+            x = data.values[:,0]
+            y = data.values[:,1]
+
+            #ax.scatter(x, y, alpha=1 / np.sqrt(len(surveys)), c='salmon')  # , lc='r'
+
+            # Evaluate a gaussian kde on a regular grid of nbins x nbins over data extents
+            nbins = 35
+            k = kde.gaussian_kde(data.T)
+            xi, yi = np.mgrid[xmin:xmax:nbins * 1j, ymin:ymax:nbins * 1j]
+            zi = k(np.vstack([xi.flatten(), yi.flatten()]))
+
+            # contour
+            ax.pcolormesh(xi, yi, zi.reshape(xi.shape), shading='gouraud', cmap=plt.cm.BuGn_r)
+            ax.contour(xi, yi, zi.reshape(xi.shape))
+            # ========
+
+        for survey in [surveys[0]]:
+            plotmeasures = [lambda x: x.LAS, lambda x: x.iner_rat]
+            df = survey.fetch_pandas(plotmeasures,  vkwargs_FilterCluster={"zborder": 0.05}, keys="dic")
+            shape = df["iner_rat"]
+            LAS = df["LAS"]
+            ax.scatter(LAS, shape, alpha=0.6, c='cornflowerblue', zorder=10)  # , lc='r'
+
+
         ax.plot(np.log10(LAS_line), np.log10(shape_line), ls='--', lw=4, alpha=0.5, c="grey")
+        ax.tick_params(direction="in", which='both')
+        ax.set_xlim([xmin, xmax])
+        ax.set_ylim([ymin, ymax])
 
-    ax.tick_params(direction="in", which='both')
-    ax.set_xlim([xmin, xmax])
-    ax.set_ylim([ymin, ymax])
+        #ax.set_xlim([0.2, 1.3])
+        #ax.set_ylim([-1.5, 0])
+        #ax.set_xticks([2, 3, 5, 7, 10], minor=True)
 
-    #ax.set_xlim([0.2, 1.3])
-    #ax.set_ylim([-1.5, 0])
-    #ax.set_xticks([2, 3, 5, 7, 10], minor=True)
+        ax.text(0.285, 0.485, "Correlation", transform=plt.gca().transAxes)
+        ax.text(0.56, 0.60, "'Unusual roundish'", transform=plt.gca().transAxes)
 
-    ax.text(0.285, 0.485, "Correlation", transform=plt.gca().transAxes)
-    ax.text(0.56, 0.60, "'Unusual roundish'", transform=plt.gca().transAxes)
-
-    plt.xlabel("$\\log_{10}(\mathrm{LAS\,[arcmin])}$")
-    plt.ylabel("$\\log_{10}(\mathrm{shape}\,s)$")
+    ax.set_xlabel("$\\log_{10}(\mathrm{LAS\,[arcmin])}$")
+    ax.set_ylabel("$\\log_{10}(\mathrm{shape}\,s)$")
 
     nowfile = 'Shape-LAS'
     nowfolder = surveys[-1].outfolder + '/PostProcessing/'
@@ -1267,7 +1343,7 @@ def create_shape_LAS_plot(surveys):
     plt.clf()
 
 
-def plot_cummulative_flux(surveys):
+def plot_cummulative_flux(surveys, average_relic_count=False):
     colors = ['cornflowerblue'] + ['salmon']*(len(surveys)-1)
     mpl.rcParams['text.usetex'] = True
     plt.style.use('default')
@@ -1275,53 +1351,60 @@ def plot_cummulative_flux(surveys):
     fig, ax = plt.subplots(figsize=(6 * scale, 5.5 * scale), dpi=200)
     fig = plt.gcf()
     min_vals, max_vals, cummulatives = [], [], []
+    limit = surveys[-1].dinfo.limit*1e3
 
-
+    n_bins = 1200
+    bins = np.linspace(np.log10(limit*0.5), np.log10(100000), num=n_bins)
     for survey in [surveys[0]]:
 
-        mpl.rcParams['text.usetex'] = True
-        plt.style.use('default')
+        clusters = survey.FilterCluster(minrel=1, zborder=0.05)
+        fluxes = [np.log10(cl.flux()) for cl in clusters]
+        n_relics = [len(cl.filterRelics()) for cl in clusters]
 
-        relics = survey.fetch_totalRelics()
-        fluxes = [np.log10(relic.flux()) for relic in relics]
-        data1 = np.array(fluxes)
-        data1.sort()
-        min_val = min(data1)  # min_val = floor(min(data1 + data2))
-        max_val = max(data1)  # max_val = ceil(max(data1 + data2))
-
-        # Cumulative distributions, stepwise:
-        ax.step(np.concatenate([data1, data1[[-1]]]), np.arange(data1.size + 1), label='$\mu=0, \sigma=5$', color="cornflowerblue", lw=8, zorder=1000)
-
+        min_val = min(fluxes)  # min_val = floor(min(data1 + data2))
+        max_val = max(fluxes)  # max_val = ceil(max(data1 + data2))
         min_vals.append(min_val)
         max_vals.append(max_val)
-        cummulatives.append(data1.size)
+        cummulatives.append(len(fluxes))
 
+        # plot the cumulative histogram
+        n, bins, patches = ax.hist(fluxes, bins=bins, density=False, histtype='step',
+                                   cumulative=-1, color="blue", lw=5, zorder=1000, alpha=0.9)
+
+        if average_relic_count:
+            ax2 = ax.twinx()
+            ax2.hist(n_relics, bins=bins, density=False, histtype='step',
+                                   cumulative=-1, color="blue", lw=5, zorder=1000, alpha=0.9, weights=len(clusters))
+            ax2.set_ylabel('average relic count', color='darkblue')
+            ax2.tick_params('y', colors='darkblue')
 
     if len(surveys) > 1:
         for survey in surveys[1:]:
-            mpl.rcParams['text.usetex'] = True
-            plt.style.use('default')
+            clusters = survey.FilterCluster(minrel=1, zborder=0.05)
+            fluxes = [np.log10(cl.flux()) for cl in clusters]
+            n_relics = [len(cl.filterRelics()) for cl in clusters]
 
-            relics = survey.fetch_totalRelics()
-            fluxes = [np.log10(relic.flux()) for relic in relics]
-            data1 = np.array(fluxes)
-            data1.sort()
-            min_val = min(data1)  # min_val = floor(min(data1 + data2))
-            max_val = max(data1)  # max_val = ceil(max(data1 + data2))
-
-            # Cumulative distributions, stepwise:
-            ax.step(np.concatenate([data1, data1[[-1]]]), np.arange(data1.size + 1), label='$\mu=0, \sigma=5$',
-                    color="salmon", lw=8, alpha=0.1)
-
+            min_val = min(fluxes)  # min_val = floor(min(data1 + data2))
+            max_val = max(fluxes)  # max_val = ceil(max(data1 + data2))
             min_vals.append(min_val)
             max_vals.append(max_val)
-            cummulatives.append(data1.size)
+            cummulatives.append(len(fluxes))
 
-    plt.ylabel('Cumulative Count')
-    plt.xlabel('$\\log_{10}(F_\\nu$ [mJy])')
-    plt.legend([survey.name for survey in surveys[0:2]], loc='upper left')
-    plt.xlim([np.min(min_vals) - 0.05, np.max(max_vals) + 0.05])
-    plt.ylim([0, np.max(cummulatives) + 1])
+            # plot the cumulative histogram
+            n, bins, patches = ax.hist(fluxes, bins=bins,  density=False, histtype='step',
+                                       cumulative=-1, color="red", lw=5, alpha=0.2)
+
+        plt.legend([survey.name for survey in surveys[0:2]], loc='upper right')
+
+
+    ax.set_xlim([np.log10(limit), np.max(max_vals) + 0.05])
+    ax.set_ylim([0, np.max(cummulatives) + 1])
+    ax.set_ylabel('Cumulative cluster count')
+    ax.set_xlabel('$\\log_{10}(F_{1.4, cluster}$ [mJy])')
+
+
+
+
 
     plt.tick_params(direction="in", which='both')
 
