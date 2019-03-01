@@ -290,7 +290,7 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
         survey = cbclass.Survey(GClList, survey='%s' % (parfile.replace('.parset', '')),
                                 emi_max=float(pase['RMSnoise']) * 1e-3 * 200,
                                 cnt_levels=[float(pase['RMSnoise']) * 2 ** i for i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]],
-                                saveFITS=(ABC is None), savewodetect=suut.TestPar(pase['savewodetect']),
+                                saveFITS=(ABC is None), savewodetect=suut.TestPar(pase['savewodetect']), dinfo=dinfo,
                                 surshort='MUSIC2', Rmodel=RModel, outfolder=outfolder, logfolder=logfolder)
     else:
         """ If you directly loaded a survey, just use its internal Rmodel """
@@ -324,17 +324,10 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
 
     """ This is the most important task! """
     while processTasks:
-        if ABC is None:
-            processTasks, smt = SheduleTasks((pase, survey, RModel), smt, verbose=verbose)
-        else:
-            processTasks, smt = DoRun((pase, survey), smt, verbose=verbose)
+        processTasks, smt = DoRun((pase, survey), smt, verbose=verbose)
 
     print('RModelID %i of run %s finished' % (RModelID, surveyN))
-
     return survey
-
-
-
 
 def main_ABC(params, parfile='MUSIC2_NVSS02_SSD.parset', Clfile='clusterCSV/MUSIC2', verbose=False):
     """ ' parfile='MUSIC2_NVSS02_SSD_small.parset' """
@@ -372,8 +365,8 @@ def main_ABC(params, parfile='MUSIC2_NVSS02_SSD.parset', Clfile='clusterCSV/MUSI
 
 
 # from http://stackoverflow.com/questions/2553354/how-to-get-a-variable-name-as-a-string-in-python
-def LoadSnap_multiprocessing(pase,realisations,Rmodel,getstring=False,verbose=False):
-    smt   = iom.SmartTiming()
+def LoadSnap_multiprocessing(pase, realisations, Rmodel, getstring=False, verbose=False):
+    smt = iom.SmartTiming()
     smt(task='LoadSnaps')   
            
     gcl = realisations[0]
@@ -429,24 +422,23 @@ def varname(var):
   
 def pool_wait(queues, limit, affix='', tmax = 1e3):
     tsleep = 0      
-    waitT  = 0.3
+    waitT = 0.3
 
     while sum([q.qsize() for q in queues]) > limit and tsleep < tmax:  #stage 3 neclected
   
         if tsleep == 0:
              message = "[%s] Gonna sleep, because of " % (affix)
-             stringlist = ['+%s(%i)'  % (varname(q),q.qsize())  for q in queues]
-             string     = ' '.join(stringlist)
-             #print("message.join(...):", ['+%s(%i)'  % (varname(q),q.qsize())  for q in queues])
+             stringlist = ['+%s(%i)'  % (varname(q),q.qsize()) for q in queues]
+             string = ' '.join(stringlist)
              message += string
              message += " > %i" %(limit)
              print(message) 
         time.sleep(waitT) 
-        tsleep += waitT 
-        #print('pool_wait:', sum([q.qsize() for q in queues]), tsleep)
+        tsleep += waitT
     print('pool_wait:', sum([q.qsize() for q in queues])) 
         
-    if tsleep > 0:  print("[%s] Slept for %.1f seconds. We don't want to shedule our memory to dead, do we?" % (affix, tsleep)   )
+    if tsleep > 0:
+        print("[%s] Slept for %.1f seconds. We don't want to shedule our memory to dead, do we?" % (affix, tsleep)   )
     
     return
     
@@ -588,8 +580,6 @@ def RadioCuts(val, compradio=False):
     smt = iom.SmartTiming()
     smt(task='RadioAndMock_initialization')
 
-     #(pase, realisations_use, survey.outfolder, Rmodel)
-    #snap, strSn, PreSnapFile, Rmodel,  
     (pase, realisations, survey) = val
 
     Rmodel = survey.Rmodel
@@ -644,7 +634,7 @@ def mupro_Output_NicePickleClusters( in_queue, output):
     return
 
 
-def DoRun( inputs, smt, verbose=False, countmax=250):
+def DoRun(inputs, smt, verbose=False, countmax=200): #countmax=250
     """ Please mind that this procedure determines early if the number of detected relics becomes to large!"""  
     (pase, survey) = inputs
     #===

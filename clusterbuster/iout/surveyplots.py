@@ -141,28 +141,27 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=T
                     shiftHist = np.roll(Histo.hist.T, -int(aligned*(GCl.relic_pro_index)), axis=1) / AreaHist**(survey.expA)  #+1e-10
 
                     # Plots the single clusters
-                    if single:
-                        fig, ax = plt.subplots(figsize=(14,14), subplot_kw=dict(projection='polar'), dpi=dpi)  #,subplot_kw=dict(projection='polar')
-                        ax.pcolormesh(Histo.bins[0], Histo.bins[1],  shiftHist, cmap=cmap)
-                        ax.set_theta_offset(addangle)
-                        ax.annotate("", xy=(int(not aligned)*(GCl.relic_pro_angle), 1.5), xytext=(0, 0), arrowprops=dict(arrowstyle="->"))
-                        ax.arrow(0, 0, 0, 0.5, linewidth=3, width=0.005, transform=mtransforms.Affine2D().translate(int(not aligned)*(GCl.relic_pro_angle), 0) + ax.transData)
-                        ax.text(0.01, 1.05, '%s' % (GCl.name.replace('_',' ')), fontsize=20, transform=ax.transAxes)
-                        if addinfo:
-                            ax.text(0.3, 0.9, 'Summed relic flux: %.2e Jy' %(np.sum(Histo.hist)), fontsize=20, transform=ax.transAxes, color='w')
-                            ax.text(0.3, 0.87, 'Ratio pro: %.2e  anti: %.2e' %(GCl.ratio_pro(), GCl.ratio_anti()), fontsize=20, transform=ax.transAxes, color='w')
-                        if title is not None: 
-                            ax.set_title(title, va='bottom')
-                        ax.set_rticks(yticks)
-                        ax.tick_params(axis='x', labelsize=25)
-                        ax.tick_params(axis='y', colors='white', labelsize=25, pad=23)
-                        ax.set_rlabel_position(89.9)
-                        ax.grid(True)
-                        tight_layout()
-                        for ftype in outformats:
-                            plt.savefig('%s%s-polar%s.%s' % (nowfolder, GCl.name, suffix, ftype))
+                    fig, ax = plt.subplots(figsize=(14,14), subplot_kw=dict(projection='polar'), dpi=dpi)  #,subplot_kw=dict(projection='polar')
+                    ax.pcolormesh(Histo.bins[0], Histo.bins[1],  shiftHist, cmap=cmap)
+                    ax.set_theta_offset(addangle)
+                    ax.annotate("", xy=(int(not aligned)*(GCl.relic_pro_angle), 1.5), xytext=(0, 0), arrowprops=dict(arrowstyle="->"))
+                    ax.arrow(0, 0, 0, 0.5, linewidth=3, width=0.005, transform=mtransforms.Affine2D().translate(int(not aligned)*(GCl.relic_pro_angle), 0) + ax.transData)
+                    ax.text(0.01, 1.05, '%s' % (GCl.name.replace('_',' ')), fontsize=20, transform=ax.transAxes)
+                    if addinfo:
+                        ax.text(0.3, 0.9, 'Summed relic flux: %.2e Jy' %(np.sum(Histo.hist)), fontsize=20, transform=ax.transAxes, color='w')
+                        ax.text(0.3, 0.87, 'Ratio pro: %.2e  anti: %.2e' %(GCl.ratio_pro(), GCl.ratio_anti()), fontsize=20, transform=ax.transAxes, color='w')
+                    if title is not None:
+                        ax.set_title(title, va='bottom')
+                    ax.set_rticks(yticks)
+                    ax.tick_params(axis='x', labelsize=25)
+                    ax.tick_params(axis='y', colors='white', labelsize=25, pad=23)
+                    ax.set_rlabel_position(89.9)
+                    ax.grid(True)
+                    tight_layout()
+                    for ftype in outformats:
+                        plt.savefig('%s%s-polar%s.%s' % (nowfolder, GCl.name, suffix, ftype))
 
-                        fig.clf()
+                    fig.clf()
 
         if additive:
             _, (radial, radial_tickz), halfHist, stat, mesh = survey.polar(aligned=True, minrel=minrel, mirrored=mirrored, mode=plottype, zborder=zborder, ztype=ztype, conv=conv)
@@ -1233,7 +1232,7 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
     nowfile = 'Scattermatrix'
     nowfolder = SurveySamples[-1].outfolder + '/PostProcessing/'
     iom.check_mkdir(nowfolder)
-    print('Gonna save:  %s' % (nowfolder + nowfile)  )
+    print('Gonna save:  %s' % (nowfolder + nowfile))
     plt.savefig('%s%s%s.png' % (nowfolder, nowfile, suffix), dpi=400)
     plt.savefig('%s%s%s.pdf' % (nowfolder, nowfile, suffix))
 
@@ -1247,9 +1246,10 @@ def make_kde(*args, **kwargs):
 
 def create_shape_LAS_plot(surveys):
     from scipy.stats import kde
-
-    mpl.rcParams['text.usetex'] = True
     plt.style.use('default')
+    mpl.rcParams['text.usetex'] = True
+    plt.rc('text', usetex=True)
+    plt.rc('text.latex')
 
     xmin, xmax = 0.1, 1.42
     ymin, ymax = -1.55, 0
@@ -1266,22 +1266,24 @@ def create_shape_LAS_plot(surveys):
     plotmeasures = [lambda x: x.LAS, lambda x: x.iner_rat]
 
 
-    df = [survey.fetch_pandas(plotmeasures, vkwargs_FilterCluster={"zborder": 0.05}, keys="dic", logs=[True,True]) for survey in
+    df = [survey.fetch_pandas(plotmeasures, vkwargs_FilterCluster={"zborder": 0.05}, logs=[True,True]) for survey in
           surveys]
     df_combined = joinpandas(df)
     print(df_combined.keys())
-    data = df_combined[['LAS', 'iner_rat']]
+    key_LAS = "log$_{10}($LAS [']$)$"
+    key_shape = "log$_{10}($$v_\mathrm{PC2}/v_\mathrm{PC1}$$)$"
+    data = df_combined[[key_LAS, key_shape]]
     print(data.shape, type(data))
     # Bin sample according to seaborn
     print(data.keys())
     df_NVSS = df_combined[df_combined['Survey'] == 'NVSS']
     df_ELSE = df_combined[df_combined['Survey'] != 'NVSS']
 
-    if not df_ELSE.empty:
-        with sns.axes_style("white"):
-            g = sns.jointplot(x=df_ELSE['LAS'], y=df_ELSE['iner_rat'], kind="scatter", alpha=0.8, ratio=5);  #color="k",
+
     with sns.axes_style("white"):
-        g = sns.jointplot(x=df_NVSS['LAS'], y=df_NVSS['iner_rat'], kind="scatter", alpha=0.8, ratio=5, color="cornflowerblue")
+        if not df_ELSE.empty:
+            sns.jointplot(x=df_ELSE[key_LAS], y=df_ELSE[key_shape], kind="scatter", alpha=0.8, ratio=5);  # color="k",
+        g = sns.jointplot(x=df_NVSS[key_LAS], y=df_NVSS[key_shape], kind="scatter", alpha=0.8, ratio=5, color="cornflowerblue")
 
     # Seaborn figures are square height = X (times X)
     #g.ax_joint.set_xscale('log')
@@ -1319,17 +1321,17 @@ def create_shape_LAS_plot(surveys):
             ax.scatter(LAS, shape, alpha=0.6, c='cornflowerblue', zorder=10)  # , lc='r'
 
 
-        ax.plot(np.log10(LAS_line), np.log10(shape_line), ls='--', lw=4, alpha=0.5, c="grey")
-        ax.tick_params(direction="in", which='both')
-        ax.set_xlim([xmin, xmax])
-        ax.set_ylim([ymin, ymax])
+    ax.plot(np.log10(LAS_line), np.log10(shape_line), ls='--', lw=4, alpha=0.5, c="grey")
+    ax.tick_params(direction="in", which='both')
+    ax.set_xlim([xmin, xmax])
+    ax.set_ylim([ymin, ymax])
 
         #ax.set_xlim([0.2, 1.3])
         #ax.set_ylim([-1.5, 0])
         #ax.set_xticks([2, 3, 5, 7, 10], minor=True)
 
-        ax.text(0.285, 0.485, "Correlation", transform=plt.gca().transAxes)
-        ax.text(0.56, 0.60, "'Unusual roundish'", transform=plt.gca().transAxes)
+    ax.text(0.285, 0.485, "Correlation", transform=plt.gca().transAxes)
+    ax.text(0.56, 0.60, "'Unusual roundish'", transform=plt.gca().transAxes)
 
     ax.set_xlabel("$\\log_{10}(\mathrm{LAS\,[arcmin])}$")
     ax.set_ylabel("$\\log_{10}(\mathrm{shape}\,s)$")
@@ -1344,16 +1346,19 @@ def create_shape_LAS_plot(surveys):
 
 
 def plot_cummulative_flux(surveys, average_relic_count=False):
-    colors = ['cornflowerblue'] + ['salmon']*(len(surveys)-1)
-    mpl.rcParams['text.usetex'] = True
+
     plt.style.use('default')
+    mpl.rcParams['text.usetex'] = True
+    plt.rc('text', usetex=True)
+    plt.rc('text.latex')
     scale = 1.0
     fig, ax = plt.subplots(figsize=(6 * scale, 5.5 * scale), dpi=200)
     fig = plt.gcf()
     min_vals, max_vals, cummulatives = [], [], []
-    limit = surveys[-1].dinfo.limit*1e3
+    limit = surveys[-1].GCls[0].dinfo.rms*1e3*8
 
     n_bins = 1200
+    print(surveys[-1].GCls[0].dinfo.limit, surveys[-1].GCls[0].dinfo.rms, np.log10(limit*0.5))
     bins = np.linspace(np.log10(limit*0.5), np.log10(100000), num=n_bins)
     for survey in [surveys[0]]:
 
@@ -1369,12 +1374,12 @@ def plot_cummulative_flux(surveys, average_relic_count=False):
 
         # plot the cumulative histogram
         n, bins, patches = ax.hist(fluxes, bins=bins, density=False, histtype='step',
-                                   cumulative=-1, color="blue", lw=5, zorder=1000, alpha=0.9)
+                                   cumulative=-1, color="blue", lw=2, zorder=1000, alpha=0.9)
 
         if average_relic_count:
             ax2 = ax.twinx()
             ax2.hist(n_relics, bins=bins, density=False, histtype='step',
-                                   cumulative=-1, color="blue", lw=5, zorder=1000, alpha=0.9, weights=len(clusters))
+                     cumulative=-1, color="blue", lw=5, zorder=1000, alpha=0.9, weights=len(clusters))
             ax2.set_ylabel('average relic count', color='darkblue')
             ax2.tick_params('y', colors='darkblue')
 
@@ -1394,18 +1399,13 @@ def plot_cummulative_flux(surveys, average_relic_count=False):
             n, bins, patches = ax.hist(fluxes, bins=bins,  density=False, histtype='step',
                                        cumulative=-1, color="red", lw=5, alpha=0.2)
 
-        plt.legend([survey.name for survey in surveys[0:2]], loc='upper right')
+        plt.legend([survey.name_short for survey in surveys[0:2]], loc='upper right')
 
 
     ax.set_xlim([np.log10(limit), np.max(max_vals) + 0.05])
     ax.set_ylim([0, np.max(cummulatives) + 1])
-    ax.set_ylabel('Cumulative cluster count')
-    ax.set_xlabel('$\\log_{10}(F_{1.4, cluster}$ [mJy])')
-
-
-
-
-
+    ax.set_ylabel('cluster count') #$\sum\mathrm{cluster}\,F_\mathrm{1.4, cluster}>F$
+    ax.set_xlabel('$\log_{10}(F\,\mathrm{[mJy]})$')
     plt.tick_params(direction="in", which='both')
 
     nowfile = 'Flux-distr'

@@ -358,12 +358,18 @@ def survey_run(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/',
                 #============= impose relic.search  =============#
                 for ii, region in enumerate(GCl.regions):
                     smt(task='RelicExtr')
-                    relics = relex.RelicExtraction(residuum, z, GCl=GCl, dinfo=GCl.dinfo, rinfo = region, Imcenter=center, subtracted=model)[0:2]  # faintexcl=3.6
+                    relics = relex.RelicExtraction(residuum, z, GCl=GCl, dinfo=GCl.dinfo, rinfo=region, Imcenter=center,
+                                                   subtracted=model)[0:2]  # faintexcl=3.6
                     smt()
                     relics = sorted(relics, key=lambda x: x.flux, reverse=True)
 
                     for relic in relics:
                         relic.alpha.value = region.alpha
+                        print(region.alpha_err)
+                        if region.alpha_err is None:
+                            relic.alpha.set_std(0)
+                        else:
+                            relic.alpha.set_std(region.alpha_err)
 
                     GCl.add_relics(relics)
 

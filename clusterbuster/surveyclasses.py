@@ -139,9 +139,9 @@ class Survey(object):
         """
           
         """DEVELOPMENT"""
-        ndist = 35  #-->deprecated! but a better umber (nicer looking then the raw grid)
-        distmax = 3500  # very important, should somehow be part of the histogramm class
-        # This is a design desicion ... in the standart case, the histogramm should ourient itself on the histogram variable of the Survey class
+        ndist = 35  #-->deprecated! but a better number (nicer looking then the raw grid)
+        distmax = 3500  # very important, should somehow be part of the histogram class
+        # This is a design desicion ... in the standart case, the histogram should orient itself on the histogram variable of the Survey class
         mesh = np.zeros_like(self.hist_main.hist.T)
         """DEVELOPMENT END"""
         
@@ -156,7 +156,7 @@ class Survey(object):
             if GCl.histo is not None and np.sum(GCl.histo.hist) > 0:
     
                 Histo = GCl.histo
-                hist_shift = np.roll(Histo.hist.T, -int(aligned*(GCl.relic_pro_index)), axis=1)  # This was a bug:/ AreaHist**(self.expA)
+                hist_shift = np.roll(Histo.hist.T, -int(aligned*(GCl.relic_pro_index)), axis=1)
                 """ The scale is very important, it would be good to normalize the flux we do this by implementing the expScale parameter.
                 This is flexible enough to give different weights to bright/faint relics. Another question for statistical analysis is, if
                 the average  or an integrated value is more interesting.
@@ -197,13 +197,13 @@ class Survey(object):
             part1 = np.sum(halfHist[:, int(halfHist.shape[1]/2):int(halfHist.shape[1]+1)], axis=1)[::-1]
             part2 = np.sum(halfHist[:, 0:int(halfHist.shape[1]/2+1)], axis=1)
             if positive:
-                radial = np.sum( (part1, part2), axis=0)  # I would like to have np.flip
+                radial = np.sum( (part1, part2), axis=0)  # I would like to use np.flip
                 ticks_r = [h for h in Histo.ticks[1]]
             else:
-                radial = np.concatenate( (part1, part2), axis=0)  # I would like to have np.flip
+                radial = np.concatenate( (part1, part2), axis=0)  # I would like to use np.flip
                 ticks_r = [-h for h in reversed(Histo.ticks[1])]+[h for h in Histo.ticks[1]]
 
-            radial = gaussian_filter1d(radial, conv/self.hist_main.width[1], mode='constant') #1274
+            radial = gaussian_filter1d(radial, conv/self.hist_main.width[1], mode='constant')
             #radial = radial/np.sum(radial)
             return halfHist, (radial, ticks_r), halfHist_plot, sigstats, mesh
         else:
@@ -1184,7 +1184,6 @@ class Relic:
         self.spec_cor = None
         
         # Flux error needs area
-        
         self.filling     = self.area()/(np.pi/4*self.LAS()**2)
         self.filling_err = self.filling*np.sqrt((self.area.std[0]/self.area())**2 + (2*self.LAS.std[0]/self.LAS())**2)
              

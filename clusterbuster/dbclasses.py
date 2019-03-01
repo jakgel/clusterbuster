@@ -49,7 +49,7 @@ class measurand(entry):
     Inspired by http://www.python-course.eu/python3_magic_methods.php it also provides some magic operation functionalities that should make it more usable like float numbers.
     """
     
-    def __init__(self, value, dic, label=False, std=0, skew=0, vrange=[None,None], vmin=None, vmax=None, un = 'arbitrary unit', distr='gauss', ref=None):
+    def __init__(self, value, dic, label=False, std=0, skew=0, vrange=[None,None], vmin=None, vmax=None, un='arbitrary unit', distr='gauss', ref=None):
         
         entry.__init__(self, value, dic, label)
 
@@ -72,10 +72,7 @@ class measurand(entry):
         if vmax is not None: self.vrange[1] = vmax               
     
     def set_std(self, std):
-        try:
-            return [std[0],std[1]]
-        except:
-            return [std, std]
+        self.std = std
                  
     def std_add(self, std):  # Also use reversed for other operations
         self.std[0] = np.sqrt(self.std[0]**2 + std[0])
@@ -293,13 +290,13 @@ class HistogramDD:
           
     self.nbins  = nbins
     self.fromto = fromto
-    self.width  = [np.abs(self.fromto[i][0]-fromto[i][1])/nbins[i]   for i in np.arange(Ndims)]
+    self.width  = [np.abs(self.fromto[i][0]-fromto[i][1])/nbins[i] for i in np.arange(Ndims)]
     self.bins   = [np.linspace(self.fromto[i][0]                , self.fromto[i][1]              , nbins[i]+1) for i in np.arange(Ndims)]
     self.ticks  = [np.linspace(self.fromto[i][0]+self.width[i]/2, self.fromto[i][1]-self.width[i], nbins[i]+0) for i in np.arange(Ndims)] 
     self.axisM  = axisM   # An 3 dimensional array of measurands
      
-    self.hist  = np.zeros( nbins )
-    self.norm  = norm
+    self.hist = np.zeros(nbins)
+    self.norm = norm
     
   def __str__(self):
     # return("The cluster %12s at dec=%6.2f and rec = %6.2f has an z of %5.3f" % (self.name, self.dec, self.rec, self.z))
