@@ -63,16 +63,19 @@ class measurand(entry):
         self.distr = distr   # distribution type
         #self.distr = ['norm','linear','weird','lgnorm']
         
-        self.std = self.set_std(std)   # first moment, can be one or two dimensional
-        self.skew = skew            # second momnt
-        self.ref = ref             #reference
+        self.set_std(std)   # first moment, can be one or two dimensional
+        self.skew = skew    # second momnt
+        self.ref = ref      #reference
     
     def set_vrange(self, vmin, vmax):
         if vmin is not None: self.vrange[0] = vmin
         if vmax is not None: self.vrange[1] = vmax               
     
     def set_std(self, std):
-        self.std = std
+        try:
+            self.std = [std[0],std[1]]
+        except:
+            self.std = [std, std]
                  
     def std_add(self, std):  # Also use reversed for other operations
         self.std[0] = np.sqrt(self.std[0]**2 + std[0])
