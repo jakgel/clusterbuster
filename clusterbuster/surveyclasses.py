@@ -1046,9 +1046,9 @@ class RelicRegion(DetRegion):  # Define a new object: RelicRegion
       try:
        self.alpha_err = float(alpha_err)
       except: 
-       self.alpha_err = 0.3
+       self.alpha_err = 0.2
     else: 
-       self.alpha_err = 0.3
+       self.alpha_err = 0.2
        
        
     """DEVELOPMENT
@@ -1238,6 +1238,11 @@ class Relic:
     #               -alpha+2/-alpha+1
 
     """ See Colafrancesco+2017 equ. 5 & 6 """
+
+    def corrupt_alpha(self):
+        sigma = np.max(0.005, 0.1439075398254617-0.04093582*np.log10(self.flux.value))
+        self.alpha = self.alpha + np.random.normal(0, sigma, 1)
+
     def infer_Mach(self, Mach=None):
         """ Derive the Mach number proxy if the spectral index is known """
 

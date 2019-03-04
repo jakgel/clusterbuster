@@ -86,7 +86,8 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=T
     if surveys is a list of surveys this function will plot averaged quantities
     """
     plt.style.use('default')
-    if not isinstance(surveys, collections.Iterable):   surveys = [surveys]
+    if not isinstance(surveys, collections.Iterable):
+        surveys = [surveys]
 
     if surveys[0].hist_main is not None:
         Histo = surveys[0].hist_main
@@ -106,7 +107,6 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=T
 
     if compsurvey is not None:
         _ , (comprad, _), comppol, _, _ = compsurvey.polar(zborder=zborder, ztype=ztype, conv=conv)
-        #comprad = compsurvey.polar(zborder=zborder, ztype=ztype, conv=conv)[1][0]    #comprad[1]
         deviations = []
 
     for survey in surveys:
@@ -132,6 +132,7 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=T
                 """ Deriving the histogram should be a functionality of the survey or the relic cluster, so this should become outdated """
                 GCl.updateInformation(Filter=True)
                 if GCl.histo is not None and np.sum(GCl.histo.hist) != 0:
+                    print(np.sum(Histo.hist.T.flatten()))
                     inner = Histo.bins[1][0:-1]
                     outer = Histo.bins[1][1::]
                     angle = Histo.ticks[0]
@@ -139,14 +140,13 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=T
                     angles, z_outer = np.meshgrid(angle, outer, sparse=True)
                     AreaHist = 2*np.pi*(2*np.pi)/len(angle)*(z_outer**2-z_inner**2)
                     shiftHist = np.roll(Histo.hist.T, -int(aligned*(GCl.relic_pro_index)), axis=1) / AreaHist**(survey.expA)  #+1e-10
-
                     # Plots the single clusters
-                    fig, ax = plt.subplots(figsize=(14,14), subplot_kw=dict(projection='polar'), dpi=dpi)  #,subplot_kw=dict(projection='polar')
+                    fig, ax = plt.subplots(figsize=(14,14), subplot_kw=dict(projection='polar'), dpi=dpi)
                     ax.pcolormesh(Histo.bins[0], Histo.bins[1],  shiftHist, cmap=cmap)
                     ax.set_theta_offset(addangle)
                     ax.annotate("", xy=(int(not aligned)*(GCl.relic_pro_angle), 1.5), xytext=(0, 0), arrowprops=dict(arrowstyle="->"))
                     ax.arrow(0, 0, 0, 0.5, linewidth=3, width=0.005, transform=mtransforms.Affine2D().translate(int(not aligned)*(GCl.relic_pro_angle), 0) + ax.transData)
-                    ax.text(0.01, 1.05, '%s' % (GCl.name.replace('_',' ')), fontsize=20, transform=ax.transAxes)
+                    ax.text(0.01, 1.05, '%s' % (GCl.name.replace('_', ' ')), fontsize=20, transform=ax.transAxes)
                     if addinfo:
                         ax.text(0.3, 0.9, 'Summed relic flux: %.2e Jy' %(np.sum(Histo.hist)), fontsize=20, transform=ax.transAxes, color='w')
                         ax.text(0.3, 0.87, 'Ratio pro: %.2e  anti: %.2e' %(GCl.ratio_pro(), GCl.ratio_anti()), fontsize=20, transform=ax.transAxes, color='w')

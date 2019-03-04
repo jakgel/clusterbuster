@@ -242,36 +242,39 @@ def numpy2mask ( array, cutoff, Ndil, outfile=False) : #, header=hdutemplateHead
  
 
 
-def sparse_array_to_fits(GCls, outfolder, maptype = "Diffuse", emission_type="relics"):
+def sparse_array_to_fits(GCls, outfolder, maptype = "Diffuse", source_type="relics"):
 
     for GCl in GCls:
         kpc_to_arcsec = 1/(GCl.cosmoPS)
 
         bins = ((np.asarray(range(int(GCl.dinfo.pcenter[0]*2+1))) - GCl.dinfo.pcenter[0])+0.25) * GCl.dinfo.spixel  # np.linspace(-500,500,widht=1)
-
-        sparseA = []
-        sparseD = []
-        sparseW = []
         array_full = np.zeros((int(GCl.dinfo.pcenter[0]*2), int(GCl.dinfo.pcenter[1]*2)))
 
-        if emission_type == "relics":
+        if source_type == "relics":
             expression = lambda x: x.relics
-        elif emission_type == "compacts":
+        elif source_type == "compacts":
             expression = lambda x: x.compacts
+
+        if maptype == "Temperature":
+            sparseWeight = lambda x: x.wT
+        elif maptype == "Density":
+            sparseWeight = lambda x: x.wRho_up
+        elif maptype == "Mach":
+            sparseWeight = lambda x: x.wMach
+        else:
+            sparseWeight = lambda x: x.sparseW
 
 
         for relic in expression(GCl):
-            sparseA.append(relic.sparseA)  # in kpc ... we need arcseconds
-            sparseD.append(relic.sparseD)
-            sparseW.append(relic.sparseW)
 
             x = np.sin(relic.sparseA) * relic.sparseD * kpc_to_arcsec
             y = np.cos(relic.sparseA) * relic.sparseD * kpc_to_arcsec
 
-            array, x, y = np.histogram2d(x, y, bins=[bins, bins], weights=relic.sparseW)
+            array, x, y = np.histogram2d(x, y, bins=[bins, bins], weights=sparseWeight(relic))
 
             array_full += array
 
         mapname = maptype
+        print('%s/maps/%s/%s.fits' % (outfolder, maptype.lower(), GCl.name))
         fitsname = '%s/maps/%s/%s.fits' % (outfolder, maptype.lower(), GCl.name)
         GCl.maps_update(array_full, mapname, fitsname)
