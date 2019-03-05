@@ -48,12 +48,12 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics=['numbers'],
     if stochdrop:
         SurveyB.set_seed_dropout()
 
-    if len([gcl.updateInformation() for gcl in SurveyB.FilterCluster(minrel=1)]) < 3:
+    if len([gcl.updateInformation() for gcl in SurveyB.FilterCluster()]) < 3:
         distances = [1e9 for m in metrics]
     else:
         distances = []
-        SurveyA.FilterCluster(minrel=1)
-        SurveyB.FilterCluster(minrel=1)
+        SurveyA.FilterCluster()
+        SurveyB.FilterCluster()
         print('SurveyB.GCls', len(SurveyB.GCls), '-->', 'SurveyB.filteredClusters', len(SurveyB.filteredClusters))
         for metric in metrics:
 #                print('metric', metric)
@@ -139,7 +139,7 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics=['numbers'],
 
 
 """=============== Baustelle: Imlement in Metric & Run Survey"""
-def Clusters_discovery_prop(survey, discovery_prop=None, maxcomp=None, verbose=False):
+def Clusters_discovery_prop(survey, discovery_prop=None, verbose=False):
     """ Return a weighted relic number count within all clusters
     input: either  a Clusterbuster Class Surveys
            or      a GalaxyClusterLists including relics
@@ -154,10 +154,10 @@ def Clusters_discovery_prop(survey, discovery_prop=None, maxcomp=None, verbose=F
 #    import scipy.stats.mstats as mstats
     if isinstance(survey, cbclass.Survey):
         """ Assume to work with surveys """
-        relics = survey.fetch_totalRelics(maxcomp=maxcomp)
+        relics = survey.fetch_totalRelics()
     else:
         """ Asume to work with lists of galaxy clusters """
-        relics = [gcl.filterRelics(maxcomp=maxcomp)          for gcl in survey]
+        relics = [gcl.filterRelics() for gcl in survey]
 
     weightedsum = len(relics)
     if verbose:
@@ -278,7 +278,7 @@ def ABC_summaryStatistics_2DKS(Surveys, verbose=False, parA=lambda x: x.M200, pa
         print('surveymetrics::ABC_summaryStatistics_2DKS()::access', access)
     return np.log10(1/access)
 
-def ABC_summaryStatistics_number_relics(Surveys, maxcomp=None, verbose = False):
+def ABC_summaryStatistics_number_relics(Surveys, verbose = False):
     """ Compares survey B (simulation) with survey A (real world survey)
     input: either  2 Clusterbuster Class Surveys
            or      2 GalaxyClusterLists including relics
@@ -292,8 +292,8 @@ def ABC_summaryStatistics_number_relics(Surveys, maxcomp=None, verbose = False):
     """
     [A, B] = Surveys
 
-    sum_A = Clusters_discovery_prop(A, maxcomp=maxcomp)
-    sum_B = Clusters_discovery_prop(B, maxcomp=maxcomp)
+    sum_A = Clusters_discovery_prop(A)
+    sum_B = Clusters_discovery_prop(B)
 
     if verbose:
         print('surveymetrics::ABC_summaryStatistics_numbers::Survey:', A.name, len(A.GCls)            , sum_A)

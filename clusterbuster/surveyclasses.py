@@ -76,7 +76,6 @@ class Survey(object):
         self.hist_main = hist_main  # Histogram of all binned objects/ without any initialization, works as an proxy
 
         self.filteredClusters = None
-        
         """This should be handled in the case of a mock survey"""
         """So there should be a nock survey and a real survey, both as childs from a generall survey"""
         self.Rmodel = replaceNone(Rmodel, RModel([], simu=False))   # A B-field model
@@ -88,6 +87,10 @@ class Survey(object):
         self.F_pro  = 0        # Pro ratio
         self.F_anti = 0        # Pro ratio
 
+        #filter arguments for clusters and relics
+        self.relic_filter_kwargs = {}   #Filter=True, maxcomp=None, shape=False, regard=[1,2,3]
+        self.cluster_filter_kwargs = {"zmin": 0.05}
+
         # Output related properties
         if outfolder is None: outfolder = '/data/ClusterBuster-Output/%s' % (survey)
         self.outfolder = outfolder
@@ -95,7 +98,7 @@ class Survey(object):
         self.saveFITS = saveFITS
         self.synonyms = synonyms
         self.savewodetect = savewodetect
-        
+
         # plot Emission I: Contours & colorscale
         self.cnt_levels = cnt_levels
         self.emi_max    = emi_max      # Maximal scale of emission
@@ -118,8 +121,7 @@ class Survey(object):
         for GCl in self.GCls:
             GCl.histo = histo
         
-    def polar(self, aligned=True, normalize=True, minrel=1,  positive=False,  mirrored=False, mode='flux', zborder=0,
-              ztype='>', conv=0.127,  **kwargs):
+    def polar(self, aligned=True, normalize=True, minrel=1,  positive=False,  mirrored=False, mode='flux', conv=0.127):
 
         """ 
         Input: needs to histogram of the survey to be set, radial axis: 2 N, polar axis: 4 M
@@ -147,12 +149,12 @@ class Survey(object):
         
         hist_main = np.zeros_like(self.hist_main.hist.T)
         sigstats = []
-        
+
         if self.filteredClusters is None:
-            self.FilterCluster(minrel=minrel, zborder=zborder, ztype=ztype)
+            self.FilterCluster()
         for ii, GCl in enumerate(self.filteredClusters):
             GCl.histo = self.hist_main
-            GCl.updateInformation(Filter=True)
+            GCl.updateInformation(**self.relic_filter_kwargs)
             if GCl.histo is not None and np.sum(GCl.histo.hist) > 0:
     
                 Histo = GCl.histo
@@ -216,7 +218,7 @@ class Survey(object):
             self.seed_dropout = np.random.RandomState()
 
     def FilterCluster(self, minrel=1, zborder=0, ztype='>', minimumLAS=0, GClflux=0, index=None, getindex=False,
-                      verbose=False,  **kwargs):
+                      verbose=False):
         """ Gives all the cluster with the relics that fullfill given criteria """
 
         if index is not None:
@@ -230,9 +232,9 @@ class Survey(object):
             state = self.seed_dropout.get_state()
             self.seed_dropout.set_state((state[0], state[1], 0, state[3], state[4]))
 
-        GCls = [GCl.updateInformation(Filter=True) for GCl in self.GCls]
+        GCls = [GCl.updateInformation(Filter=True, **self.relic_filter_kwargs) for GCl in self.GCls]
 
-        results = [(ii,GCl) for ii, GCl in enumerate(GCls) if len(GCl.filterRelics(**kwargs)) >= minrel and
+        results = [(ii,GCl) for ii, GCl in enumerate(GCls) if len(GCl.filterRelics(**self.relic_filter_kwargs)) >= minrel and
                    get_truth(GCl.z, ztype, zborder) and GCl.largestLAS() >= minimumLAS and GCl.flux() >= GClflux
                    and GCl.stoch_drop(self.seed_dropout)]
 
@@ -255,7 +257,7 @@ class Survey(object):
           
         return [GCl.relicRegions for GCl in self.GCls]
          
-    def fetch_totalRelics(self, **kwargs):
+    def fetch_totalRelics(self):
         relics_list = []
 
         zborder = 0.05
@@ -263,16 +265,16 @@ class Survey(object):
             self.FilterCluster(zborder=zborder)
 
         for GCl in self.filteredClusters:
-            relics_list += GCl.filterRelics(**kwargs)
+            relics_list += GCl.filterRelics(self.relic_filter_kwargs)
 
         return relics_list
-         
+
          
     def fetch_totalHisto(self):
           
         return sum([GCl.hist for GCl in self.GCls], 0)
      
-    def fetch_pandas(survey, plotmeasures, logs=None,  surname=True, keys="label", vkwargs_FilterCluster={}, kwargs_FilterObjects={}):
+    def fetch_pandas(survey, plotmeasures, logs=None,  surname=True, keys="label"):
         """ Return a panda array generated from the survey catalogue 
         
         survey: A ClusterBusterSurvey
@@ -294,9 +296,9 @@ class Survey(object):
     
         """ This very ugly steps just creates a List of (relic,GCL) from the survey
         As in the future galaxy clusters will gain be a property of relics again this step will be shorter  and more readable"""
-        for GCl in survey.FilterCluster(**vkwargs_FilterCluster):
+        for GCl in survey.FilterCluster():
                 GCl.updateInformation()
-                list_full.append([(GCl,relic) for relic in GCl.filterRelics()])
+                list_full.append([(GCl,relic) for relic in GCl.filterRelics(**survey.relic_filter_kwargs)])
                 
         list_full = [item for sublist in list_full for item in sublist]
             
@@ -456,7 +458,7 @@ class Galaxycluster(object):
     # The lambda function does make the file unpickelable
     #  self.Filter = lambda x: (x.flux > self.minflux and (x.iner_rat/(x.LAS/(x.dinfo.beam[0]/60.))) < self.maxcomp)  
 
-    def filterRelics(self, Filter=True, maxcomp=None, regard=[1,2,3]):
+    def filterRelics(self, Filter=True, maxcomp=None, shape=False, regard=[1,2,3]):
 
         if Filter:
             minflux = self.dinfo.rms * 8 * 1000  #microjansky to millijansky
@@ -467,7 +469,8 @@ class Galaxycluster(object):
             minflux = -1
             
         return [relic for relic in self.relics
-                if ((relic.flux() > minflux) and (relic.region.rtype.classi in regard))] #and (relic.shape_advanced().value < maxcomp)
+                if ((relic.flux() > minflux) and (relic.region.rtype.classi in regard) and
+                    ((shape == False) or (relic.shape_advanced().value < maxcomp)))]
 
     def add_regions(self, regions, **filterargs):
        
@@ -786,7 +789,7 @@ class Galaxycluster(object):
     def where_all(self, allwhere=None, **kwargs):
         """ Returns a numpy-where list for a two dimensional array that an be used to mask all relics in an 2D-map"""
 
-        for relic in self.relics:  # self.filterRelics(**kwargs):
+        for relic in self.relics:
             if allwhere is not None:
                 allwhere = np.concatenate((relic.pmask, allwhere), axis=1)
             else:

@@ -77,11 +77,12 @@ def readDS9relics(regfile, spixel, center, pixref, Test=False):
 
 
 def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=True, additive=False,
-                             aligned=False, cbar=True, addinfo=False, mirrored=False, minrel=1,
-                             zborder=0.05, ztype = '>', plottype='flux', title="Polar binned radio relic flux",
-                             dpi=None, add_pi=1/2, Histo=dbc.Histogram2D(), suffix='', conv=0.127):
+                             aligned=False, cbar=True, addinfo=False, mirrored=False, plottype='flux',
+                             title="Polar binned radio relic flux", dpi=None, add_pi=1/2,
+                             Histo=dbc.Histogram2D(), suffix='', conv=0.127):
     """ possible inprovements: http://stackoverflow.com/questions/22562364/circular-histogram-for-python
     minrel : minimal number of relics to be consided for the histogram
+    addpi: Additional Rotation;  added anticlockwise! We want to turn by 90 degree anticlockwise
 
     if surveys is a list of surveys this function will plot averaged quantities
     """
@@ -93,11 +94,11 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=T
         Histo = surveys[0].hist_main
 
     """ Plotting and normalization of combined histogram"""
-    expPlot  = 0.45   # 0.25
+    expPlot  = 0.45
     dist_text_params = 0.08
-    cmap     = cm.viridis # ; cm.afmhot none
+    cmap     = cm.viridis
     yticks   = [0.4, 0.8, 1.2]
-    addangle = int(aligned)*np.pi*add_pi # Additional Rotation;  added anticlockwise! We want to turn by 90 degree anticlockwise
+    addangle = int(aligned)*np.pi*add_pi
 
     halfHists = []
     radials   = []
@@ -106,7 +107,7 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=T
 
 
     if compsurvey is not None:
-        _ , (comprad, _), comppol, _, _ = compsurvey.polar(zborder=zborder, ztype=ztype, conv=conv)
+        _ , (comprad, _), comppol, _, _ = compsurvey.polar(conv=conv)
         deviations = []
 
     for survey in surveys:
@@ -127,7 +128,7 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=T
         buckedfolder = os.path.abspath(os.path.join(survey.outfolder, '..', 'bucket'))
         iom.check_mkdir(buckedfolder)
         if single:
-            for ii, GCl in enumerate(survey.FilterCluster(minrel=minrel, zborder=zborder, ztype='>')):
+            for ii, GCl in enumerate(survey.FilterCluster()):
 
                 """ Deriving the histogram should be a functionality of the survey or the relic cluster, so this should become outdated """
                 GCl.updateInformation(Filter=True)
@@ -164,7 +165,7 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=T
                     fig.clf()
 
         if additive:
-            _, (radial, radial_tickz), halfHist, stat, mesh = survey.polar(aligned=True, minrel=minrel, mirrored=mirrored, mode=plottype, zborder=zborder, ztype=ztype, conv=conv)
+            _, (radial, radial_tickz), halfHist, stat, mesh = survey.polar(aligned=True, mirrored=mirrored, mode=plottype, conv=conv)
 
             if halfHist is not None:
                 fig, ax = plt.subplots(figsize=(14, 14), subplot_kw=dict(projection='polar'), dpi=dpi)  #,subplot_kw=dict(projection='polar')
@@ -612,12 +613,10 @@ def plot_fluxRatio_LAS(surveys):
     for survey in surveys:
         df = survey.fetch_pandas([lambda x: x.GCl.largestLAS, lambda x: x.GCl.flux,
                                         lambda x: x.GCl.flux_lit, lambda x: x.GCl.area],
-                                       logs=[False]*3,  keys="dic", vkwargs_FilterCluster={"zborder": 0.05})
+                                       logs=[False]*3,  keys="dic")
         print('Keys:', df.keys())
         df_clean = df.dropna()
         print(df_clean.keys())
-
-        clusters = survey.FilterCluster(minrel=1, zborder=0.05, ztype='>')
 
         # use latex for font rendering
         mpl.rcParams['text.usetex'] = True
@@ -1147,7 +1146,7 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
     Input: SurveySamples ... there is currently no differnciation between different Survey Samples (symbol-wise or else)
     """
 
-    df = [survey.fetch_pandas(plotmeasures, logs=logs, vkwargs_FilterCluster={"zborder":0.05}) for survey in SurveySamples]
+    df = [survey.fetch_pandas(plotmeasures, logs=logs) for survey in SurveySamples]
     original_keys = df[0].keys()
     df_combined = joinpandas(df)
     NSurveys = len(SurveySamples)
@@ -1188,7 +1187,7 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
 
     # from https://stackoverflow.com/questions/52118245/python-seaborn-jointplot-does-not-show-the-correlation-coefficient-and-p-value-o
     for numbered, survey in enumerate(SurveySamples):
-        df = survey.fetch_pandas(plotmeasures, logs=logs, vkwargs_FilterCluster={"zborder": 0.05})
+        df = survey.fetch_pandas(plotmeasures, logs=logs)
         print('Keys:', df.keys())
 
         # from https://stackoverflow.com/questions/289.971882/pandas-columns-correlation-with-statistical-significance
@@ -1244,7 +1243,7 @@ def make_kde(*args, **kwargs):
     sns.kdeplot(*args, cmap=next(make_kde.cmap_cycle), **kwargs)
 
 
-def create_shape_LAS_plot(surveys):
+def create_shape_LAS_plot(surveys, relic_filter_kwargs={}):
     from scipy.stats import kde
     plt.style.use('default')
     mpl.rcParams['text.usetex'] = True
@@ -1266,33 +1265,32 @@ def create_shape_LAS_plot(surveys):
     plotmeasures = [lambda x: x.LAS, lambda x: x.iner_rat]
 
 
-    df = [survey.fetch_pandas(plotmeasures, vkwargs_FilterCluster={"zborder": 0.05}, logs=[True,True]) for survey in
-          surveys]
-    df_combined = joinpandas(df)
-    print(df_combined.keys())
-    key_LAS = "log$_{10}($LAS [']$)$"
-    key_shape = "log$_{10}($$v_\mathrm{PC2}/v_\mathrm{PC1}$$)$"
-    data = df_combined[[key_LAS, key_shape]]
-    print(data.shape, type(data))
-    # Bin sample according to seaborn
-    print(data.keys())
-    df_NVSS = df_combined[df_combined['Survey'] == 'NVSS']
-    df_ELSE = df_combined[df_combined['Survey'] != 'NVSS']
-
-
-    with sns.axes_style("white"):
-        if not df_ELSE.empty:
-            sns.jointplot(x=df_ELSE[key_LAS], y=df_ELSE[key_shape], kind="scatter", alpha=0.8, ratio=5);  # color="k",
-        g = sns.jointplot(x=df_NVSS[key_LAS], y=df_NVSS[key_shape], kind="scatter", alpha=0.8, ratio=5, color="cornflowerblue")
-
-    # Seaborn figures are square height = X (times X)
-    #g.ax_joint.set_xscale('log')
-    #g.ax_joint.set_yscale('log')
-
     if 1 == 2:
+        df = [survey.fetch_pandas(plotmeasures, logs=[True,True]) for survey in surveys]
+        df_combined = joinpandas(df)
+        print(df_combined.keys())
+        key_LAS = "log$_{10}($LAS [']$)$"
+        key_shape = "log$_{10}($$v_\mathrm{PC2}/v_\mathrm{PC1}$$)$"
+        data = df_combined[[key_LAS, key_shape]]
+        print(data.shape, type(data))
+        # Bin sample according to seaborn
+        print(data.keys())
+        df_NVSS = df_combined[df_combined['Survey'] == 'NVSS']
+        df_ELSE = df_combined[df_combined['Survey'] != 'NVSS']
+
+
+        with sns.axes_style("white"):
+            if not df_ELSE.empty:
+                sns.jointplot(x=df_ELSE[key_LAS], y=df_ELSE[key_shape], kind="scatter", alpha=0.8, ratio=5);  # color="k",
+            g = sns.jointplot(x=df_NVSS[key_LAS], y=df_NVSS[key_shape], kind="scatter", alpha=0.8, ratio=5, color="cornflowerblue")
+
+        # Seaborn figures are square height = X (times X)
+        #g.ax_joint.set_xscale('log')
+        #g.ax_joint.set_yscale('log')
+
+    if 1 == 1:
         if len(surveys) > 1:
-            df = [survey.fetch_pandas(plotmeasures, vkwargs_FilterCluster={"zborder": 0.05}, keys="dic") for survey in
-                  surveys[1:]]
+            df = [survey.fetch_pandas(plotmeasures, keys="dic") for survey in surveys[1:]]
             df_combined = joinpandas(df)
             print(df_combined.keys())
             data = df_combined[['LAS', 'iner_rat']]
@@ -1315,7 +1313,7 @@ def create_shape_LAS_plot(surveys):
 
         for survey in [surveys[0]]:
             plotmeasures = [lambda x: x.LAS, lambda x: x.iner_rat]
-            df = survey.fetch_pandas(plotmeasures,  vkwargs_FilterCluster={"zborder": 0.05}, keys="dic")
+            df = survey.fetch_pandas(plotmeasures, keys="dic")
             shape = df["iner_rat"]
             LAS = df["LAS"]
             ax.scatter(LAS, shape, alpha=0.6, c='cornflowerblue', zorder=10)  # , lc='r'
@@ -1362,9 +1360,9 @@ def plot_cummulative_flux(surveys, average_relic_count=False):
     bins = np.linspace(np.log10(limit*0.5), np.log10(100000), num=n_bins)
     for survey in [surveys[0]]:
 
-        clusters = survey.FilterCluster(minrel=1, zborder=0.05)
+        clusters = survey.FilterCluster(minrel=1)
         fluxes = [np.log10(cl.flux()) for cl in clusters]
-        n_relics = [len(cl.filterRelics()) for cl in clusters]
+        n_relics = [len(cl.filterRelics(**survey.relic_filter_kwargs)) for cl in clusters]
 
         min_val = min(fluxes)  # min_val = floor(min(data1 + data2))
         max_val = max(fluxes)  # max_val = ceil(max(data1 + data2))
@@ -1385,9 +1383,9 @@ def plot_cummulative_flux(surveys, average_relic_count=False):
 
     if len(surveys) > 1:
         for survey in surveys[1:]:
-            clusters = survey.FilterCluster(minrel=1, zborder=0.05)
+            clusters = survey.FilterCluster(minrel=1)
             fluxes = [np.log10(cl.flux()) for cl in clusters]
-            n_relics = [len(cl.filterRelics()) for cl in clusters]
+            n_relics = [len(cl.filterRelics(**survey.relic_filter_kwargs)) for cl in clusters]
 
             min_val = min(fluxes)  # min_val = floor(min(data1 + data2))
             max_val = max(fluxes)  # max_val = ceil(max(data1 + data2))

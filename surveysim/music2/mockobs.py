@@ -136,8 +136,8 @@ def Run_MockObs(bulked, GClrealisations, CASAmock=False, saveFITS=False, writeCl
             scale_2: Larger  scale in kpc        
             """
             thresh = 0.75
-            scale_1 = 100  #100
-            scale_2 = 400 #300 #450
+            scale_1 = 20
+            scale_2 = 60
             
             DoG1_filter      = copy.deepcopy(dinf)
             DoG1_filter.beam = [scale_1/gcl.cosmoPS, scale_1/gcl.cosmoPS, 0]
@@ -148,11 +148,11 @@ def Run_MockObs(bulked, GClrealisations, CASAmock=False, saveFITS=False, writeCl
             DoG2_filter.update_Abeam()
             
             DoG_mask = np.ones_like(H1)
-            for no_use in range(3):
+            for no_use in range(2):
                 convolved_sigma1 = DoG1_filter.convolve_map(H1*DoG_mask)  ## gaussian convolution
                 convolved_sigma2 = DoG2_filter.convolve_map(H1*DoG_mask)  ## gaussian convolution
                 DoG_rel = np.divide(np.abs(convolved_sigma2-convolved_sigma1)+1e-20, convolved_sigma2+1e-20)
-                DoG_mask[np.where(DoG_rel < thresh)] = 0.4*DoG_mask[np.where(DoG_rel < thresh)]
+                DoG_mask[np.where(DoG_rel < thresh)] = 0.2*DoG_mask[np.where(DoG_rel < thresh)]
             convolved_sigma1 = DoG1_filter.convolve_map(H1)  ## gaussian convolution
             convolved_sigma2 = DoG2_filter.convolve_map(H1)  ## gaussian convolution
 
