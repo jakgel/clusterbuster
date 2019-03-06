@@ -177,21 +177,18 @@ def ABC_summaryStatistics_polarHisto(Surveys):
     """
     [SurveyA, SurveyB] = Surveys
 
-    # Filtering by redshift
-    zborder = 0.05
-    ztype = '>'
-
     norm = dbc.norm('R200', Nexp=1.0)         # In the past I used 1.5 ... because this could be a better scaling
     for Survey in Surveys:
         Survey.hist_main = dbc.Histogram2D(nbins=(32,30), fromto=[[0,2.*np.pi], [0,1.5]], norm=norm)     # angle_projected(rad), D_proj(R200)
-        Survey.expScale = 0.65
+        Survey.set_binning()
+        Survey.expScale = 0.75
 
-    polar = SurveyB.polar(zborder=zborder, ztype=ztype, normalize=True)
+    polar = SurveyB.polar(normalize=True)
     if polar[0] is None:
         HiB = 0
     else:
         HiB = polar[1][0]
-    HiA = SurveyA.polar(zborder=zborder, ztype=ztype, normalize=True)[1][0]
+    HiA = SurveyA.polar(normalize=True)[1][0]
     deviation = np.sum(np.abs(HiA-HiB))
     
     return deviation

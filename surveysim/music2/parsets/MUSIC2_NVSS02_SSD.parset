@@ -19,6 +19,8 @@ ratio   = 0.05  # Initial normalisation PRE and thermal at shockfront
 # Specify used survey A: clusters 
 surv_compl      = 0.82                                              # If < 1 seen as coverage, If > 1 seen as number of clusters (roundet to int)
 z_range         = [0.05,0.7]                                        # Gives the lower and higher boundary for z of the cosmic slice
+empicut         = False
+
 # Because of Z_range and eff_cover a filter should be generated to choose objects out of the list
 
 # Specify used survey B: observational parameters

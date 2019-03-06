@@ -120,6 +120,14 @@ class Survey(object):
             histo = self.histo
         for GCl in self.GCls:
             GCl.histo = histo
+
+        # We compute a weighting array to weight to bins at larger radii, which are larger down
+        inner = histo.bins[1][0:-1]
+        outer = histo.bins[1][1::]
+        angle = histo.ticks[0]
+        angles, z_inner = np.meshgrid(angle, inner, sparse=True)
+        angles, z_outer = np.meshgrid(angle, outer, sparse=True)
+        self.AreaHist = 2 * np.pi * (2 * np.pi) / len(angle) * (z_outer ** 2 - z_inner ** 2)
         
     def polar(self, aligned=True, normalize=True, minrel=1,  positive=False,  mirrored=False, mode='flux', conv=0.127):
 
@@ -185,15 +193,8 @@ class Survey(object):
                 halfHist_plot = np.add(np.fliplr(hist_main[:,0:int(hist_shift.shape[1]*1/2)]), hist_main[:,int(hist_shift.shape[1]*1/2):] )                  
             else:
                 halfHist_plot = np.copy(halfHist)
-                  
-            # We compute a weighting array to weight to bins at larger radii, which are larger down
-            inner = Histo.bins[1][0:-1]
-            outer = Histo.bins[1][1::]
-            angle = Histo.ticks[0]
-            angles, z_inner = np.meshgrid(angle, inner, sparse=True)
-            angles, z_outer = np.meshgrid(angle, outer, sparse=True)
-            AreaHist = 2*np.pi*(2*np.pi)/len(angle)*(z_outer**2-z_inner**2)     
-            halfHist_plot /= AreaHist**self.expA
+
+            halfHist_plot /= self.AreaHist**self.expA
             
             """ radially binned """
             part1 = np.sum(halfHist[:, int(halfHist.shape[1]/2):int(halfHist.shape[1]+1)], axis=1)[::-1]
@@ -232,7 +233,7 @@ class Survey(object):
             state = self.seed_dropout.get_state()
             self.seed_dropout.set_state((state[0], state[1], 0, state[3], state[4]))
 
-        GCls = [GCl.updateInformation(Filter=True, **self.relic_filter_kwargs) for GCl in self.GCls]
+        GCls = [GCl.updateInformation(**self.relic_filter_kwargs) for GCl in self.GCls]
 
         results = [(ii,GCl) for ii, GCl in enumerate(GCls) if len(GCl.filterRelics(**self.relic_filter_kwargs)) >= minrel and
                    get_truth(GCl.z, ztype, zborder) and GCl.largestLAS() >= minimumLAS and GCl.flux() >= GClflux
@@ -260,9 +261,8 @@ class Survey(object):
     def fetch_totalRelics(self):
         relics_list = []
 
-        zborder = 0.05
         if self.filteredClusters is None:
-            self.FilterCluster(zborder=zborder)
+            self.FilterCluster(self.cluster_filter_kwargs)
 
         for GCl in self.filteredClusters:
             relics_list += GCl.filterRelics(self.relic_filter_kwargs)
@@ -378,7 +378,7 @@ class Galaxycluster(object):
         self.Mvir = dbc.measurand(Mvir, 'Mvir', label='$M_{vir}$', un='$M_\odot$')    # Mvir   mass in solar masses
 
         """ Pre-existing electron content normalizationNorm """
-        self.PreNorm   = None
+        self.PreNorm = None
 
 
         """ A general or map specific reference """
@@ -391,7 +391,8 @@ class Galaxycluster(object):
         self.regions  = regions  # a list of the region used to seperate relics  # One to many; regions=RelicRegion('', [], rtype=1)
         self.relics   = relics   # a list of relics One to many
         self.dinfo    = replaceNone(dinfo, DetInfo())   # detection information --> One per radio map!  ... One to one ?
-        self.histo    = Histo    # Histogramm of all binned objects, anyhow a future function could provide this right out of the image(s)
+        self.histo    = Histo    # Histogram of all binned objects, anyhow a future function could provide this right out of the image(s)
+        self.AreaHist = None
         self.mockobs  = replaceNone(mockobs, MockObs(0))  # mockobs   information --> One per radio map! One to one ?
         self.compacts = []  # A list of (compact) sources that were substacted. One to many
 
@@ -470,7 +471,7 @@ class Galaxycluster(object):
             
         return [relic for relic in self.relics
                 if ((relic.flux() > minflux) and (relic.region.rtype.classi in regard) and
-                    ((shape == False) or (relic.shape_advanced().value < maxcomp)))]
+                    ((shape is False) or (relic.shape_advanced().value < maxcomp)))]
 
     def add_regions(self, regions, **filterargs):
        
@@ -1243,8 +1244,8 @@ class Relic:
     """ See Colafrancesco+2017 equ. 5 & 6 """
 
     def corrupt_alpha(self):
-        sigma = np.max(0.005, 0.1439075398254617-0.04093582*np.log10(self.flux.value))
-        self.alpha = self.alpha + np.random.normal(0, sigma, 1)
+        sigma = np.max(0.005, 0.1439075398254617-0.04093582*np.log10(self.flux.value)) #0.18
+        self.alpha.value = self.alpha.value + np.random.normal(0, sigma, 1)[0]
 
     def infer_Mach(self, Mach=None):
         """ Derive the Mach number proxy if the spectral index is known """

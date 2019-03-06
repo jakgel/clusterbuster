@@ -130,17 +130,18 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=T
         if single:
             for ii, GCl in enumerate(survey.FilterCluster()):
 
-                """ Deriving the histogram should be a functionality of the survey or the relic cluster, so this should become outdated """
+                """ Deriving the histogram should be a functionality of the survey or the relic cluster, so this should become outdated 
+                Beware that at this point, survey.Hist and gcl.Hist are the same objects!
+                
+                """
                 GCl.updateInformation(Filter=True)
                 if GCl.histo is not None and np.sum(GCl.histo.hist) != 0:
-                    print(np.sum(Histo.hist.T.flatten()))
                     inner = Histo.bins[1][0:-1]
                     outer = Histo.bins[1][1::]
                     angle = Histo.ticks[0]
                     angles, z_inner = np.meshgrid(angle, inner, sparse=True)
                     angles, z_outer = np.meshgrid(angle, outer, sparse=True)
-                    AreaHist = 2*np.pi*(2*np.pi)/len(angle)*(z_outer**2-z_inner**2)
-                    shiftHist = np.roll(Histo.hist.T, -int(aligned*(GCl.relic_pro_index)), axis=1) / AreaHist**(survey.expA)  #+1e-10
+                    shiftHist = np.roll(GCl.histo.hist.T, -int(aligned*(GCl.relic_pro_index)), axis=1) / survey.AreaHist**(survey.expA)  #+1e-10
                     # Plots the single clusters
                     fig, ax = plt.subplots(figsize=(14,14), subplot_kw=dict(projection='polar'), dpi=dpi)
                     ax.pcolormesh(Histo.bins[0], Histo.bins[1],  shiftHist, cmap=cmap)
@@ -149,8 +150,8 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=T
                     ax.arrow(0, 0, 0, 0.5, linewidth=3, width=0.005, transform=mtransforms.Affine2D().translate(int(not aligned)*(GCl.relic_pro_angle), 0) + ax.transData)
                     ax.text(0.01, 1.05, '%s' % (GCl.name.replace('_', ' ')), fontsize=20, transform=ax.transAxes)
                     if addinfo:
-                        ax.text(0.3, 0.9, 'Summed relic flux: %.2e Jy' %(np.sum(Histo.hist)), fontsize=20, transform=ax.transAxes, color='w')
-                        ax.text(0.3, 0.87, 'Ratio pro: %.2e  anti: %.2e' %(GCl.ratio_pro(), GCl.ratio_anti()), fontsize=20, transform=ax.transAxes, color='w')
+                        ax.text(0.3, 0.9, 'Summed relic flux: %.2e Jy' % (np.sum(Histo.hist)), fontsize=20, transform=ax.transAxes, color='w')
+                        ax.text(0.3, 0.87, 'Ratio pro: %.2e  anti: %.2e' % (GCl.ratio_pro(), GCl.ratio_anti()), fontsize=20, transform=ax.transAxes, color='w')
                     if title is not None:
                         ax.set_title(title, va='bottom')
                     ax.set_rticks(yticks)
@@ -1183,7 +1184,7 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
 
     make_kde.cmap_cycle = cycle(colormaps[0:len(df_combined.Survey.unique())])    #,
 
-    g = g.map_lower(make_kde, alpha=1.0/np.sqrt(NSurveys), shade=True, shade_lowest=False)
+    g = g.map_lower(make_kde, alpha=1.0/np.sqrt(NSurveys), shade=False, shade_lowest=False)
 
     # from https://stackoverflow.com/questions/52118245/python-seaborn-jointplot-does-not-show-the-correlation-coefficient-and-p-value-o
     for numbered, survey in enumerate(SurveySamples):
