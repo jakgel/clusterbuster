@@ -5,11 +5,11 @@ Created on Wed May 10 10:52:22 2017
 
 @author: jakobg
 """
-from __future__ import division,print_function
+from __future__ import division, print_function
 
 import glob
 import os                                   
-import numpy                   as np
+import numpy as np
 import clusterbuster.iout.misc as iom
 
 def AddFilesToSurvey(survey, savefolder, verbose = True, clusterwise=False):
@@ -85,9 +85,9 @@ def interpret_parset(parfile, repository='/parsets/', default='default.parset', 
     z_arr    =  [float(z) for z in   iom.str2list(comb_dict['z_range']) ]
     if oldstyle:
         # Now this parset is used to create some lists needed for this script
-        B0_arr   =  iom.createlist(iom.str2list(comb_dict['B0']       ),comb_dict['B0_N']     , interpol= comb_dict['B0_type'])
-        nu_arr   =  iom.createlist(iom.str2list(comb_dict['nu']       ),comb_dict['nu_N']     , interpol= comb_dict['nu_type'])
-        eff_arr  =  iom.createlist(iom.str2list(comb_dict['eff_range']),comb_dict['eff_steps'], interpol= comb_dict['eff_type'])[::-1]  #invert array
+        B0_arr  = iom.createlist(iom.str2list(comb_dict['B0']       ), comb_dict['B0_N']     , interpol= comb_dict['B0_type'])
+        nu_arr  = iom.createlist(iom.str2list(comb_dict['nu']       ), comb_dict['nu_N']     , interpol= comb_dict['nu_type'])
+        eff_arr = iom.createlist(iom.str2list(comb_dict['eff_range']), comb_dict['eff_steps'], interpol= comb_dict['eff_type'])[::-1]  #invert array
         returnargs = (comb_dict, B0_arr, nu_arr, eff_arr, z_arr)
     else:
         returnargs = (comb_dict, z_arr)
@@ -98,35 +98,30 @@ def interpret_parset(parfile, repository='/parsets/', default='default.parset', 
      
 """ former CW """
 
-
 def brightestPixel(image):  # Runs into issues if there is more than one brightest pixel, this is also why a smoothed image is prefered
 
     VMax = image.max() 
     return np.where(image == VMax)
 
 
-
 def cmask(image,radius,center=None):
     """ takes the 2D-array and creates a mask with a radius of 'radius' elements
     If not specified by index the center of the image is given as the center.
-    inspired by http://stackoverflow.com/questions/8647024/how-to-apply-a-disc-shaped-mask-to-a-numpy-array 
+    inspired by http://stackoverflow.com/questions/8647024/how-to-apply-a-disc-shaped-mask-to-a-numpy-array
     Returns: ... """
-    
 
-    
+
     if center is None:
         center = int(image.shape[0]/2.), int(image.shape[1]/2.)
-
 
     a, b = center[0], center[1]
     n1 = image.shape[0]
     n2 = image.shape[1]
 
-    
-    y,x = np.ogrid[-a:n1-a, -b:n2-b]
+    y, x = np.ogrid[-a:n1-a, -b:n2-b]
     mask = x*x + y*y >= radius*radius
 
-    return mask  
+    return mask
 
 
 def gaussian_pseudo(x,x0,sigma):
@@ -140,15 +135,15 @@ def Recenter(GCl, image, subp, image2mask=None, setto=0.): # a function of galax
     # draw region of Mwir around current center """
     # find maximum within Rvir ...
     radius = GCl.R200/(146.48/subp)
-    mask      = cmask(image,radius)  #(1+GCl.z)
+    mask = cmask(image, radius)  #(1+GCl.z)
     masked_im = np.copy(image)
     masked_im[mask] = -10
     cen_x, cen_y = brightestPixel(masked_im)
     off_x = cen_x[0] - int(masked_im.shape[0]/2)
     off_y = cen_y[0] - int(masked_im.shape[1]/2)
     
-    GCl.RA.value       = GCl.RA  - off_y* 146.48/(subp*GCl.cosmoPS*3600)/(1+GCl.mockobs.z_snap)
-    GCl.Dec.value      = GCl.Dec + off_x* 146.48/(subp*GCl.cosmoPS*3600)/(1+GCl.mockobs.z_snap)
+    GCl.RA.value  = GCl.RA  - off_y * 146.48/(subp*GCl.cosmoPS*3600)/(1+GCl.mockobs.z_snap)
+    GCl.Dec.value = GCl.Dec + off_x * 146.48/(subp*GCl.cosmoPS*3600)/(1+GCl.mockobs.z_snap)
     GCl.massproxy_mask = mask
     
     """ Masks relic emission outside R200 of the given cluster """
@@ -166,11 +161,9 @@ def Mask(image, radius, center, setto=-10):
     # find minimal contour within rvir that divides both clusters
     # use this contour to mask the outer regions
     # another massive cluster in the image
-    mask      = cmask(image,radius, center=center)  #(1+GCl.z)
+    mask = cmask(image, radius, center=center)  #(1+GCl.z)
     masked_im = np.copy(image)
     masked_im[mask] = setto
-#    plt.imshow(masked_im)
-#    plt.show()
     
     return masked_im, mask
 
