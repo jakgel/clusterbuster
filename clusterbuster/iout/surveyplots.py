@@ -1357,10 +1357,8 @@ def plot_cummulative_flux(surveys, average_relic_count=False):
     limit = surveys[-1].GCls[0].dinfo.rms*1e3*8
 
     n_bins = 1200
-    print(surveys[-1].GCls[0].dinfo.limit, surveys[-1].GCls[0].dinfo.rms, np.log10(limit*0.5))
     bins = np.linspace(np.log10(limit*0.5), np.log10(100000), num=n_bins)
     for survey in [surveys[0]]:
-
         clusters = survey.FilterCluster(minrel=1)
         fluxes = [np.log10(cl.flux()) for cl in clusters]
         n_relics = [len(cl.filterRelics(**survey.relic_filter_kwargs)) for cl in clusters]
@@ -1413,3 +1411,6 @@ def plot_cummulative_flux(surveys, average_relic_count=False):
     print('Gonna save:  %s' % (nowfolder + nowfile))
     plt.savefig('%s%s.pdf' % (nowfolder, nowfile))
     plt.clf()
+
+
+    print('survey.relic_filter_kwargs', survey.relic_filter_kwargs)

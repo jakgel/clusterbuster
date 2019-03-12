@@ -88,7 +88,7 @@ class Survey(object):
         self.F_anti = 0        # Pro ratio
 
         #filter arguments for clusters and relics
-        self.relic_filter_kwargs = {}   #Filter=True, maxcomp=None, shape=False, regard=[1,2,3]
+        self.relic_filter_kwargs = {"Filter":True}   #maxcomp=None, shape=False, regard=[1,2,3]
         self.cluster_filter_kwargs = {"zmin": 0.05}
 
         # Output related properties
@@ -117,7 +117,10 @@ class Survey(object):
     def set_binning(self, histo=None):
 
         if histo is None:
-            histo = self.histo
+            histo = self.hist_main
+        else:
+            self.hist_main = histo
+
         for GCl in self.GCls:
             GCl.histo = histo
 
@@ -127,8 +130,8 @@ class Survey(object):
         angle = histo.ticks[0]
         angles, z_inner = np.meshgrid(angle, inner, sparse=True)
         angles, z_outer = np.meshgrid(angle, outer, sparse=True)
-        self.AreaHist = 2 * np.pi * (2 * np.pi) / len(angle) * (z_outer ** 2 - z_inner ** 2)
-        
+        self.AreaHist = (2 * np.pi)**2 / len(angle) * (z_outer ** 2 - z_inner ** 2)
+
     def polar(self, aligned=True, normalize=True, minrel=1,  positive=False,  mirrored=False, mode='flux', conv=0.127):
 
         """ 
@@ -185,7 +188,7 @@ class Survey(object):
                 
         if len(sigstats) > 0:
             if normalize: 
-                hist_main = hist_main/max(len(sigstats), 0)
+                hist_main = hist_main/max(len(sigstats), 1)
             halfHist = np.add(hist_main[:,0:int(hist_shift.shape[1]*1/2)], np.fliplr(hist_main[:,int(hist_shift.shape[1]*1/2):]) )
 
             """ Transformation for plotting: Only works if histo was already set"""
@@ -207,7 +210,8 @@ class Survey(object):
                 ticks_r = [-h for h in reversed(Histo.ticks[1])]+[h for h in Histo.ticks[1]]
 
             radial = gaussian_filter1d(radial, conv/self.hist_main.width[1], mode='constant')
-            #radial = radial/np.sum(radial)
+            if normalize:
+                radial = radial/np.sum(radial)
             return halfHist, (radial, ticks_r), halfHist_plot, sigstats, mesh
         else:
             return None, (None, None), None, None, None
@@ -459,18 +463,18 @@ class Galaxycluster(object):
     # The lambda function does make the file unpickelable
     #  self.Filter = lambda x: (x.flux > self.minflux and (x.iner_rat/(x.LAS/(x.dinfo.beam[0]/60.))) < self.maxcomp)  
 
-    def filterRelics(self, Filter=True, maxcomp=None, shape=False, regard=[1,2,3]):
+    def filterRelics(self, Filter=True, maxcomp=None, shape=False, minrms = 8, regard=[1,2,3]):
 
         if Filter:
-            minflux = self.dinfo.rms * 8 * 1000  #microjansky to millijansky
+            self.minflux = self.dinfo.rms * minrms * 1000  #microjansky to millijansky
             if maxcomp is None:
                 maxcomp = self.maxcomp
         else:
             maxcomp = 1e9
-            minflux = -1
+            self.minflux = -1
             
         return [relic for relic in self.relics
-                if ((relic.flux() > minflux) and (relic.region.rtype.classi in regard) and
+                if ((relic.flux() > self.minflux) and (relic.region.rtype.classi in regard) and
                     ((shape is False) or (relic.shape_advanced().value < maxcomp)))]
 
     def add_regions(self, regions, **filterargs):
@@ -715,8 +719,7 @@ class Galaxycluster(object):
                                            std=[abs(ratio_val-min(self.ratio_pro(),self.ratio_anti())),
                                                 abs(max(self.ratio_pro(),self.ratio_anti())-ratio_val)],
                                            vrange=[2e-3,1])
-    
-    
+
     def gettypestring(self, vec=False) :
         """ Returns a typestring for the diffusive emission components in this galaxy cluster.
         In the case of several emission types of different candidate status I have to think of an solution"""
@@ -1302,7 +1305,7 @@ class Relic:
 #                self.T_down   = dbc.measurand( np.sum(self.wT_down)/np.sum(self.sparseW)            , 'T_dow'  , label='$\overline{T_\\mathrm{down}}}$', un = 'keV' ) 
 
         if self.wAlpha is not None:
-            self.alpha = dbc.measurand(-np.sum(self.wAlpha)/np.sum(self.sparseW), 'alpha', label='$\\alpha$', un=None)
+            self.alpha = dbc.measurand(-np.sum(self.wAlpha)/np.sum(self.sparseW), 'alpha_int', label='$\\alpha_\mathrm{int}$', un=None)
 #                self.infer_Mach()
 
     def asign_cluster(self, GCl):

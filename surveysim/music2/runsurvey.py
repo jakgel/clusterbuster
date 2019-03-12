@@ -634,7 +634,7 @@ def mupro_Output_NicePickleClusters( in_queue, output):
     return
 
 
-def DoRun(inputs, smt, verbose=False, countmax=200): #countmax=250
+def DoRun(inputs, smt, verbose=False, countmax=2000): #countmax=200
     """ Please mind that this procedure determines early if the number of detected relics becomes to large!"""  
     (pase, survey) = inputs
     #===
