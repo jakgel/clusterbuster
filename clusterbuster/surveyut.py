@@ -12,6 +12,8 @@ import os
 import numpy as np
 import clusterbuster.iout.misc as iom
 
+from scipy.stats import logistic
+
 def AddFilesToSurvey(survey, savefolder, verbose = True, clusterwise=False):
     """
     Adds galaxy cluster in a specified folder to an survey.
@@ -44,7 +46,7 @@ def AddFilesToSurvey(survey, savefolder, verbose = True, clusterwise=False):
                  GCls.append(Cluster)
              os.remove(filename) 
 
-    GCls = sorted(GCls, key= iom.Object_natural_keys)
+    GCls = sorted(GCls, key=iom.Object_natural_keys)
     survey.GCls = GCls
      
     if len(GCls) == 0:
@@ -235,7 +237,7 @@ def assign_snaps(snaplist_z, boundaries_z, VCM, snaps_Nclusters, sigma_z=0.2, us
     if verbose:
         if logmode == 'long':
             print('z_central %.4f' % z_central, 'weighted_snap', weighted_snap, 'p_counts',
-                  ['%.1e' % (w*N) for w,N in zip(weighting,snaps_Nclusters)])
+                  ['%.1e' % (w*N) for w, N in zip(weighting,snaps_Nclusters)])
         elif logmode == 'short':
             print('z_central %.4f' % z_central, 'N_GCl', len(clusterlist))
 
@@ -250,7 +252,17 @@ def discovery_prop(relics, a=3, b=0.10):
            a is the normalization of the strength
            b is the offset
            """
-    from scipy.stats import logistic
-    
     probs = logistic.cdf([np.log10(b/relic.shape_advanced().value)*a for relic in relics])
+    return probs
+
+
+def discovery_prop_pca(relics, a=0.08, b=-0.08):
+    """ Takes a list of relics and takes returns an array of they weighted discovery probabilities according
+    to their shape parameter and the discovery function
+
+    Input: relics a list of ClusterBuster relics
+           a is the normalization of the strength
+           b is the offset
+           """
+    probs = logistic.cdf([((relic.shape_advanced_pca().value - b) / a) for relic in relics])
     return probs

@@ -205,8 +205,7 @@ def ABC_summaryStatistics_polarHisto_simple(Surveys):
     [SurveyA, SurveyB] = Surveys
 
     # Filtering by redshift
-    zborder = 0.05
-    ztype = '>'
+    zmin = 0.05
 
     norm = dbc.norm('R200', Nexp=1.5)  # I used Nexp=2.0 in the past! ANd maybe I just should use 1.0!!!!!!!!!!!!!!
     for Survey in Surveys:
@@ -217,8 +216,8 @@ def ABC_summaryStatistics_polarHisto_simple(Surveys):
     if SurveyB.polar()[0] is None:
         HiB = 0
     else:
-        HiB = SurveyB.polar(zborder=zborder, ztype=ztype, normalize=True)[1][0]
-    HiA = SurveyA.polar(zborder=zborder, ztype=ztype, normalize=True)[1][0]
+        HiB = SurveyB.polar(zmin=zmin, normalize=True)[1][0]
+    HiA = SurveyA.polar(zmin=zmin, normalize=True)[1][0]
     deviation = np.sum(np.abs(HiA - HiB))
 
     return deviation

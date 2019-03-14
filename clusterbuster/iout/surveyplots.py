@@ -1308,7 +1308,7 @@ def create_shape_LAS_plot(surveys, relic_filter_kwargs={}):
             zi = k(np.vstack([xi.flatten(), yi.flatten()]))
 
             # contour
-            ax.pcolormesh(xi, yi, zi.reshape(xi.shape), shading='gouraud', cmap=plt.cm.BuGn_r)
+            ax.pcolormesh(xi, yi, zi.reshape(xi.shape), shading='gouraud', cmap=sns.palplot(sns.light_palette("orange", reverse=True))) # plt.cm.BuGn_r
             ax.contour(xi, yi, zi.reshape(xi.shape))
             # ========
 
@@ -1317,10 +1317,10 @@ def create_shape_LAS_plot(surveys, relic_filter_kwargs={}):
             df = survey.fetch_pandas(plotmeasures, keys="dic")
             shape = df["iner_rat"]
             LAS = df["LAS"]
-            ax.scatter(LAS, shape, alpha=0.6, c='cornflowerblue', zorder=10)  # , lc='r'
+            ax.scatter(LAS, shape, alpha=0.8, c='cornflowerblue', zorder=10)  # , lc='r'
 
 
-    ax.plot(np.log10(LAS_line), np.log10(shape_line), ls='--', lw=4, alpha=0.5, c="grey")
+    #ax.plot(np.log10(LAS_line), np.log10(shape_line), ls='--', lw=4, alpha=0.5, c="grey")
     ax.tick_params(direction="in", which='both')
     ax.set_xlim([xmin, xmax])
     ax.set_ylim([ymin, ymax])
@@ -1329,8 +1329,8 @@ def create_shape_LAS_plot(surveys, relic_filter_kwargs={}):
         #ax.set_ylim([-1.5, 0])
         #ax.set_xticks([2, 3, 5, 7, 10], minor=True)
 
-    ax.text(0.285, 0.485, "Correlation", transform=plt.gca().transAxes)
-    ax.text(0.56, 0.60, "'Unusual roundish'", transform=plt.gca().transAxes)
+    #ax.text(0.285, 0.485, "Correlation", transform=plt.gca().transAxes)
+    #ax.text(0.56, 0.60, "'Unusual roundish'", transform=plt.gca().transAxes)
 
     ax.set_xlabel("$\\log_{10}(\mathrm{LAS\,[arcmin])}$")
     ax.set_ylabel("$\\log_{10}(\mathrm{shape}\,s)$")

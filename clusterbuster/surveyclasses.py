@@ -14,11 +14,10 @@ from __future__ import division,print_function,absolute_import
 import operator
 import os
 import copy
-import pandas as pd  
-#import warnings
 
 import ephem as ephem
 import numpy as np
+import pandas as pd
 import clusterbuster.mathut as maut
 import clusterbuster.surveyut as surut
 import clusterbuster.fitsut as fitsut
@@ -28,8 +27,6 @@ import scipy.stats.mstats as mstats #.gmean
 import scipy.ndimage as ndi
 import matplotlib.patches as patches
 import NFW.mass_concentration as massC
-
-#from .mathut  import *
 
 from astropy import units as u
 from astropy.coordinates import SkyCoord
@@ -132,7 +129,7 @@ class Survey(object):
         angles, z_outer = np.meshgrid(angle, outer, sparse=True)
         self.AreaHist = (2 * np.pi)**2 / len(angle) * (z_outer ** 2 - z_inner ** 2)
 
-    def polar(self, aligned=True, normalize=True, minrel=1,  positive=False,  mirrored=False, mode='flux', conv=0.127):
+    def polar(self, aligned=True, normalize=True, positive=False,  mirrored=False, mode='flux', conv=0.127):
 
         """ 
         Input: needs to histogram of the survey to be set, radial axis: 2 N, polar axis: 4 M
@@ -162,7 +159,7 @@ class Survey(object):
         sigstats = []
 
         if self.filteredClusters is None:
-            self.FilterCluster()
+            self.FilterCluster(**self.cluster_filter_kwargs)
         for ii, GCl in enumerate(self.filteredClusters):
             GCl.histo = self.hist_main
             GCl.updateInformation(**self.relic_filter_kwargs)
@@ -222,7 +219,7 @@ class Survey(object):
         else:
             self.seed_dropout = np.random.RandomState()
 
-    def FilterCluster(self, minrel=1, zborder=0, ztype='>', minimumLAS=0, GClflux=0, index=None, getindex=False,
+    def FilterCluster(self, minrel=1, zmin=0, minimumLAS=0, GClflux=0, index=None, getindex=False,
                       verbose=False):
         """ Gives all the cluster with the relics that fullfill given criteria """
 
@@ -240,7 +237,7 @@ class Survey(object):
         GCls = [GCl.updateInformation(**self.relic_filter_kwargs) for GCl in self.GCls]
 
         results = [(ii,GCl) for ii, GCl in enumerate(GCls) if len(GCl.filterRelics(**self.relic_filter_kwargs)) >= minrel and
-                   get_truth(GCl.z, ztype, zborder) and GCl.largestLAS() >= minimumLAS and GCl.flux() >= GClflux
+                   get_truth(GCl.z, '>', zmin) and GCl.largestLAS() >= minimumLAS and GCl.flux() >= GClflux
                    and GCl.stoch_drop(self.seed_dropout)]
 
         """ Should also give an result, if no cluster fullfills the criterion """
@@ -266,7 +263,7 @@ class Survey(object):
         relics_list = []
 
         if self.filteredClusters is None:
-            self.FilterCluster(self.cluster_filter_kwargs)
+            self.FilterCluster(**self.cluster_filter_kwargs)
 
         for GCl in self.filteredClusters:
             relics_list += GCl.filterRelics(self.relic_filter_kwargs)
@@ -300,7 +297,7 @@ class Survey(object):
     
         """ This very ugly steps just creates a List of (relic,GCL) from the survey
         As in the future galaxy clusters will gain be a property of relics again this step will be shorter  and more readable"""
-        for GCl in survey.FilterCluster():
+        for GCl in survey.FilterCluster(**survey.cluster_filter_kwargs):
                 GCl.updateInformation()
                 list_full.append([(GCl,relic) for relic in GCl.filterRelics(**survey.relic_filter_kwargs)])
                 
@@ -336,7 +333,7 @@ class Survey(object):
 
 
 # Define a new object: relic
-class Galaxycluster(object):           
+class Galaxycluster(object):
 
     """
       Simple class for representing a galaxy cluster in our visible universe.
@@ -347,16 +344,16 @@ class Galaxycluster(object):
       ... might add astropy functionalities --> including using astropy quantities (quantity + unt)
       ... might write it for python 3.X
       ... In add information: Roundish relics should e kept, with the notion that their are roundish
-    """             
+    """
 
     def __init__(self, name, RA, Dec, z, M200=1e14, M500=0, M100=0, Mvir = 0, Lx=0, Lx_lit=0, flux_ps=0, flux_lit=0,
                  Prest100=0, relics=[], regions=[], halo=False, dinfo=None, ClassFlag=False, mockobs=None,
                                       Image=np.zeros((2,2)), status=None, Histo=None, reference=None, mapdic=dict()):
-      
+
         """
         parameters
-        """  
-        
+        """
+
         self.name = name  #name.replace('_', ' ')
         self.RA   = dbc.measurand(RA, 'RA', un='deg')
         self.Dec  = dbc.measurand(Dec, 'Dec', un='deg')
@@ -366,7 +363,7 @@ class Galaxycluster(object):
         """  We differentiate several (currently two) measures of the clsuter central position 
         One is the center of the dipole (we assume a double merger) of the cluster              sky_double
         The other one is the position of the X-Ray brightness peak of the more massive cluster  sky_main 
-        """ 
+        """
         RA_d, Dec_d = RA, Dec # Curenty not implemented, DEBUGGING
         RA_m, Dec_m = RA, Dec # Curenty not implemented, DEBUGGING
         self.sky_double = SkyCoord(RA_d, Dec_d, frame='icrs', unit='deg')
@@ -375,7 +372,7 @@ class Galaxycluster(object):
         # Masses and mass proxies
         self.Lx        = dbc.measurand(Lx, 'Lx', label='$L_{500,0.1-2.4}$', un='erg\\,s$^{-1}$') # X-Ray luminosity in erg/s from 0.1-2.4 keV within R500
         self.Lx_lit    = dbc.measurand(Lx_lit, 'Lx_lit', label='$L_{500,0.1-2.4}$', un='erg\\,s$^{-1}$') # X-Ray luminosity in erg/s from 0.1-2.4 keV within R500
-         
+
         self.M200 = dbc.measurand(M200, 'M200', label='$M_{200}$', un='$M_\odot$')    # virial mass in solar masses
         self.M500 = dbc.measurand(M500, 'M500', label='$M_{500}$', un='$M_\odot$')    # M500   mass in solar masses
         self.M100 = dbc.measurand(M100, 'M100', label='$M_{100}$', un='$M_\odot$')    # M100   mass in solar masses
@@ -387,9 +384,9 @@ class Galaxycluster(object):
 
         """ A general or map specific reference """
         self.reference = reference
-        
 
-        """ Maps specific properties ... in the future this could be a list of map-classes """            
+
+        """ Maps specific properties ... in the future this could be a list of map-classes """
         #=== Classes attached to it
         self.status   = status   # A list of possible atatuses
         self.regions  = regions  # a list of the region used to seperate relics  # One to many; regions=RelicRegion('', [], rtype=1)
@@ -400,70 +397,70 @@ class Galaxycluster(object):
         self.mockobs  = replaceNone(mockobs, MockObs(0))  # mockobs   information --> One per radio map! One to one ?
         self.compacts = []  # A list of (compact) sources that were substacted. One to many
 
-        #== 
-        self.halo = halo                                     
+        #==
+        self.halo = halo
 
         #=== Image --> Library of Image arrays with Image (2D numpy array or astropy object with metainformation & labels)
         # an dictionary of 2D numpy array, attached to frequencies, mock observations and other stuff
-        self.mapdic     = mapdic   # a list of paths to the [vanilla] or [vanilla, subtracted, subtracted_convolved, residuum] 
+        self.mapdic     = mapdic   # a list of paths to the [vanilla] or [vanilla, subtracted, subtracted_convolved, residuum]
         self.spixel     = 0        # has to become filled the pixle size --> however pixelsize is also part of detinfo, ... at the end I might merge an map-class and detinfo class
 #        self.center    = []       # has to become filled with two center coordiantes
         self.massproxy_mask = []   # a mask that can be used to mask the radio image, if it has the same size like the image that was used to create the mask. So ... it has many ifs
         self.ClassFlag  = int(ClassFlag)
-        
-        
+
+
         ## All Fluxes are in mJy
         self.flux_lit   = dbc.measurand(flux_lit, 'F_lit', un='mJy', label='$F_\mathrm{lit}$')    # Literature flux
         self.Prest100   = Prest100
         #  contaminating sources:
-        self.contSour  = []         # A list of contaminating sources, The source themself could be represented by objects   
-       
-        
+        self.contSour  = []         # A list of contaminating sources, The source themself could be represented by objects
+
+
         """ filter criteria """
         self.maxcomp    = 0.17   # shape criterion
         self.updateInformation(massproxis=True)           # Information with added value:
 
- 
+
     """
     functions
     """
-    def set_center(self): 
+    def set_center(self):
         """ This function does not have any current use.
-        
+
         input: sky coordinates
-        
+
         At its completed state it should be used to redefine the cluster centre.
         This however is only of use if the the polary binned histogramms are adjusted to that.
         At this step is currently done on the fly, using this function is a thing of future versions """
 
     def maps_update(self, nparray, mapname, fitsname, dinfo=None):
         """ This functions is used to write a .fits file to disk. and to update the map dictionary
-        
+
         Input arguments:
             The numpy array map
             The mapname
             The fitsname
             The detection information
-            
+
         Currently, there is a detour by copying the dictionary.
         I did this to counter the effect, that the dictionaries of all galaxy clusters ended up do be the same.
         """
         if dinfo is None:
             dinfo = self.dinfo
-        
+
         mapdic = copy.deepcopy(self.mapdic)
         folder = os.path.dirname(fitsname)
         if not os.path.exists(folder):
             os.makedirs(folder)
-        fitsut.map2fits(nparray, dinfo, fitsname)   # s_pixel, center1, center2  
+        fitsut.map2fits(nparray, dinfo, fitsname)   # s_pixel, center1, center2
         mapdic[mapname] = fitsname
         self.mapdic = mapdic
 
-    #==== importing dill and 'dilling' the objects instead of pickling can help     
+    #==== importing dill and 'dilling' the objects instead of pickling can help
     # The lambda function does make the file unpickelable
-    #  self.Filter = lambda x: (x.flux > self.minflux and (x.iner_rat/(x.LAS/(x.dinfo.beam[0]/60.))) < self.maxcomp)  
+    #  self.Filter = lambda x: (x.flux > self.minflux and (x.iner_rat/(x.LAS/(x.dinfo.beam[0]/60.))) < self.maxcomp)
 
-    def filterRelics(self, Filter=True, maxcomp=None, shape=False, minrms = 8, regard=[1,2,3]):
+    def filterRelics(self, Filter=True, maxcomp=None, shape=False, shape_pca=False, minrms = 8, regard=[1,2,3]):
 
         if Filter:
             self.minflux = self.dinfo.rms * minrms * 1000  #microjansky to millijansky
@@ -472,43 +469,44 @@ class Galaxycluster(object):
         else:
             maxcomp = 1e9
             self.minflux = -1
-            
+
         return [relic for relic in self.relics
                 if ((relic.flux() > self.minflux) and (relic.region.rtype.classi in regard) and
-                    ((shape is False) or (relic.shape_advanced().value < maxcomp)))]
+                    ((shape is False) or (relic.shape_advanced().value < maxcomp))) and
+                    ((shape_pca is False) or (surut.discovery_prop_pca([relic])[0] > np.random.uniform(0, 1, 1)[0]))]
 
     def add_regions(self, regions, **filterargs):
-       
+
         if len(regions) > 0:
             self.regions = self.regions + regions
             self.updateInformation(**filterargs)
 
     def add_relics(self, relics, **filterargs):
-        
+
         if len(relics) > 0:
             self.relics = self.relics + relics
             self.updateInformation(**filterargs)
-#     
+#
 #    def cutout_relics(self, relics = lambda x: x.relics,  Filter=False):
-#        
+#
 #        # use filter to get to now which relics you extract from the maps
 #        # ...
-#        Image = self.Image 
-#        # apply image mask based on contours        
-#        
+#        Image = self.Image
+#        # apply image mask based on contours
+#
 #        return Image
-       
+
     def updateInformation(self, massproxis=False, **filterargs):
         """ Updates the cluster information, based on the associated regions/relics
             Also includes properties, which are by definition accociated to clusters with radio relics
-        """     
+        """
 
         # Astropy cosmology
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.27)
         self.cosmoDL = self.cosmo.luminosity_distance(self.z.value).cgs.value # cm
         self.cosmoPS = self.cosmo.kpc_proper_per_arcmin(self.z.value).value /60  # kpc/''
 
-        # Computes M200 from other mass proxies if needed  
+        # Computes M200 from other mass proxies if needed
         if massproxis:
             self.infer_M200_MX(self.M500, 500)
             self.infer_M200_MX(self.M100, 100)
@@ -525,7 +523,7 @@ class Galaxycluster(object):
             """
             self.Mvir = self.M(178)   # virial mass in solar masses
             self.Rvir = self.R(178)   # virial radius in Mpc (comoving volume?)
-          
+
             """Development """
             if self.M200.value == 0:
                 self.M200.value = np.nan
@@ -545,15 +543,15 @@ class Galaxycluster(object):
         self.largestLAS = dbc.measurand(0, 'LASmax', un='kpc', label='LAS$_\mathrm{max}$')
         if self.histo is not None:
             self.histo.hist = 0*self.histo.hist
-        
+
         # This includes the option to filter relics due to certain criteria
         for relic in self.filterRelics(**filterargs):
             relic.asign_cluster(self)
             self.area += relic.area
-            self.area100kpc += relic.area * (self.cosmoPS*60/100)**2 
+            self.area100kpc += relic.area * (self.cosmoPS*60/100)**2
             self.Dproj.value = np.divide((np.multiply(self.Dproj, self.flux) +  np.multiply(relic.Dproj,relic.flux)), (self.flux+relic.flux))
-            self.Dproj_pix.value = np.divide((np.multiply(self.Dproj_pix, self.flux) + np.multiply(relic.Dproj_pix, relic.flux)), (self.flux+relic.flux)) 
-            self.Dproj.set_std(max(0.1*self.Dproj, 100.)) 
+            self.Dproj_pix.value = np.divide((np.multiply(self.Dproj_pix, self.flux) + np.multiply(relic.Dproj_pix, relic.flux)), (self.flux+relic.flux))
+            self.Dproj.set_std(max(0.1*self.Dproj, 100.))
             self.Dproj_pix.set_std(max(0.1*self.Dproj_pix, 100.))
             self.flux += relic.flux
             self.flux.std_add(relic.flux.std)
@@ -562,7 +560,7 @@ class Galaxycluster(object):
             self.flux_ps += relic.flux_ps
             self.flux_ps.std_add(relic.flux_ps.std)
             self.largestLAS.value = max(self.largestLAS(), relic.LAS())
-            #self.regions.append(relic.region) """Created BUG; update needed? 
+            #self.regions.append(relic.region) """Created BUG; update needed?
             self.area.std += [0.2*np.sqrt(relic.area/self.dinfo.Abeam[1])]*2                 # arcmin^2
             self.area100kpc.std += [area*(self.cosmoPS*60/100)**2 for area in relic.area.std]   # in (100kpc)^2
             self.accumHisto(relic.polHist)
@@ -573,7 +571,7 @@ class Galaxycluster(object):
 
     def accumHisto(self, Hist):
         """ Adds histograms of sparse numpy arrays """
-        
+
         if self.histo is not None and Hist is not None:
             self.histo.hist += Hist.A
 
@@ -596,7 +594,7 @@ class Galaxycluster(object):
         """ works with https://github.com/joergdietrich/NFW the original mass overdensity based dependent
         & depends on  z"""
         umass = u.Quantity(m, u.solMass)
-        return  massC.m200_to_mdelta(umass, massC.duffy_concentration, overdensity, args=(self.z, self.cosmo)).value 
+        return  massC.m200_to_mdelta(umass, massC.duffy_concentration, overdensity, args=(self.z, self.cosmo)).value
 
 
     def M(self, overdensity=200): # the original virial mass overdensity based on z
@@ -605,37 +603,37 @@ class Galaxycluster(object):
             return dbc.measurand(result, 'M%i' % overdensity, label='$M_{%i}$' % overdensity, un='$M_\odot$')
         else:
             return dbc.measurand(0, 'M%i' % overdensity, label='$M_{%i}$' % overdensity, un='$M_\odot$')
-        
+
     def R(self, overdensity=200):
         # inspired by http://www.star.bris.ac.uk/bjm/lectures/cluster-cosmology/3-scaling.pdf
         #M200 = 4np.pi/3 * overdensity * rho_crit *  r(200)**3
         f_a = 3.0857e21  # kpc to cm
-        f_b = 1.98855e33 # solar masses g to 
+        f_b = 1.98855e33 # solar masses g to
         rho_crit = self.cosmo.critical_density(self.z.value) #<Quantity 9.31000324...e-30 g / cm3>
         result = np.power( self.M(200)*f_b / ( 4*np.pi/3 * overdensity * rho_crit.value) ,  1./3. ) / f_a
         return dbc.measurand(result, 'R%i' % overdensity, label='$R_{%i}$' % overdensity, un='$kpc$')
-        
+
     def infer_M200_LX(self):
 
         if self.M200() == 0 and self.Lx() != 0:
             masses_checked = [10**m for m in np.arange(13.5, 16, 0.01)]
             masses_tested = []
-            for m in masses_checked: 
+            for m in masses_checked:
                 masses_tested.append( np.abs(np.log(self.comp_LX_M200(m)/self.Lx)) )
             m_index = np.argmin(masses_tested)
             self.M200.value = masses_checked[m_index]   # [0:2pi]
-          
+
     def infer_M200_MX(self, Mx, x):
         """ This method is VERY slow, it takes around 2 seconds per computation """
 
         if self.M200() == 0 and Mx() != 0:
             masses_checked = [10**m for m in np.arange(13.0, 16, 0.03)]
             masses_tested = []
-            for m in masses_checked: 
+            for m in masses_checked:
                 masses_tested.append(np.abs(np.log(self.comp_M(m,x)/Mx)))
             m_index = np.argmin(masses_tested)
-            self.M200.value = masses_checked[m_index]   # [0:2pi]      
-                      
+            self.M200.value = masses_checked[m_index]   # [0:2pi]
+
     # inspired by Boehringer et al 2014  (also see Nuza+2017)
     def infer_LX_M200(self):
 
@@ -647,12 +645,12 @@ class Galaxycluster(object):
         # To factor for converting flux [Jy?] to power (erg/s)
         return 1e-29*(4 * np.pi*np.power(self.cosmoDL*1e-2, 2))
 
-    
+
     def relics_polarDistribution(self, histo=None, **kwargs):
         """ This function identifies to axis of preferred radio emission in the galaxy cluster
             In the first step the dividing line that minimizes/maximizes an regression criterium.
             In the next step the fluxes within these regions are computed.
-            
+
             This procedure depends on gcl.histo, if flux is outside the given range (radius etc)
             it won't be put into consideration
         """
@@ -692,25 +690,25 @@ class Galaxycluster(object):
             self.pro1 = np.sum(maut.polar_from_to(collabsed, [int(self.relic_pro_index-1./4.*N), int(self.relic_pro_index + 1./4.*N)])) + eps
             self.pro2 = np.sum(collabsed) - self.pro1 + 2.*eps
 
-            self.anti1 = np.sum(maut.polar_from_to( collabsed, [int(self.relic_anti_index),int(self.relic_anti_index + 1./2.*N)])) + eps 
-            self.anti2 = np.sum(collabsed) - self.anti1 + 2.*eps 
-    
+            self.anti1 = np.sum(maut.polar_from_to( collabsed, [int(self.relic_anti_index),int(self.relic_anti_index + 1./2.*N)])) + eps
+            self.anti2 = np.sum(collabsed) - self.anti1 + 2.*eps
+
             # simple but inefficient way to make sure that the vectors have one and not two major directions
             if self.pro2 / self.pro1 > 1:
-     
+
                 self.relic_pro_index = int((self.relic_pro_index + len(fitarray_pro)/2) % len(fitarray_pro))
                 self.relic_pro_angle = histo.ticks[0][self.relic_pro_index]      # [0:2pi]
                 self.pro1, self.pro2 = self.pro2, self.pro1
-    
+
             if self.anti2 / self.anti1 > 1:
-                
+
                 self.relic_anti_index = int((self.relic_anti_index + len(fitarray_pro)/2) % len(fitarray_pro))
                 self.relic_anti_angle = histo.ticks[0][self.relic_anti_index]   # [0:2pi]
                 self.anti1, self.anti2 = self.anti2, self.anti1
 
         else:
             self.pro1, self.pro2, self.anti1, self.anti2 = eps, eps, eps, eps
-            
+
         # Divide flux in up- and downside emission
         self.ratio_pro = dbc.measurand(self.pro2 / self.pro1, 'ratio_pro', label='ratio$_\mathrm{pro}$',  vrange=[2e-3,1])
         self.ratio_anti = dbc.measurand(self.anti2 / self.anti1, 'ratio_ant', label='ratio$_\mathrm{anti}$', vrange=[2e-3,1])
@@ -723,7 +721,7 @@ class Galaxycluster(object):
     def gettypestring(self, vec=False) :
         """ Returns a typestring for the diffusive emission components in this galaxy cluster.
         In the case of several emission types of different candidate status I have to think of an solution"""
-        
+
         tarr = [0]*4
 
         for reg in self.regions:
@@ -734,15 +732,15 @@ class Galaxycluster(object):
             if reg.rtype.classi == 2:
                 tarr[1] = 1.0-0.6*int(reg.candidate)
                 tarr[2] = 1.0-0.6*int(reg.candidate)
-             
+
         if len(self.regions) > 1 and tarr[2] == 0:
             tarr[0] = 0.5
-        
+
         if self.halo == 'TRUE':
-            tarr[3] = 1.0 
+            tarr[3] = 1.0
         if self.halo == 'CAND':
             tarr[3] = 0.4
-                
+
         if vec:
             return tarr
         else:
@@ -753,30 +751,30 @@ class Galaxycluster(object):
             tstr += '\\textcolor{black!%.f}{*}'           % (tarr[0]*100)
             return tstr
 
-    
+
     def getstatusstring(self, zmin=0.05) :
         """ Returns if the galaxy cluster was considered and the analysisi and the statusstring  descriping either the total flux density value or
             the resson why the cluster was not included in the analysisi """
-        
+
         if self.flux > 0 and self.z > zmin:
             return True, '$%.1f$' % self.flux.value
         else:
             """ NVSS specific """
-            
+
             status = self.status.split(',')
             statuses = []
-            
+
             if self.z < zmin:
                 statuses.append('low z')
-            
+
             if self.flux() == 0:
                 vec = self.gettypestring(vec=True)
                 if 'noMAP' not in status:
                     if vec[1] > 0 not in status:
-                        statuses.append('too faint' ) 
+                        statuses.append('too faint' )
                     else:
                         statuses.append('not gischt')
-                    
+
             if 'CLASSI'    in status: statuses.append('not gischt')
             if 'CONF'      in status: statuses.append('contam.')
             if 'FAINT'     in status: statuses.append('too faint')
@@ -789,7 +787,7 @@ class Galaxycluster(object):
             statusstring = ','.join(statuses)
 
             return None, statusstring
-    
+
     def where_all(self, allwhere=None, **kwargs):
         """ Returns a numpy-where list for a two dimensional array that an be used to mask all relics in an 2D-map"""
 
@@ -800,21 +798,21 @@ class Galaxycluster(object):
                 allwhere = relic.pmask
 
         return allwhere
-    
+
     def whereToMask(self, H, iL):
         """ Returns a numpy array for a mask and an array of a given shape """
         return [iL[0].astype(np.int64), iL[1].astype(np.int64)]
-    
+
     def Mask_Map(self, H, normalize=1, **kwargs):
         """Input:
            H       :  A numpy array that represents the values of the evenly sampled map
-           Normalize: Array or Float for Normalization 
-           
+           Normalize: Array or Float for Normalization
+
            Out: A masked and normalized numpy array weighted by the 'nornalization' factor
            """
         iL = self.where_all(**kwargs)
         mask = self.whereToMask(H, iL)
- 
+
         Hnew = np.asarray(H)*np.nan
         Hnew[mask] = H[mask]/normalize
 
@@ -824,26 +822,23 @@ class Galaxycluster(object):
     def stoch_drop(self, seed_dropout):
         """ stochasticaly drops cluster objects based on  discovery_prop_cluster()"""
         if seed_dropout is None:
-            return (len(self.relics)>0) and (len(self.filterRelics()) > 0)
+            return (len(self.relics) > 0) and (len(self.filterRelics()) > 0)
         return self.discovery_prop_cluster() > seed_dropout.uniform(0, 1)
-    
-    def discovery_prop_cluster(self):
-        """ Assigns a probalistic value (0-1) that the given relic hosting cluster would be detected in any relic survey 
-            In the current implementation, this is a super simple approach that assumes that
-            the most prominent object determines the discovery probability.
-            
+
+    def discovery_prop_cluster(self, used_function=surut.discovery_prop_pca):
+        """ Assigns a probalistic value (0-1) that the given relic hosting cluster would be detected in any relic survey
+            In the current implementation, we assume that the most prominent object determines the discovery probability.
+
             In the truth characteristic structures like double relics might increase the discovery probability.
-            This is why if there is more than 2 objects above a certain value,
-            we double the discovery probability ... in the future
             """
 
-        return max(surut.discovery_prop(self.relics))
-        
+        return max(used_function(self.relics))
+
     def __str__(self):
         """ I don't see any reason to keep this return value. Is this for any specific filtercluster statement?"""
-        return True 
-    
-        
+        return True
+
+
 # Define a new object: galaxycluster_added for the CW, in the future might as well marge bith classes
 class Galaxycluster_simulation(Galaxycluster):
     """
@@ -1285,8 +1280,17 @@ class Relic:
 
     def shape_advanced(self):
         return dbc.measurand(self.iner_rat/ (self.LAS / (self.dinfo.beam[0]/60.)), 'shape_advanced',
+                             label='shape$_\mathrm{advanced}$', un=None)
+    def shape_advanced_pca(self):
+
+        X = (np.log10(self.LAS.value), np.log10(self.iner_rat.value))  #(1, 2) -->
+        mean = np.asarray([0.45075362,  -0.4687414])
+        components = np.asarray([[0.58409064, 0.81168844], [-0.81168844,  0.58409064]])
+        X_new = np.dot(X - mean, components)
+        PC1 = X_new[0]
+        PC2 = X_new[1]
+        return dbc.measurand(PC1, 'shape_advanced_pca',
                              label='shape$_\mathrm{PC_1}$', un=None)
-                  
 
     def averages_quantities(self):
         """ flux weighted properties """
