@@ -225,15 +225,15 @@ def numpy2mask ( array, cutoff, Ndil, outfile=False) : #, header=hdutemplateHead
  array3 = morp.binary_dilation(array2, iterations=Ndil)
  
  # call numpy2FITS ( array,  outfile) with bool as data type
- newarray   = array3[np.newaxis , np.newaxis, :, :].astype(np.float32) #np.bool_) #array[np.newaxis , np.newaxis, :, :]
+ newarray = array3[np.newaxis , np.newaxis, :, :].astype(np.float32) #np.bool_) #array[np.newaxis , np.newaxis, :, :]
 
- hdu        = fits.PrimaryHDU(newarray)
- hduHead    = hdu.header  # now add some modifications ...    
- hduHead    = hduTemplateHead.header   
+ hdu     = fits.PrimaryHDU(newarray)
+ hduHead = hdu.header  # now add some modifications ...
+ hduHead = hduTemplateHead.header
                                                   
- hduHead['NAXIS1']  =   array.shape[0]                                                  
- hduHead['NAXIS2']  =   array.shape[1]                                                  
- hduHead['EXTEND']  =     True         
+ hduHead['NAXIS1'] = array.shape[0]
+ hduHead['NAXIS2'] = array.shape[1]
+ hduHead['EXTEND'] = True
         
  if outfile:
   fits.writeto( filename=outfile, data=newarray, header = hduHead, clobber = True)
