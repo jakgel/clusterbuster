@@ -694,8 +694,8 @@ def DoRun(inputs, smt, verbose=False, countmax=2000): #countmax=200
             """
             for gcl_test in realisations:
                 # print(survey.outfolder, gcl_test.stoch_drop(survey.seed_dropout))
-                countW = int(gcl_test.stoch_drop(survey.seed_dropout))
-                count += countW
+                if len(gcl_test.FilterRelics(**survey.relic_filter_kwargs)) > 1:
+                    count += 1
                 if count > countmax:
                     print('Because the (weighted) number of relics already now is larger than %i the function DoRun() is terminated.' % (countmax))
                     return False, smt

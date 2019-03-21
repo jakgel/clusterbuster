@@ -11,22 +11,18 @@ Once you have done this you are able to create a survey catalogue (.pickle) that
 In the subdirectories several functionalities are added. In the provided examples the focus is on so-called diffuse radio emision, which is synchrotron emission emerging from cosmic rays in galaxy clusters.
 A future release will add additional modules to analyse at least MUSIC-2.
 
-Radio Surveys:
+##### Radio Surveys:
 - NVSS ([Condon et al. 1998](http://adsabs.harvard.edu/abs/1998AJ....115.1693C) + add link to the TLS catalogue of point sources+relic region+cluster information)
 
 
+##### Scripts for analysis of simulations is added:
 
-##  Likely changes
-- The requirement of [cosmocalc](http://cxc.harvard.edu/contrib/cosmocalc/) will be removed. 
-- Installing descriptions will be layed out.
-- Files paths in some .py will be made more general (example RelicSurveys/RelicExtraction.py)
-- DEBUGGING   parts within the code will be removed
-- DEVELOPMENT parts within the code will be removed
+- MUSIC-2: 283 massive clusters resimulated from Multidark. Ask authors of [Nuza et al. 2017](http://adsabs.harvard.edu/abs/2017MNRAS.470..240N) for the processed files that include the infered shock strength and other hydrodynamical properties within the galaxy clusters.
+
+####  Likely changes
+ - Installing descriptions will be layed out.
 - NVSS poststamp images (currently 50MB) will be removed and add a description added where to find them
-
-Input for simulations likely added:
 - Cosmic web (cite, also cite the data science centre because it has the radio emission)
-- MUSIC-2: three-hundred massive clusters. Ask authors of [Nuza et al. 2017](http://adsabs.harvard.edu/abs/2017MNRAS.470..240N) for the processed files that include the infered shock strength and other hydrodynamical properties within the galaxy clusters.
 
 
 **[Disclaimer](#disclaimer)** |
@@ -64,7 +60,6 @@ Add the github path to your bashrc like
 *Additional packaes needed?*
 Install addition packages via
 conda install -c astropy pyregion=1.2 
-cosmocalc? --> change to astropy cosmology!
 
 *Optional packages*
 abcpmc

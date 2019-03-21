@@ -85,7 +85,7 @@ class Survey(object):
         self.F_anti = 0        # Pro ratio
 
         #filter arguments for clusters and relics
-        self.relic_filter_kwargs = {"Filter":True, 'minrms':8}   #maxcomp=None, shape=False, regard=[1,2,3]
+        self.relic_filter_kwargs = {"Filter":True, 'minrms':8,"shape_pca":True}   #maxcomp=None, shape=False, regard=[1,2,3]
         self.cluster_filter_kwargs = {"zmin": 0.05}
 
         # Output related properties
@@ -220,7 +220,7 @@ class Survey(object):
             self.seed_dropout = np.random.RandomState()
 
         for GCl in self.GCls:
-            GCl.random_detection_quality = seed_dropout.uniform(0, 1)
+            GCl.random_detection_quality = self.seed_dropout.uniform(0, 1)
 
     def FilterCluster(self, minrel=1, zmin=0, minimumLAS=0, GClflux=0, index=None, getindex=False,
                       verbose=False):
@@ -453,7 +453,7 @@ class Galaxycluster(object):
     # The lambda function does make the file unpickelable
     #  self.Filter = lambda x: (x.flux > self.minflux and (x.iner_rat/(x.LAS/(x.dinfo.beam[0]/60.))) < self.maxcomp)
 
-    def filterRelics(self, Filter=True, maxcomp=None, shape=False, shape_pca=False, minrms = 8, regard=[1,2,3]):
+    def filterRelics(self, Filter=True, maxcomp=None, shape=False, shape_pca=False, minrms=8, regard=[1,2,3]):
 
         if Filter:
             self.minflux = self.dinfo.rms * minrms * 1000  #microjansky to millijansky
@@ -810,13 +810,6 @@ class Galaxycluster(object):
         Hnew[mask] = H[mask]/normalize
 
         return Hnew
-
-
-    def stoch_drop(self, seed_dropout):
-        """ stochasticaly drops cluster objects based on  discovery_prop_cluster()"""
-        if seed_dropout is None:
-            return (len(self.relics) > 0) and (len(self.filterRelics()) > 0)
-        return self.discovery_prop_cluster() > seed_dropout.uniform(0, 1)
 
     def discovery_prop_cluster(self, used_function=surut.discovery_prop_pca):
         """ Assigns a probalistic value (0-1) that the given relic hosting cluster would be detected in any relic survey
