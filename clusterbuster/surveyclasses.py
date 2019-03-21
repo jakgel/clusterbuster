@@ -85,7 +85,7 @@ class Survey(object):
         self.F_anti = 0        # Pro ratio
 
         #filter arguments for clusters and relics
-        self.relic_filter_kwargs = {"Filter":True}   #maxcomp=None, shape=False, regard=[1,2,3]
+        self.relic_filter_kwargs = {"Filter":True, 'minrms':8}   #maxcomp=None, shape=False, regard=[1,2,3]
         self.cluster_filter_kwargs = {"zmin": 0.05}
 
         # Output related properties
@@ -219,6 +219,9 @@ class Survey(object):
         else:
             self.seed_dropout = np.random.RandomState()
 
+        for GCl in self.GCls:
+            GCl.random_detection_quality = seed_dropout.uniform(0, 1)
+
     def FilterCluster(self, minrel=1, zmin=0, minimumLAS=0, GClflux=0, index=None, getindex=False,
                       verbose=False):
         """ Gives all the cluster with the relics that fullfill given criteria """
@@ -229,16 +232,10 @@ class Survey(object):
             else:
                 return [self.GCls[i] for i in index]
 
-        """ This part is implemented to give consistent results in plotting and metric etc. for a given seed_dropout """
-        if self.seed_dropout is not None:
-            state = self.seed_dropout.get_state()
-            self.seed_dropout.set_state((state[0], state[1], 0, state[3], state[4]))
-
         GCls = [GCl.updateInformation(**self.relic_filter_kwargs) for GCl in self.GCls]
 
         results = [(ii,GCl) for ii, GCl in enumerate(GCls) if len(GCl.filterRelics(**self.relic_filter_kwargs)) >= minrel and
-                   get_truth(GCl.z, '>', zmin) and GCl.largestLAS() >= minimumLAS and GCl.flux() >= GClflux
-                   and GCl.stoch_drop(self.seed_dropout)]
+                   get_truth(GCl.z, '>', zmin) and GCl.largestLAS() >= minimumLAS and GCl.flux() >= GClflux]
 
         """ Should also give an result, if no cluster fullfills the criterion """
         if len(results) > 0:
@@ -370,8 +367,8 @@ class Galaxycluster(object):
         self.sky_main   = SkyCoord(RA_m, Dec_m, frame='icrs', unit='deg')
 
         # Masses and mass proxies
-        self.Lx        = dbc.measurand(Lx, 'Lx', label='$L_{500,0.1-2.4}$', un='erg\\,s$^{-1}$') # X-Ray luminosity in erg/s from 0.1-2.4 keV within R500
-        self.Lx_lit    = dbc.measurand(Lx_lit, 'Lx_lit', label='$L_{500,0.1-2.4}$', un='erg\\,s$^{-1}$') # X-Ray luminosity in erg/s from 0.1-2.4 keV within R500
+        self.Lx     = dbc.measurand(Lx, 'Lx', label='$L_{500,0.1-2.4}$', un='erg\\,s$^{-1}$') # X-Ray luminosity in erg/s from 0.1-2.4 keV within R500
+        self.Lx_lit = dbc.measurand(Lx_lit, 'Lx_lit', label='$L_{500,0.1-2.4}$', un='erg\\,s$^{-1}$') # X-Ray luminosity in erg/s from 0.1-2.4 keV within R500
 
         self.M200 = dbc.measurand(M200, 'M200', label='$M_{200}$', un='$M_\odot$')    # virial mass in solar masses
         self.M500 = dbc.measurand(M500, 'M500', label='$M_{500}$', un='$M_\odot$')    # M500   mass in solar masses
@@ -402,28 +399,24 @@ class Galaxycluster(object):
 
         #=== Image --> Library of Image arrays with Image (2D numpy array or astropy object with metainformation & labels)
         # an dictionary of 2D numpy array, attached to frequencies, mock observations and other stuff
-        self.mapdic     = mapdic   # a list of paths to the [vanilla] or [vanilla, subtracted, subtracted_convolved, residuum]
-        self.spixel     = 0        # has to become filled the pixle size --> however pixelsize is also part of detinfo, ... at the end I might merge an map-class and detinfo class
+        self.mapdic = mapdic   # a list of paths to the [vanilla] or [vanilla, subtracted, subtracted_convolved, residuum]
+        self.spixel = 0        # has to become filled the pixle size --> however pixelsize is also part of detinfo, ... at the end I might merge an map-class and detinfo class
 #        self.center    = []       # has to become filled with two center coordiantes
         self.massproxy_mask = []   # a mask that can be used to mask the radio image, if it has the same size like the image that was used to create the mask. So ... it has many ifs
-        self.ClassFlag  = int(ClassFlag)
+        self.ClassFlag = int(ClassFlag)
 
 
         ## All Fluxes are in mJy
-        self.flux_lit   = dbc.measurand(flux_lit, 'F_lit', un='mJy', label='$F_\mathrm{lit}$')    # Literature flux
-        self.Prest100   = Prest100
+        self.flux_lit = dbc.measurand(flux_lit, 'F_lit', un='mJy', label='$F_\mathrm{lit}$')    # Literature flux
+        self.Prest100 = Prest100
         #  contaminating sources:
-        self.contSour  = []         # A list of contaminating sources, The source themself could be represented by objects
-
+        self.contSour = []         # A list of contaminating sources, The source themself could be represented by objects
 
         """ filter criteria """
-        self.maxcomp    = 0.17   # shape criterion
-        self.updateInformation(massproxis=True)           # Information with added value:
+        self.maxcomp = 0.17   # shape criterion
+        self.random_detection_quality = 1
+        self.updateInformation(massproxis=True)
 
-
-    """
-    functions
-    """
     def set_center(self):
         """ This function does not have any current use.
 
@@ -473,7 +466,7 @@ class Galaxycluster(object):
         return [relic for relic in self.relics
                 if ((relic.flux() > self.minflux) and (relic.region.rtype.classi in regard) and
                     ((shape is False) or (relic.shape_advanced().value < maxcomp))) and
-                    ((shape_pca is False) or (surut.discovery_prop_pca([relic])[0] > np.random.uniform(0, 1, 1)[0]))]
+                    ((shape_pca is False) or (self.random_detection_quality > surut.discovery_prop_pca(relic)))]
 
     def add_regions(self, regions, **filterargs):
 
@@ -533,12 +526,12 @@ class Galaxycluster(object):
         self.sparseD = np.empty(0)
         self.sparseW = np.empty(0)
         self.moment_angle = dbc.measurand(0, 'moment_angle', un='', label='$moment_\mathrm{angle}$')
-        self.flux      = dbc.measurand(0, 'F', un='mJy')
-        self.flux_ps   = dbc.measurand(0, 'F_ps', un='mJy', label='$F_\mathrm{ps}$')
-        self.P_rest    = dbc.measurand(0, 'P_rest', un='W/Hz', label='$P_\mathrm{rest}$')
-        self.Dproj     = dbc.measurand(0, 'Dproj', un='kpc', label='$D_\mathrm{proj}$')
+        self.flux = dbc.measurand(0, 'F', un='mJy')
+        self.flux_ps = dbc.measurand(0, 'F_ps', un='mJy', label='$F_\mathrm{ps}$')
+        self.P_rest = dbc.measurand(0, 'P_rest', un='W/Hz', label='$P_\mathrm{rest}$')
+        self.Dproj= dbc.measurand(0, 'Dproj', un='kpc', label='$D_\mathrm{proj}$')
         self.Dproj_pix = dbc.measurand(0, 'Dproj_pix', un='kpc', label='$D_\mathrm{proj,pix}$')
-        self.area      = dbc.measurand(0, 'area', un='arcmin$^2$', label='$\sum\\nolimits_{i \in \mathrm{relics}} A_{i}$')
+        self.area = dbc.measurand(0, 'area', un='arcmin$^2$', label='$\sum\\nolimits_{i \in \mathrm{relics}} A_{i}$')
         self.area100kpc = dbc.measurand(0, 'area100kpc', un='(100kpc)$^2$', label='$\sum\\nolimits_{i \in \mathrm{relics}} A_{i}$')
         self.largestLAS = dbc.measurand(0, 'LASmax', un='kpc', label='LAS$_\mathrm{max}$')
         if self.histo is not None:
@@ -1242,7 +1235,7 @@ class Relic:
     """ See Colafrancesco+2017 equ. 5 & 6 """
 
     def corrupt_alpha(self):
-        sigma = np.max(0.005, 0.1439075398254617-0.04093582*np.log10(self.flux.value)) #0.18
+        sigma = 1.5*max(0.005, 0.1439075398254617-0.04093582*np.log10(self.flux.value)) #0.18
         self.alpha.value = self.alpha.value + np.random.normal(0, sigma, 1)[0]
 
     def infer_Mach(self, Mach=None):

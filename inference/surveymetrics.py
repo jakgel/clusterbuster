@@ -15,7 +15,7 @@ import clusterbuster.iout.misc      as iom
 import os
 import shutil
 import numpy  as np
-import ndtest as KSmaster
+import ndtest
 import math
 import time
 
@@ -31,7 +31,7 @@ def abcpmc_dist_severalMetrices( SurveyA, SurveyB, metrics=['number'], outpath='
   """
   return ABC_dist_severalMetrices( SurveyB, SurveyA, metrics=metrics, outpath = outpath, delal=delal, stochdrop=stochdrop)
 
-def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics=['numbers'],
+def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics=['number'],
                              outpath='', delal=True, verbose=False, stochdrop=True):
     """ 
     Returns the distance within the MUSIC-2/NVSS metric
@@ -60,21 +60,22 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics=['numbers'],
 
             if metric == 'number':
                 distance = ABC_summaryStatistics_number_relics([SurveyA,SurveyB])
-            if metric == 'flux_kolm':
+            elif metric == 'flux_kolm':
                 distance = ABC_summaryStatistics_flux_komogorov([SurveyA,SurveyB])
-            if metric == 'polarHisto':
+            elif metric == 'polarHisto':
                 distance = ABC_summaryStatistics_polarHisto([SurveyA,SurveyB])
-            if metric == 'polarHisto_simple':
+            elif metric == 'polarHisto_simple':
                 distance = ABC_summaryStatistics_polarHisto_simple([SurveyA,SurveyB])
-            if metric == 'logMach':
+            elif metric == 'logMach':
                 distance = ABC_summaryStatistics_logMach([SurveyA,SurveyB])
-            if metric == 'alpha':
+            elif metric == 'alpha':
                 distance = ABC_summaryStatistics_alpha([SurveyA,SurveyB])
-            if metric == '2DKS':
+            elif metric == '2DKS':
                 distance = ABC_summaryStatistics_2DKS([SurveyA,SurveyB])
-            if metric == 'PCA':
+            elif metric == 'PCA':
                 distance = ABC_summaryStatistics_PCA([SurveyA,SurveyB])
-
+            else:
+                print(metric, 'is unknown as metric!')
             distances.append(distance)
                      
         print('surveymetrics::ABC_dist_severalMetrices::', SurveyA.name, 'VS', SurveyB.name, 'metric disimilarity:',
@@ -203,21 +204,17 @@ def ABC_summaryStatistics_polarHisto_simple(Surveys):
     This method will fail if the first survey class doesn't have any relics!
     """
     [SurveyA, SurveyB] = Surveys
-
-    # Filtering by redshift
-    zmin = 0.05
-
-    norm = dbc.norm('R200', Nexp=1.5)  # I used Nexp=2.0 in the past! ANd maybe I just should use 1.0!!!!!!!!!!!!!!
+    norm = dbc.norm('R200', Nexp=1.0)
     for Survey in Surveys:
         Survey.mainhist = dbc.Histogram2D(nbins=(32, 30), fromto=[[0, 2. * np.pi], [0, 1.5]],
                                           norm=norm)  # angle_projected(rad), D_proj(R200)
-        Survey.expScale = 0.65
+        Survey.expScale = 0.75
 
     if SurveyB.polar()[0] is None:
         HiB = 0
     else:
-        HiB = SurveyB.polar(zmin=zmin, normalize=True)[1][0]
-    HiA = SurveyA.polar(zmin=zmin, normalize=True)[1][0]
+        HiB = SurveyB.polar(normalize=True)[1][0]
+    HiA = SurveyA.polar(normalize=True)[1][0]
     deviation = np.sum(np.abs(HiA - HiB))
 
     return deviation
@@ -266,7 +263,7 @@ def ABC_summaryStatistics_2DKS(Surveys, verbose=False, parA=lambda x: x.M200, pa
     """
 
     if x1.shape[0] > 2 and x2.shape[0] > 2:
-        access, stats = KSmaster.ndtest.ks2d2s(x1, y1, x2, y2, nboot=None, extra=True)
+        access, stats = ndtest.ks2d2s(x1, y1, x2, y2, nboot=None, extra=True) #KSmaster.
         if math.isnan(access): access = 1.e-10
     else:
         access = 1.e-10

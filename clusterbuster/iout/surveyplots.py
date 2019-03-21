@@ -39,7 +39,7 @@ from matplotlib import transforms as mtransforms
 
 import surveysim.music2.mockobsxray as Xray
 from PyPDF2 import PdfFileMerger
-
+from scipy import stats
 
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
@@ -360,6 +360,7 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
                   colorbar=False, beam=True, shapes=False, recenter=True, infolabel = False, sectors=False,
                   xray=False, highres=False, show_rot=False, vectors=False, label_sheme='balanced',
                   filterargs={'zborder': 0, 'ztype': '>', 'minimumLAS': 4, 'GClflux': 20, 'index': None}):
+    print('plot_Clusters:BUGS: THere not always the full contours shown')
 
     sns.set(style="white", color_codes=True)
     pdfs = []
@@ -433,7 +434,6 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
             vmax = np.max(f._data)
             levels = [GCl.dinfo.limit*l for l in [survey.m_cnt**n for n in np.arange(0,16)]]  #0,16
         else:
-            print('plot_Clusters fixed scale might be broken!')
             vmax = survey.emi_max
             levels = survey.cnt_levels
 
@@ -1140,7 +1140,7 @@ def joinpandas(df):
     return df_combined
 
 
-def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
+def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix='', shade=True):
     sns.set(style="ticks", color_codes=True)
 
     """ Creates a scatter matrix, off a list of quantities ... nice! 
@@ -1184,7 +1184,7 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
 
     make_kde.cmap_cycle = cycle(colormaps[0:len(df_combined.Survey.unique())])    #,
 
-    g = g.map_lower(make_kde, alpha=1.0/np.sqrt(NSurveys), shade=False, shade_lowest=False)
+    g = g.map_lower(make_kde, alpha=1.0/np.sqrt(NSurveys), shade=shade, shade_lowest=False)
 
     # from https://stackoverflow.com/questions/52118245/python-seaborn-jointplot-does-not-show-the-correlation-coefficient-and-p-value-o
     for numbered, survey in enumerate(SurveySamples):
@@ -1200,10 +1200,13 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
         for i in range(df_clean.shape[1]):  # rows are the number of rows in the matrix.
             for j in range(df_clean.shape[1]):
                 if df_clean.keys()[i] != "Survey" and df_clean.keys()[j] != "Survey":
-                    print(i,j, df_clean.shape)
+                    print(i, j, df_clean.shape)
                     JonI = pd.ols(y=df_clean.iloc[:,i], x=df_clean.iloc[:,j], intercept=True)
                     pval[i, j] = JonI.f_stat['p-value']
                     print("Scatterplot, pval for %s-%s" % (df_clean.keys()[i], df_clean.keys()[j]), pval[i, j])
+
+                    """ Only for PhD Thesis, draw line from de gasperin and on fit."""
+
 
         xlabels, ylabels = [], []
         for ax in g.axes[-1, :]:
@@ -1225,6 +1228,17 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix=''):
                 if i < j and abs(rho.values[i,j]) > 0.01:
                     g.axes[j, i].text(0.5, 0.1+numbered*0.07, 'correlation: %0.2f' % rho.values[j,i], horizontalalignment='center',
                                       verticalalignment='center', transform=g.axes[j, i].transAxes)
+                    slope, intercept, r_value, p_value, std_err = stats.linregress(df_clean.iloc[:,i], df_clean.iloc[:,j])
+                    g.axes[j, i].text(0.2, 0.8, "sl=%.2f, ic=%.2f, stde=%.2f" % (slope, intercept, std_err),
+                                  horizontalalignment='center',
+                                  verticalalignment='center', transform=g.axes[j, i].transAxes)
+                    print("Fit results for pairs i,j: sl=%.2f, ic=%.2f, stde=%.2f" % (slope, intercept, std_err))
+                    slope, intercept, r_value, p_value, std_err = stats.linregress(df_clean.iloc[:,j], df_clean.iloc[:,i])
+                    g.axes[j, i].text(0.2, 0.87, "sl=%.2f,  ic=%.2f, stde=%.2f" % (slope, intercept, std_err),
+                                  horizontalalignment='center',
+                                  verticalalignment='center', transform=g.axes[j, i].transAxes)
+                    print("Fit results for pairs j,i: sl=%.2f,  ic=%.2f, stde=%.2f" % (slope, intercept, std_err))
+
                 if i > j:
                     pass
 
@@ -1244,7 +1258,7 @@ def make_kde(*args, **kwargs):
     sns.kdeplot(*args, cmap=next(make_kde.cmap_cycle), **kwargs)
 
 
-def create_shape_LAS_plot(surveys, relic_filter_kwargs={}):
+def create_shape_LAS_plot(surveys):
     from scipy.stats import kde
     plt.style.use('default')
     mpl.rcParams['text.usetex'] = True
@@ -1308,8 +1322,28 @@ def create_shape_LAS_plot(surveys, relic_filter_kwargs={}):
             zi = k(np.vstack([xi.flatten(), yi.flatten()]))
 
             # contour
-            ax.pcolormesh(xi, yi, zi.reshape(xi.shape), shading='gouraud', cmap=sns.palplot(sns.light_palette("orange", reverse=True))) # plt.cm.BuGn_r
-            ax.contour(xi, yi, zi.reshape(xi.shape))
+            ax.pcolormesh(xi, yi, zi.reshape(xi.shape), shading='gouraud', cmap=plt.cm.Oranges_r) # plt.cm.BuGn_r, sns.palplot(sns.light_palette("orange", reverse=True))
+            ax.contour(xi, yi, zi.reshape(xi.shape), cmap=plt.cm.Oranges_r)
+
+            if 1==2:
+                g = sns.jointplot(x, y, kind="scatter", color="orange", alpha=0.2, ratio=5)
+                g.ax_marg_x.hist(
+                    x,
+                    alpha=0.5,
+                    range=(np.min(x), np.max(x)),
+                    color="darkorange",
+                    weights=np.ones_like(x) * 1
+                )
+
+                g.ax_marg_y.hist(
+                    y,
+                    orientation='horizontal',
+                    alpha=0.5,
+                    range=(np.min(y), np.max(y)),
+                    color="darkorange",
+                    weights=np.ones_like(y) * 1
+                )
+
             # ========
 
         for survey in [surveys[0]]:
@@ -1354,7 +1388,7 @@ def plot_cummulative_flux(surveys, average_relic_count=False):
     fig, ax = plt.subplots(figsize=(6 * scale, 5.5 * scale), dpi=200)
     fig = plt.gcf()
     min_vals, max_vals, cummulatives = [], [], []
-    limit = surveys[-1].GCls[0].dinfo.rms*1e3*8
+    limit = surveys[-1].dinfo.rms*1e3*surveys[-1].relic_filter_kwargs['minrms']
 
     n_bins = 1200
     bins = np.linspace(np.log10(limit*0.5), np.log10(100000), num=n_bins)
@@ -1397,7 +1431,6 @@ def plot_cummulative_flux(surveys, average_relic_count=False):
                                        cumulative=-1, color="red", lw=5, alpha=0.2)
 
         plt.legend([survey.name_short for survey in surveys[0:2]], loc='upper right')
-
 
     ax.set_xlim([np.log10(limit), np.max(max_vals) + 0.05])
     ax.set_ylim([0, np.max(cummulatives) + 1])

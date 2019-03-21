@@ -175,7 +175,7 @@ def create_table(objectlist, dictionary, caption='nocap', outer=False, longtab=F
 
 def RList2table_paper(location, survey, longtab=False):
     
-    survey.FilterCluster(zborder=0.05,ztype='>')
+    survey.FilterCluster()
     RList     = survey.fetch_totalRelics()
     RList.sort(key= iom.Object_natural_keys ) 
     

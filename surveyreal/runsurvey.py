@@ -197,8 +197,8 @@ def survey_run(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/',
                         NVSSnu    = 1.4
                         telescope = 'VLA-D'
                         GCl.dinfo = cbclass.DetInfo(beam=[NVSSbeam[0], NVSSbeam[0], 0],
-                                                     spixel=s_pixel[1], rms=NVSS_rms, 
-                                                     limit=NVSSlimit, telescope=telescope, 
+                                                     spixel=s_pixel[1], rms=NVSS_rms,
+                                                     limit=NVSSlimit, telescope=telescope,
                                                      nucen=NVSSnu, center=center[0], pcenter=center[1])
                 if survey == 'TGSS':
                         s_pixel   = [spixel[1]*GCl.cosmoPS*3600, spixel[1]*3600]
@@ -209,10 +209,10 @@ def survey_run(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/',
                         TGSSnu    = 0.1475
                         telescope = 'GMRT'
                         GCl.dinfo = cbclass.DetInfo(beam=[TGSSbeam[0]*beamrec, TGSSbeam[0], 0],
-                                                     spixel=s_pixel[1], rms=TGSS_rms, 
-                                                     limit=TGSSlimit, telescope=telescope, 
+                                                     spixel=s_pixel[1], rms=TGSS_rms,
+                                                     limit=TGSSlimit, telescope=telescope,
                                                      nucen=TGSSnu, center=center[0], pcenter=center[1])
-
+                dinfo_survey = GCl.dinfo
                 #============= Load relic search region  =============#
                 # Make in np.image
                 regfile     = infolder + 'Regions/RR_%s.reg' % (Cl_name) 
@@ -449,7 +449,8 @@ def survey_run(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/',
 
         norm = cdb.norm('R200', Nexp=1)
         Histo = cdb.Histogram2D(nbins=(64, 46), fromto=[[0, 2.*np.pi], [0, 1.5]], norm=norm)     # angle_projected(rad), D_proj(R200)
-        Survey = cbclass.Survey(ClList, survey, cnt_levels=cnt_levels, synonyms=synonyms, dinfo=GCl.dinfo, hist_main=Histo, surshort=survey)  # 'NVSS' should be replaced with a real survey class
+
+        Survey = cbclass.Survey(ClList, survey, cnt_levels=cnt_levels, synonyms=synonyms, dinfo=dinfo_survey, hist_main=Histo, surshort=survey)  # 'NVSS' should be replaced with a real survey class
         Survey.emi_max = 2e-2
         Survey.scatterkwargs = {"alpha": 0.7, "fmt": "o", "markersize": 10}
         Survey.histkwargs = {"alpha": 0.4}

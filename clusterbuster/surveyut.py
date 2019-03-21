@@ -256,7 +256,7 @@ def discovery_prop(relics, a=3, b=0.10):
     return probs
 
 
-def discovery_prop_pca(relics, a=0.08, b=-0.08):
+def discovery_prop_pca(relic, a=0.08, b=-0.08):
     """ Takes a list of relics and takes returns an array of they weighted discovery probabilities according
     to their shape parameter and the discovery function
 
@@ -264,5 +264,5 @@ def discovery_prop_pca(relics, a=0.08, b=-0.08):
            a is the normalization of the strength
            b is the offset
            """
-    probs = logistic.cdf([((relic.shape_advanced_pca().value - b) / a) for relic in relics])
+    probs = logistic.cdf(((relic.shape_advanced_pca().value - b) / a))
     return probs
