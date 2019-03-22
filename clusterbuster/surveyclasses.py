@@ -85,7 +85,7 @@ class Survey(object):
         self.F_anti = 0        # Pro ratio
 
         #filter arguments for clusters and relics
-        self.relic_filter_kwargs = {"Filter":True, 'minrms':8,"shape_pca":True}   #maxcomp=None, shape=False, regard=[1,2,3]
+        self.relic_filter_kwargs = {"Filter": True, 'minrms': 8, "shape_pca": True}   #maxcomp=None, shape=False, regard=[1,2,3]
         self.cluster_filter_kwargs = {"zmin": 0.05}
 
         # Output related properties
@@ -466,7 +466,7 @@ class Galaxycluster(object):
         return [relic for relic in self.relics
                 if ((relic.flux() > self.minflux) and (relic.region.rtype.classi in regard) and
                     ((shape is False) or (relic.shape_advanced().value < maxcomp))) and
-                    ((shape_pca is False) or (self.random_detection_quality > surut.discovery_prop_pca(relic)))]
+                    ((shape_pca is False) or (surut.discovery_prop_pca(relic) > self.random_detection_quality))]
 
     def add_regions(self, regions, **filterargs):
 

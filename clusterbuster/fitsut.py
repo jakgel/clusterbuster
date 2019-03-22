@@ -134,7 +134,7 @@ def numpy2mask(array, cutoff, Ndil, outfile=False):
     hduHead['EXTEND'] = True
 
     if outfile:
-        fits.writeto( filename=outfile, data=newarray, header = hduHead, clobber = True)
+        fits.writeto(filename=outfile, data=newarray, header = hduHead, clobber = True)
 
     return array3
  

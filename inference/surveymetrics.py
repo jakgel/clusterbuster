@@ -336,9 +336,13 @@ def ABC_summaryStatistics_logMach(Surveys):
 
 def ABC_summaryStatistics_alpha(Surveys):
     """ Compares survey B (simulation) with survey A (real world survey)
-        Derives the Histogram of the alpha number and returns the difference of the means
+        Derives the difference of the means in alpha
     """
     [A, B] = Surveys
+
+    #for gcl in A.GCls:
+    #    for relic in gcl.relics:
+    #        relic.corrupt_alpha()
 
     if isinstance(A, cbclass.Survey):
         """ Assume to work with surveys """
@@ -350,8 +354,11 @@ def ABC_summaryStatistics_alpha(Surveys):
         relicsB = [gcl.filterRelics() for gcl in B]
 
         # Get mach-numbers and remove nans
-    A = np.array([max(-1, relic.alpha()) for relic in relicsA])
-    B = np.array([max(-1, relic.alpha()) for relic in relicsB])
+    A = np.array([min(-1, relic.alpha()) for relic in relicsA])
+    B = np.array([min(-1, relic.alpha()) for relic in relicsB])
+
+    print([relic.alpha() for relic in relicsA])
+    print('!', [relic.alpha() for relic in relicsB])
 
     mA = A[~np.isnan(A)].mean()
     mB = B[~np.isnan(B)].mean()

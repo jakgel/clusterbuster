@@ -694,10 +694,10 @@ def DoRun(inputs, smt, verbose=False, countmax=2000): #countmax=200
             """
             for gcl_test in realisations:
                 # print(survey.outfolder, gcl_test.stoch_drop(survey.seed_dropout))
-                if len(gcl_test.FilterRelics(**survey.relic_filter_kwargs)) > 1:
+                if len(gcl_test.filterRelics(**survey.relic_filter_kwargs)) > 1:
                     count += 1
                 if count > countmax:
-                    print('Because the (weighted) number of relics already now is larger than %i the function DoRun() is terminated.' % (countmax))
+                    print('Because the (weighted) number of relics already now is larger than %i the function DoRun() is terminated.' % countmax)
                     return False, smt
             """  Block END """
 
@@ -711,7 +711,7 @@ def DoRun(inputs, smt, verbose=False, countmax=2000): #countmax=200
     return False, smt
 
 
-def create_ClusterLibrary(snapfolder='/radioarchive/MergerTrees/Clusters/snaps/', Clfile = 'clusterCSV/MUSIC2', copyfolder = '/data2/MUSIC-2/',
+def create_ClusterLibrary(snapfolder='/radioarchive/MergerTrees/Clusters/snaps/', Clfile='clusterCSV/MUSIC2', copyfolder='/data2/MUSIC-2/',
                           clusters =range(1,283), snaps =range(3,18), add=''):
     """ This is an aunciiliary function that should be run once to create a file that lets you map R200 and M200 to each snapshot.
         This is done, because in the current implementation of the ClusterBuster_pythonClass.py the galaxycluster computing these quantities is quite costly
