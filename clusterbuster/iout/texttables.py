@@ -175,11 +175,10 @@ def create_table(objectlist, dictionary, caption='nocap', outer=False, longtab=F
 
 def RList2table_paper(location, survey, longtab=False):
     
-    survey.FilterCluster()
-    RList     = survey.fetch_totalRelics()
-    RList.sort(key= iom.Object_natural_keys ) 
-    
-    
+    survey.FilterCluster(**survey.cluster_filter_kwargs)
+    RList = survey.fetch_totalRelics()
+    RList.sort(key = iom.Object_natural_keys)
+
 #'', r/ö/, .label, .unit, rrrr}  
 #lambda x: cbclass.measurand( x.R200/1000       , '$R_{200}$', un = 'Mpc' )  
     dictionary = [ [lambda x: x.name.replace('_', ' '), '%25s', 'l', 'Identifier', ''],

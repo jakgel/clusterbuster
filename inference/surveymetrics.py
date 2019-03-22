@@ -42,6 +42,7 @@ def ABC_dist_severalMetrices(SurveyA, SurveyB, metrics=['number'], outpath='', d
     SurveyB: model
     
     """
+
     print('ABC_dist_severalMetrices', metrics)
     if verbose:
         print(SurveyA.name, SurveyB.name)
@@ -49,13 +50,16 @@ def ABC_dist_severalMetrices(SurveyA, SurveyB, metrics=['number'], outpath='', d
     if stochdrop:
         SurveyB.set_seed_dropout()
 
-    if len([gcl.updateInformation() for gcl in SurveyB.FilterCluster()]) < 3:
+    if len([gcl.updateInformation() for gcl in SurveyB.FilterCluster(**SurveyB.cluster_filter_kwargs)]) < 3:
         distances = [1e9 for m in metrics]
     else:
         distances = []
-        SurveyA.FilterCluster()
-        SurveyB.FilterCluster()
+        SurveyA.FilterCluster(**SurveyA.cluster_filter_kwargs)
+        SurveyB.FilterCluster(**SurveyB.cluster_filter_kwargs)
         print('SurveyB.GCls', len(SurveyB.GCls), '-->', 'SurveyB.filteredClusters', len(SurveyB.filteredClusters))
+
+        relicsA = SurveyA.fetch_totalRelics()
+        A = np.array([min(-1, relic.alpha()) for relic in relicsA])
         for metric in metrics:
 
             if metric == 'number':
@@ -343,8 +347,6 @@ def ABC_summaryStatistics_alpha(Surveys):
     #for gcl in A.GCls:
     #    for relic in gcl.relics:
     #        relic.corrupt_alpha()
-    print(A.cluster_filter_kwargs, B.cluster_filter_kwargs)
-    print(A.relic_filter_kwargs, B.relic_filter_kwargs)
 
     if isinstance(A, cbclass.Survey):
         """ Assume to work with surveys """
@@ -355,7 +357,7 @@ def ABC_summaryStatistics_alpha(Surveys):
         relicsA = [gcl.filterRelics() for gcl in A]
         relicsB = [gcl.filterRelics() for gcl in B]
 
-        # Get mach-numbers and remove nans
+    # Get alpha and remove nans
     A = np.array([min(-1, relic.alpha()) for relic in relicsA])
     B = np.array([min(-1, relic.alpha()) for relic in relicsB])
 
@@ -373,7 +375,7 @@ def ABC_summaryStatistics_PCA(Surveys):
     
     newdist = lambda x:  dbc.measurand( x.Dproj_pix()/x.GCl.R200(), 'Dproj', label='$D_\mathrm{proj,rel}$', un='$R_{200}$' )
     plotmeasures = [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.Mach, newdist]
-    
+
     X1 = A.fetch_pandas(plotmeasures, surname=False).dropna().as_matrix()   #.data()   #, kwargs_FilterCluster={}, kwargs_FilterObjects={}
     X2 = B.fetch_pandas(plotmeasures, surname=False).dropna().as_matrix()   #.data()   #, kwargs_FilterCluster={}, kwargs_FilterObjects={}
     
