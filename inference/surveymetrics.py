@@ -23,16 +23,17 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA as sklearnPCA
 import scipy
     
-def abcpmc_dist_severalMetrices( SurveyA, SurveyB, metrics=['number'], outpath='', delal=True, stochdrop=True):
+def abcpmc_dist_severalMetrices(SurveyA, SurveyB, metrics=['number'], outpath='', delal=True, stochdrop=True):
   """ abcpmc differs from astroABC in that sense that the model data is called before the data in the metric arguement,
       so it is metric(model,data) instead of metric(data,model)
       
   So this is just a wrapper    
   """
-  return ABC_dist_severalMetrices( SurveyB, SurveyA, metrics=metrics, outpath = outpath, delal=delal, stochdrop=stochdrop)
+  return ABC_dist_severalMetrices(SurveyB, SurveyA, metrics=metrics, outpath = outpath, delal=delal, stochdrop=stochdrop)
 
-def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics=['number'],
-                             outpath='', delal=True, verbose=False, stochdrop=True):
+
+def ABC_dist_severalMetrices(SurveyA, SurveyB, metrics=['number'], outpath='', delal=True,
+                             verbose=False, stochdrop=True):
     """ 
     Returns the distance within the MUSIC-2/NVSS metric
     you have: data,model
@@ -56,7 +57,6 @@ def ABC_dist_severalMetrices( SurveyA, SurveyB,  metrics=['number'],
         SurveyB.FilterCluster()
         print('SurveyB.GCls', len(SurveyB.GCls), '-->', 'SurveyB.filteredClusters', len(SurveyB.filteredClusters))
         for metric in metrics:
-#                print('metric', metric)
 
             if metric == 'number':
                 distance = ABC_summaryStatistics_number_relics([SurveyA,SurveyB])
@@ -198,7 +198,7 @@ def ABC_summaryStatistics_polarHisto(Surveys):
 def ABC_summaryStatistics_polarHisto_simple(Surveys):
     """ Compares the 'average relic' of survey B (simulation) with survey A (real world survey)
     input: either  2 Clusterbuster Class Surveys
-           or      2 Polary binned Histogramms of the same dimensions
+           or      2 Polary binned Histograms of the same dimensions
 
 
     This method will fail if the first survey class doesn't have any relics!
@@ -294,15 +294,15 @@ def ABC_summaryStatistics_number_relics(Surveys, verbose = False):
     
     # This is like assuming a students distribution (?) in the number count and taking the the reduced sqrt of the number as the standart deviation
     #deviation =  np.abs(sum_A-sum_B)  / max(1.,np.sqrt(sum_A - 1.))
-    deviation =  np.abs(sum_A-sum_B)  / np.sqrt(sum_A*max(1.,sum_B))
+    deviation = np.abs(sum_A-sum_B) / np.sqrt(sum_A*max(1., sum_B))
     return deviation
 
 
 def ABC_summaryStatistics_flux_komogorov(Surveys):
 
     [A, B] = Surveys
-    fluxes_A  = [relic.flux() for relic in A.fetch_totalRelics()]
-    fluxes_B  = [relic.flux() for relic in B.fetch_totalRelics()]
+    fluxes_A = [relic.flux() for relic in A.fetch_totalRelics()]
+    fluxes_B = [relic.flux() for relic in B.fetch_totalRelics()]
     statistic, p_value = scipy.stats.ks_2samp(fluxes_A, fluxes_B)
 
     return 1-p_value
@@ -343,6 +343,8 @@ def ABC_summaryStatistics_alpha(Surveys):
     #for gcl in A.GCls:
     #    for relic in gcl.relics:
     #        relic.corrupt_alpha()
+    print(A.cluster_filter_kwargs, B.cluster_filter_kwargs)
+    print(A.relic_filter_kwargs, B.relic_filter_kwargs)
 
     if isinstance(A, cbclass.Survey):
         """ Assume to work with surveys """
@@ -358,7 +360,6 @@ def ABC_summaryStatistics_alpha(Surveys):
     B = np.array([min(-1, relic.alpha()) for relic in relicsB])
 
     print([relic.alpha() for relic in relicsA])
-    print('!', [relic.alpha() for relic in relicsB])
 
     mA = A[~np.isnan(A)].mean()
     mB = B[~np.isnan(B)].mean()
@@ -370,9 +371,8 @@ def ABC_summaryStatistics_PCA(Surveys):
     """ Heavily inspired by https://plot.ly/ipython-notebooks/principal-component-analysis/ """
     [A, B] = Surveys
     
-    newdist      =  lambda x:  dbc.measurand( x.Dproj_pix()/x.GCl.R200(), 'Dproj',label='$D_\mathrm{proj,rel}$',  un = '$R_{200}$' )
+    newdist = lambda x:  dbc.measurand( x.Dproj_pix()/x.GCl.R200(), 'Dproj', label='$D_\mathrm{proj,rel}$', un='$R_{200}$' )
     plotmeasures = [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.Mach, newdist]
-    
     
     X1 = A.fetch_pandas(plotmeasures, surname=False).dropna().as_matrix()   #.data()   #, kwargs_FilterCluster={}, kwargs_FilterObjects={}
     X2 = B.fetch_pandas(plotmeasures, surname=False).dropna().as_matrix()   #.data()   #, kwargs_FilterCluster={}, kwargs_FilterObjects={}

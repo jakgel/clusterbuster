@@ -86,7 +86,7 @@ class Survey(object):
 
         #filter arguments for clusters and relics
         self.relic_filter_kwargs = {"Filter": True, 'minrms': 8, "shape_pca": True}   #maxcomp=None, shape=False, regard=[1,2,3]
-        self.cluster_filter_kwargs = {"zmin": 0.05}
+        self.cluster_filter_kwargs = {"minrel":1, "zmin": 0.05}
 
         # Output related properties
         if outfolder is None: outfolder = '/data/ClusterBuster-Output/%s' % (survey)
@@ -263,7 +263,7 @@ class Survey(object):
             self.FilterCluster(**self.cluster_filter_kwargs)
 
         for GCl in self.filteredClusters:
-            relics_list += GCl.filterRelics(self.relic_filter_kwargs)
+            relics_list += GCl.filterRelics(**self.relic_filter_kwargs)
 
         return relics_list
 
