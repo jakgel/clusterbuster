@@ -224,7 +224,17 @@ def ABC_summaryStatistics_polarHisto_simple(Surveys):
     return deviation
 
 
-def ABC_summaryStatistics_2DKS(Surveys, verbose=False, parA=lambda x: x.M200, parB = lambda y: y.P_rest):
+
+def ABC_summaryStatistics_flux_komogorov(Surveys, par=lambda x: x.flux):
+
+    [A, B] = Surveys
+    fluxes_A = [par(relic).value for relic in A.fetch_totalRelics()]
+    fluxes_B = [par(relic).value for relic in B.fetch_totalRelics()]
+    statistic, p_value = scipy.stats.ks_2samp(fluxes_A, fluxes_B)
+
+    return 1-p_value
+
+def ABC_summaryStatistics_2DKS(Surveys, verbose=False, parA=lambda x: x.LLS, parB = lambda y: y.P_rest, clusterwide=False):
     """ Compares survey B (simulation) with survey A (real world survey)
     input: either  2 Clusterbuster Class Surveys
     """
@@ -232,20 +242,19 @@ def ABC_summaryStatistics_2DKS(Surveys, verbose=False, parA=lambda x: x.M200, pa
     [A, B] = Surveys
     
 #    import scipy.stats.mstats as mstats
-    if isinstance(A, cbclass.Survey) and isinstance(B, cbclass.Survey):
-        """ Assume to work with surveys """
-        cl_A = [gcl.updateInformation() for gcl in A.GCls]
-        cl_B = [gcl.updateInformation() for gcl in B.filteredClusters]
+    if clusterwide:
+        entities_A = [gcl.updateInformation() for gcl in A.GCls]
+        entities_B = [gcl.updateInformation() for gcl in B.filteredClusters]
     else:
-        """ Asume to work with lists of galaxy clusters """
-        cl_A = [gcl.updateInformation() for gcl in A]
-        cl_A = [gcl.updateInformation() for gcl in B]
-        
-    x1 = np.asarray([parA(gcl).value for gcl in cl_A])
-    y1 = np.asarray([parB(gcl).value for gcl in cl_A])
+        entities_A = A.fetch_totalRelics()
+        entities_B = B.fetch_totalRelics()
 
-    x2 = np.asarray([parA(gcl).value for gcl in cl_B])
-    y2 = np.asarray([parB(gcl).value for gcl in cl_B])
+
+    x1 = np.asarray([parA(ent).value for ent in entities_A])
+    y1 = np.asarray([parB(ent).value for ent in entities_A])
+
+    x2 = np.asarray([parA(ent).value for ent in entities_B])
+    y2 = np.asarray([parB(ent).value for ent in entities_B])
     
     
     """Two-dimensional Kolmogorov-Smirnov test on two samples. 
@@ -267,13 +276,16 @@ def ABC_summaryStatistics_2DKS(Surveys, verbose=False, parA=lambda x: x.M200, pa
     """
 
     if x1.shape[0] > 2 and x2.shape[0] > 2:
-        access, stats = ndtest.ks2d2s(x1, y1, x2, y2, nboot=None, extra=True) #KSmaster.
-        if math.isnan(access): access = 1.e-10
+        p_value, stats = ndtest.ks2d2s(x1, y1, x2, y2, nboot=None, extra=True) #KSmaster.
+        distance = 1 - p_value #np.log10(1/p_value)
     else:
-        access = 1.e-10
+        distance = 1
+    if math.isnan(p_value):
+        distance = 1
+
     if verbose:
-        print('surveymetrics::ABC_summaryStatistics_2DKS()::access', access)
-    return np.log10(1/access)
+        print('surveymetrics::ABC_summaryStatistics_2DKS()::', distance)
+    return distance
 
 def ABC_summaryStatistics_number_relics(Surveys, verbose = False):
     """ Compares survey B (simulation) with survey A (real world survey)
@@ -301,15 +313,6 @@ def ABC_summaryStatistics_number_relics(Surveys, verbose = False):
     deviation = np.abs(sum_A-sum_B) / np.sqrt(sum_A*max(1., sum_B))
     return deviation
 
-
-def ABC_summaryStatistics_flux_komogorov(Surveys):
-
-    [A, B] = Surveys
-    fluxes_A = [relic.flux() for relic in A.fetch_totalRelics()]
-    fluxes_B = [relic.flux() for relic in B.fetch_totalRelics()]
-    statistic, p_value = scipy.stats.ks_2samp(fluxes_A, fluxes_B)
-
-    return 1-p_value
 
 def ABC_summaryStatistics_logMach(Surveys):
     """ Compares survey B (simulation) with survey A (real world survey)
@@ -360,8 +363,6 @@ def ABC_summaryStatistics_alpha(Surveys):
     # Get alpha and remove nans
     A = np.array([min(-1, relic.alpha()) for relic in relicsA])
     B = np.array([min(-1, relic.alpha()) for relic in relicsB])
-
-    print([relic.alpha() for relic in relicsA])
 
     mA = A[~np.isnan(A)].mean()
     mB = B[~np.isnan(B)].mean()
