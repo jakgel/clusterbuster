@@ -186,7 +186,7 @@ def plot_abctraces(pools, surveypath=''):
     for ii, pool, in enumerate(pools):
         thetas = pool.thetas
         figure = corner.corner(thetas)
-        figure.savefig('%s/CornerThetas_%02i.png' % (surveypath,ii))
+        plt.savefig('%s/CornerThetas_%02i.png' % (surveypath,ii))
     
     """
     corner.corner(distances)
@@ -205,7 +205,7 @@ def plot_abctraces(pools, surveypath=''):
     ax.set_ylabel(r"$\epsilon$", fontsize=15)
     ax.legend(loc="best")
     ax.set_title("Thresholds")
-    fig.savefig('%s/Thresholds.png' % (surveypath))
+    plt.savefig('%s/Thresholds.png' % (surveypath))
 
 
     """ Violin Plots """
@@ -220,7 +220,7 @@ def plot_abctraces(pools, surveypath=''):
     #background = axes.violinplot(mod_data,
     #                   showmeans=False,
     #                   showmedians=False, showextrema=False)
-    foreground = axes.violinplot(all_data,
+    axes.violinplot(all_data,
                        showmeans=False,
                        showmedians=True)
     
@@ -245,8 +245,10 @@ def plot_abctraces(pools, surveypath=''):
 
     # add x-tick labels
     plt.setp(axes, xticks=[y+1 for y in range(len(all_data))])
-    fig.savefig('%s/Violin.png' % (surveypath))
-    
+    plt.savefig('%s/Violin.png' % (surveypath))
+    plt.savefig('%s/Violin.pdf' % (surveypath))
+    plt.clf()
+
     """ Plot Parameters
     pools[ii].thetas[:, 0] is a numpy array 
     """
@@ -259,7 +261,7 @@ def plot_abctraces(pools, surveypath=''):
                          )
             jg.ax_joint.set_xlabel('var1')
             jg.ax_joint.set_ylabel('var2')
-            jg.savefig('%s/FirstThetas_%i.png' % (surveypath, ii))
+            plt.savefig('%s/FirstThetas_%i.png' % (surveypath, ii))
 
     return 0
 

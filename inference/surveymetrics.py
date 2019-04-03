@@ -310,7 +310,7 @@ def ABC_summaryStatistics_number_relics(Surveys, verbose = False):
     
     # This is like assuming a students distribution (?) in the number count and taking the the reduced sqrt of the number as the standart deviation
     #deviation =  np.abs(sum_A-sum_B)  / max(1.,np.sqrt(sum_A - 1.))
-    deviation = np.abs(sum_A-sum_B) / np.sqrt(sum_A*max(1., sum_B))
+    deviation = np.abs(sum_A-sum_B) / np.sqrt(sum_A*min(1., sum_B))
     return deviation
 
 

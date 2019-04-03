@@ -191,7 +191,7 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
                 M200 = float(l["M200"])
 
                 # Filter for the cluster masses. Please mind that this filtering step is also redshift dependent
-                if suut.TestPar(pase['empicut']) and np.log10(M200) < (13.8 + 2 * z_central):
+                if suut.TestPar(pase['empicut']) and np.log10(M200) < (13.6 + 2 * z_central):
                     continue
 
                 count += 1
