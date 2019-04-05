@@ -22,7 +22,7 @@ import time
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA as sklearnPCA
 import scipy
-    
+
 def abcpmc_dist_severalMetrices(SurveyA, SurveyB, metrics=['number'], outpath='', delal=True, stochdrop=True):
   """ abcpmc differs from astroABC in that sense that the model data is called before the data in the metric arguement,
       so it is metric(model,data) instead of metric(data,model)
@@ -61,9 +61,11 @@ def ABC_dist_severalMetrices(SurveyA, SurveyB, metrics=['number'], outpath='', d
         relicsA = SurveyA.fetch_totalRelics()
         A = np.array([min(-1, relic.alpha()) for relic in relicsA])
         for metric in metrics:
-
+            print('metric:', metric)
             if metric == 'number':
                 distance = ABC_summaryStatistics_number_relics([SurveyA,SurveyB])
+            elif metric == 'number_cluster':
+                distance = ABC_summaryStatistics_number_cluster([SurveyA,SurveyB])
             elif metric == 'flux_kolm':
                 distance = ABC_summaryStatistics_flux_komogorov([SurveyA,SurveyB])
             elif metric == 'polarHisto':
@@ -125,6 +127,7 @@ def ABC_dist_severalMetrices(SurveyA, SurveyB, metrics=['number'], outpath='', d
             """ We increment the current logfile number by one ... just to show how much we have progressed """
             with open("%s/logfile.txt" % outpath, "a") as f:
                 Rm  = SurveyB.Rmodel
+                Sm  = SurveyB.surmodel
                 eff = SurveyB.Rmodel.effList[0]
 
                 line = ''
@@ -136,6 +139,8 @@ def ABC_dist_severalMetrices(SurveyA, SurveyB, metrics=['number'], outpath='', d
                     line += ' %+.4e %+.4e %+.4e %+.4e %+.4e' % (Rm.t0, Rm.t1, Rm.ratio, Rm.n0, Rm.n1)
                 if isinstance(Rm, cbclass.PreModel_Gelszinnis):
                     line += ' %+.4e %+.4e %+.4e %+.4e' % (Rm.p0, Rm.p_sigma, Rm.sigmoid_0, Rm.sigmoid_width)
+                if Sm is not None:
+                    line += ' %+.4e %+.4e' % (Sm.relic_filter_pca_a, Sm.relic_filter_pca_b)
                 line += '\n'
 
                 f.write(line)
@@ -144,7 +149,7 @@ def ABC_dist_severalMetrices(SurveyA, SurveyB, metrics=['number'], outpath='', d
 
 
 """=============== Baustelle: Imlement in Metric & Run Survey"""
-def Clusters_discovery_prop(survey, discovery_prop=None, verbose=False):
+def Clusters_discovery_prop(survey, verbose=False):
     """ Return a weighted relic number count within all clusters
     input: either  a Clusterbuster Class Surveys
            or      a GalaxyClusterLists including relics
@@ -155,20 +160,75 @@ def Clusters_discovery_prop(survey, discovery_prop=None, verbose=False):
     ------
     distance: float
     """
-    
-#    import scipy.stats.mstats as mstats
+
     if isinstance(survey, cbclass.Survey):
         """ Assume to work with surveys """
         relics = survey.fetch_totalRelics()
     else:
         """ Asume to work with lists of galaxy clusters """
         relics = [gcl.filterRelics() for gcl in survey]
+    print("survey.name", survey.name, "isinstance(survey, cbclass.Survey)", isinstance(survey, cbclass.Survey), len(relics), type(len(relics)))
 
     weightedsum = len(relics)
     if verbose:
         print('surveymetrics::Clusters_discovery_prop()::Survey:', survey.name, weightedsum)
 
     return weightedsum
+
+
+def ABC_summaryStatistics_number_relics(Surveys, verbose=False):
+    """ Compares survey B (simulation) with survey A (real world survey)
+    input: either  2 Clusterbuster Class Surveys
+           or      2 GalaxyClusterLists including relics
+           and the efficiency at which to compare the galaxy clusters
+           optional: the function of the discovery prop that is a shape dependent discovery probability
+    It allows to filter for cetain shape regimes
+    Returns:
+        All radio relics
+    ------
+    distance: float
+    """
+    [A, B] = Surveys
+
+    sum_A = Clusters_discovery_prop(A)
+    sum_B = Clusters_discovery_prop(B)
+
+    if verbose:
+        print('surveymetrics::ABC_summaryStatistics_numbers::Survey:', A.name, len(A.GCls), sum_A)
+        print('surveymetrics::ABC_summaryStatistics_numbers::Model :', B.name, len(B.filteredClusters), sum_B)
+
+    # This is like assuming a students distribution (?) in the number count and taking the the reduced sqrt of the number as the standart deviation
+    # deviation =  np.abs(sum_A-sum_B)  / max(1.,np.sqrt(sum_A - 1.))
+    print(sum_A, sum_B, max(1., sum_A), max(1., sum_B))
+    deviation = np.abs(sum_A - sum_B) / np.sqrt(max(1., sum_A) * max(1., sum_B))
+    return deviation
+
+
+def ABC_summaryStatistics_number_cluster(Surveys, verbose=False):
+    """ Compares survey B (simulation) with survey A (real world survey)
+    input: either  2 Clusterbuster Class Surveys
+           or      2 GalaxyClusterLists including relics
+           and the efficiency at which to compare the galaxy clusters
+           optional: the function of the discovery prop that is a shape dependent discovery probability
+    It allows to filter for cetain shape regimes
+    Returns:
+        All radio relics
+    ------
+    distance: float
+    """
+    [A, B] = Surveys
+
+    sum_A = len(A.GCls)
+    sum_B = len(B.filteredClusters)
+    print("A.name", A.name, 'len(A.GCls)', len(A.GCls), 'len(A.filteredClusters)', len(A.filteredClusters))
+    print("B.name", B.name, 'len(B.GCls)', len(B.GCls), 'len(B.filteredClusters)', len(B.filteredClusters))
+    # This is like assuming a students distribution (?) in the number count and taking the the reduced sqrt of the number as the standart deviation
+    # deviation =  np.abs(sum_A-sum_B)  / max(1.,np.sqrt(sum_A - 1.))
+    print(sum_A, sum_B, max(1., sum_A), max(1., sum_B))
+    deviation = np.abs(sum_A - sum_B) / np.sqrt(max(1., sum_A) * max(1., sum_B))
+    return deviation
+
+
 """==============="""
 
 
@@ -286,33 +346,6 @@ def ABC_summaryStatistics_2DKS(Surveys, verbose=False, parA=lambda x: x.LLS, par
     if verbose:
         print('surveymetrics::ABC_summaryStatistics_2DKS()::', distance)
     return distance
-
-def ABC_summaryStatistics_number_relics(Surveys, verbose = False):
-    """ Compares survey B (simulation) with survey A (real world survey)
-    input: either  2 Clusterbuster Class Surveys
-           or      2 GalaxyClusterLists including relics
-           and the efficiency at which to compare the galaxy clusters
-           optional: the function of the discovery prop that is a shape dependent discovery probability
-    It allows to filter for cetain shape regimes      
-    Returns:
-        All radio relics
-    ------
-    distance: float
-    """
-    [A, B] = Surveys
-
-    sum_A = Clusters_discovery_prop(A)
-    sum_B = Clusters_discovery_prop(B)
-
-    if verbose:
-        print('surveymetrics::ABC_summaryStatistics_numbers::Survey:', A.name, len(A.GCls)            , sum_A)
-        print('surveymetrics::ABC_summaryStatistics_numbers::Model :', B.name, len(B.filteredClusters), sum_B)
-    
-    # This is like assuming a students distribution (?) in the number count and taking the the reduced sqrt of the number as the standart deviation
-    #deviation =  np.abs(sum_A-sum_B)  / max(1.,np.sqrt(sum_A - 1.))
-    deviation = np.abs(sum_A-sum_B) / np.sqrt(max(1., sum_A)*max(1., sum_B))
-    return deviation
-
 
 def ABC_summaryStatistics_logMach(Surveys):
     """ Compares survey B (simulation) with survey A (real world survey)

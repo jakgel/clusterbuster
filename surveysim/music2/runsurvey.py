@@ -184,7 +184,8 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
 
                 """ Skips missing snapshots --> they will also miss in the .csv"""
                 if len(l) == 0:
-                    print('__ Missing snapshot:', clusterIDs[kk], snapidlist[snap])
+                    if verbose:
+                        print('__ Missing snapshot:', clusterIDs[kk], snapidlist[snap])
                     continue
 
                 ids = int(l["clID"])
@@ -226,6 +227,8 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
         now = datetime.datetime.now()
         writestring = 'y%i m%02i d%02i %02i:%02i:%02i ' % (now.year, now.month, now.day,
                                                            now.hour, now.minute, now.second)
+
+        surmodel = None
         if ABC is None:
             """CAVEAT: The issue with the currently used ABC routines is that you have to give them arrays. Which is why 
                the corresponding model associated has to be defined at this layer.
@@ -257,6 +260,14 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
             (lgeff, lgB0, kappa) = ABC
             RModel = cbclass.RModel(RModelID, effList=[10 ** lgeff], B0=10 ** lgB0, kappa=kappa,
                                     compress=float(pase['compress']))
+            writestring += "%7i" % (RModelID) + ' %+.4e %+.4e %+.4e %+.3f\n' % (
+            RModel.effList[0], RModel.B0, RModel.kappa, RModel.compress)
+        elif len(ABC) == 4:
+            """ Varies the standard model + detection probability """
+            (lgeff, lgB0, kappa, survey_filter_pca_b) = ABC
+            RModel = cbclass.RModel(RModelID, effList=[10 ** lgeff], B0=10 ** lgB0, kappa=kappa,
+                                    compress=float(pase['compress']))
+            surmodel = cbclass.SurModel(b=survey_filter_pca_b)
             writestring += "%7i" % (RModelID) + ' %+.4e %+.4e %+.4e %+.3f\n' % (
             RModel.effList[0], RModel.B0, RModel.kappa, RModel.compress)
         elif len(ABC) == 7:
@@ -292,6 +303,8 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
                                 cnt_levels=[float(pase['RMSnoise']) * 2 ** i for i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]],
                                 saveFITS=(ABC is None), savewodetect=suut.TestPar(pase['savewodetect']), dinfo=dinfo,
                                 surshort='MUSIC2', Rmodel=RModel, outfolder=outfolder, logfolder=logfolder)
+        survey.set_surmodel(surmodel)
+
     else:
         """ If you directly loaded a survey, just use its internal Rmodel """
         RModel = survey.Rmodel
@@ -634,7 +647,7 @@ def mupro_Output_NicePickleClusters( in_queue, output):
     return
 
 
-def DoRun(inputs, smt, verbose=False, countmax=2000): #countmax=200
+def DoRun(inputs, smt, verbose=False, countmax=300): #countmax=200
     """ Please mind that this procedure determines early if the number of detected relics becomes to large!"""  
     (pase, survey) = inputs
     #===

@@ -257,6 +257,7 @@ def discovery_prop(relics, a=3, b=0.10):
 
 
 def discovery_prop_pca(relic, a=0.08, b=-0.08):
+
     """ Takes a list of relics and takes returns an array of they weighted discovery probabilities according
     to their shape parameter and the discovery function
 

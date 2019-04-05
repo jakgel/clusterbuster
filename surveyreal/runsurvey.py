@@ -454,6 +454,7 @@ def survey_run(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/',
         Survey.emi_max = 2e-2
         Survey.scatterkwargs = {"alpha": 0.7, "fmt": "o", "markersize": 10}
         Survey.histkwargs = {"alpha": 0.4}
+        Survey.relic_filter_kwargs = {"Filter": True, "shape": False, "minrms": 8}
         iom.pickleObject(Survey, outfolder+'/pickled/', 'Survey')
 
         for GCl in Survey.GCls:

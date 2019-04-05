@@ -76,6 +76,7 @@ class Survey(object):
         """This should be handled in the case of a mock survey"""
         """So there should be a nock survey and a real survey, both as childs from a generall survey"""
         self.Rmodel = replaceNone(Rmodel, RModel([], simu=False))   # A B-field model
+        self.surmodel = None
         
         # Total measures, you can also write an function for that
 
@@ -85,6 +86,7 @@ class Survey(object):
         self.F_anti = 0        # Pro ratio
 
         #filter arguments for clusters and relics
+        self.filter_pca_kwargs = {}
         self.relic_filter_kwargs = {"Filter": True, 'minrms': 8, "shape_pca": True}   #maxcomp=None, shape=False, regard=[1,2,3]
         self.cluster_filter_kwargs = {"minrel":1, "zmin": 0.05}
 
@@ -110,7 +112,13 @@ class Survey(object):
         self.expScale   = 0.75
         self.expA       = 1.
         self.seed_dropout = None
-        
+
+    def set_surmodel(self, surmodel=None):
+        self.surmodel = surmodel
+        if surmodel is not None:
+            filter_pca_kwargs = {"a":surmodel.relic_filter_pca_a,"b":surmodel.relic_filter_pca_a}
+            self.relic_filter_kwargs.update({"filter_pca_kwargs":filter_pca_kwargs})
+
     def set_binning(self, histo=None):
 
         if histo is None:
@@ -453,7 +461,8 @@ class Galaxycluster(object):
     # The lambda function does make the file unpickelable
     #  self.Filter = lambda x: (x.flux > self.minflux and (x.iner_rat/(x.LAS/(x.dinfo.beam[0]/60.))) < self.maxcomp)
 
-    def filterRelics(self, Filter=True, maxcomp=None, shape=False, shape_pca=False, minrms=8, regard=[1,2,3]):
+    def filterRelics(self, Filter=True, maxcomp=None, shape=False, shape_pca=False, minrms=8, regard=[1,2,3],
+                     filter_pca_kwargs={}):
 
         if Filter:
             self.minflux = self.dinfo.rms * minrms * 1000  #microjansky to millijansky
@@ -466,7 +475,8 @@ class Galaxycluster(object):
         return [relic for relic in self.relics
                 if ((relic.flux() > self.minflux) and (relic.region.rtype.classi in regard) and
                     ((shape is False) or (relic.shape_advanced().value < maxcomp))) and
-                    ((shape_pca is False) or (surut.discovery_prop_pca(relic) > self.random_detection_quality))]
+                    ((shape_pca is False) or
+                     (surut.discovery_prop_pca(relic, **filter_pca_kwargs) > self.random_detection_quality))]
 
     def add_regions(self, regions, **filterargs):
 
@@ -923,6 +933,7 @@ class RModel(BFieldModel):
         self.simu    = simu
         self.id      = id
 
+
 class PreModel_Hoeft(RModel):
     """
     Class that inherits from 'RModel'  and adds parameters to descripe a population of preexisting electrons and further, misc parameters
@@ -951,7 +962,18 @@ class PreModel_Gelszinnis(RModel):
         self.sigmoid_0     = sigmoid_0      # density  (particles/cm-3)value for which the sigmoid value becomes 0
         self.sigmoid_width = sigmoid_width  # order of magnitude over which this plasma content changes
         self.PREexpo       = 0.09           # The exponent for the eff(Mach) modification, latter this should be replaced by the average gamma of the PREs
-        
+
+class SurModel():
+    """
+    Class that for representing the detection biased imposed on certain kinds of relics /clusters
+    """
+
+    def __init__(self, a=0.08, b=-0.08):
+        # Bott variables used in the formula
+        # B = (B0/muG) * (rho/1e-4) ** kappa
+        self.relic_filter_pca_a = a
+        self.relic_filter_pca_b = b
+
 class MockObs:
     """
     Simple class for representing some parameters of the mock observation
