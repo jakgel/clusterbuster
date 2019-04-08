@@ -40,30 +40,24 @@ Install via pip (broken, but fix incoming with next version):
     pip install clusterbuster
 
 Alternatively clone/fork this directory from  github. 
+After download go to the directory and add the repository to your bashrc
+>> echo "export PYTHONPATH=\PYTHONPATH:$(pwd)" >> ~/.bashrc
 
 ## Dependencies
 - NumPy >=1.8
 - scipy >=0.16
+- pandas >= 0.22
+- opencv >= 3.4
 - aplpy >=1.1
 - NFW   >=0.2
 - astropy >=1.3
-- pandas >= ?
-- ephem >=?
-- opencv-python >=?
-- PyPDF2 >=?
+- ephem >=3.7.6
+- PyPDF2 >= 1.26.0
 - matplotlib > (needs matplotlib.mlab)
 - reproject (the NVSS subtraction part)
+Older versions may work but are untested.
 
-Add the github path to your bashrc like
->> export PYTHONPATH="/PATH/TO/clusterbuster:${PYTHONPATH}"
 
-*Additional packaes needed?*
-Install addition packages via
-conda install -c astropy pyregion=1.2 
-
-*Optional packages*
-abcpmc
-astroabc
 
 
 
