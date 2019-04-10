@@ -56,6 +56,7 @@ def ABC_dist_severalMetrices(SurveyA, SurveyB, metrics=['number'], outpath='', d
         distances = []
         SurveyA.FilterCluster(**SurveyA.cluster_filter_kwargs)
         SurveyB.FilterCluster(**SurveyB.cluster_filter_kwargs)
+        print('SurveyA.GCls', len(SurveyA.GCls), '-->', 'SurveyB.filteredClusters', len(SurveyA.filteredClusters))
         print('SurveyB.GCls', len(SurveyB.GCls), '-->', 'SurveyB.filteredClusters', len(SurveyB.filteredClusters))
 
         relicsA = SurveyA.fetch_totalRelics()
@@ -63,9 +64,9 @@ def ABC_dist_severalMetrices(SurveyA, SurveyB, metrics=['number'], outpath='', d
         for metric in metrics:
             print('metric:', metric)
             if metric == 'number':
-                distance = ABC_summaryStatistics_number_relics([SurveyA,SurveyB])
+                distance = ABC_summaryStatistics_number_relics([SurveyA,SurveyB], verbose=verbose)
             elif metric == 'number_cluster':
-                distance = ABC_summaryStatistics_number_cluster([SurveyA,SurveyB])
+                distance = ABC_summaryStatistics_number_cluster([SurveyA,SurveyB], verbose=verbose)
             elif metric == 'flux_kolm':
                 distance = ABC_summaryStatistics_flux_komogorov([SurveyA,SurveyB])
             elif metric == 'polarHisto':
@@ -81,7 +82,7 @@ def ABC_dist_severalMetrices(SurveyA, SurveyB, metrics=['number'], outpath='', d
             elif metric == 'PCA':
                 distance = ABC_summaryStatistics_PCA([SurveyA,SurveyB])
             else:
-                print(metric, 'is unknown as metric!')
+                print(metric, 'is not an implemented metric!')
             distances.append(distance)
                      
         print('surveymetrics::ABC_dist_severalMetrices::', SurveyA.name, 'VS', SurveyB.name, 'metric disimilarity:',
@@ -147,35 +148,6 @@ def ABC_dist_severalMetrices(SurveyA, SurveyB, metrics=['number'], outpath='', d
     
     return distances
 
-
-"""=============== Baustelle: Imlement in Metric & Run Survey"""
-def Clusters_discovery_prop(survey, verbose=False):
-    """ Return a weighted relic number count within all clusters
-    input: either  a Clusterbuster Class Surveys
-           or      a GalaxyClusterLists including relics
-           and the efficiency at which to count the relics
-           optional: the function of the discovery prop that is a shape&LAS dependent discovery probability
-    It allows to filter for certain shape regimes
-    Returns
-    ------
-    distance: float
-    """
-
-    if isinstance(survey, cbclass.Survey):
-        """ Assume to work with surveys """
-        relics = survey.fetch_totalRelics()
-    else:
-        """ Asume to work with lists of galaxy clusters """
-        relics = [gcl.filterRelics() for gcl in survey]
-    print("survey.name", survey.name, "isinstance(survey, cbclass.Survey)", isinstance(survey, cbclass.Survey), len(relics), type(len(relics)))
-
-    weightedsum = len(relics)
-    if verbose:
-        print('surveymetrics::Clusters_discovery_prop()::Survey:', survey.name, weightedsum)
-
-    return weightedsum
-
-
 def ABC_summaryStatistics_number_relics(Surveys, verbose=False):
     """ Compares survey B (simulation) with survey A (real world survey)
     input: either  2 Clusterbuster Class Surveys
@@ -190,12 +162,12 @@ def ABC_summaryStatistics_number_relics(Surveys, verbose=False):
     """
     [A, B] = Surveys
 
-    sum_A = Clusters_discovery_prop(A)
-    sum_B = Clusters_discovery_prop(B)
+    sum_A = len(A.fetch_totalRelics())
+    sum_B = len(B.fetch_totalRelics())
 
     if verbose:
-        print('surveymetrics::ABC_summaryStatistics_numbers::Survey:', A.name, len(A.GCls), sum_A)
-        print('surveymetrics::ABC_summaryStatistics_numbers::Model :', B.name, len(B.filteredClusters), sum_B)
+        print('surveymetrics::ABC_summaryStatistics_number_relics::Survey:', A.name, sum_A)
+        print('surveymetrics::ABC_summaryStatistics_number_relics::Model :', B.name, sum_B)
 
     # This is like assuming a students distribution (?) in the number count and taking the the reduced sqrt of the number as the standart deviation
     # deviation =  np.abs(sum_A-sum_B)  / max(1.,np.sqrt(sum_A - 1.))
@@ -218,13 +190,13 @@ def ABC_summaryStatistics_number_cluster(Surveys, verbose=False):
     """
     [A, B] = Surveys
 
-    sum_A = len(A.GCls)
+    sum_A = len(A.filteredClusters)
     sum_B = len(B.filteredClusters)
-    print("A.name", A.name, 'len(A.GCls)', len(A.GCls), 'len(A.filteredClusters)', len(A.filteredClusters))
-    print("B.name", B.name, 'len(B.GCls)', len(B.GCls), 'len(B.filteredClusters)', len(B.filteredClusters))
+    if verbose:
+        print("A.name", A.name, 'len(A.GCls)', len(A.GCls), 'len(A.filteredClusters)', len(A.filteredClusters))
+        print("B.name", B.name, 'len(B.GCls)', len(B.GCls), 'len(B.filteredClusters)', len(B.filteredClusters))
     # This is like assuming a students distribution (?) in the number count and taking the the reduced sqrt of the number as the standart deviation
     # deviation =  np.abs(sum_A-sum_B)  / max(1.,np.sqrt(sum_A - 1.))
-    print(sum_A, sum_B, max(1., sum_A), max(1., sum_B))
     deviation = np.abs(sum_A - sum_B) / np.sqrt(max(1., sum_A) * max(1., sum_B))
     return deviation
 
