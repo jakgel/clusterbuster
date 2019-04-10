@@ -356,6 +356,7 @@ def ABC_summaryStatistics_alpha(Surveys):
     #    for relic in gcl.relics:
     #        relic.corrupt_alpha()
 
+
     if isinstance(A, cbclass.Survey):
         """ Assume to work with surveys """
         relicsA = A.fetch_totalRelics()
@@ -364,6 +365,10 @@ def ABC_summaryStatistics_alpha(Surveys):
         """ Asume to work with lists of galaxy clusters """
         relicsA = [gcl.filterRelics() for gcl in A]
         relicsB = [gcl.filterRelics() for gcl in B]
+
+    #corrupt the measurement of the spectral index
+    for relic in relicsB:
+        relic.corrupt_alpha()
 
     # Get alpha and remove nans
     A = np.array([min(-1, relic.alpha()) for relic in relicsA])
