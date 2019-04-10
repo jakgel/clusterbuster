@@ -218,7 +218,7 @@ class Survey(object):
             if normalize:
                 radial = radial/np.sum(radial)
             if density:
-                radial = radial*ndist/distmax
+                radial = radial/(self.hist_main.width[1])
 
             return halfHist, (radial, ticks_r), halfHist_plot, sigstats, mesh
         else:
