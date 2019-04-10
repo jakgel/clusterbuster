@@ -160,11 +160,11 @@ def plot_abctraces(pools, surveypath=''):
     print(distances.shape)
     f, ax = plt.subplots()
     for ii in range(distances.shape[2]):
-        ax.errorbar(np.arange(len(distances)), np.mean(distances, axis=1)[:, ii], np.std(distances, axis=1)[:, ii], label='M%i' % (ii+1))
+        ax.errorbar(np.arange(len(distances)), np.mean(distances, axis=1)[:, ii], np.std(distances, axis=1)[:, ii], label='$\\Delta_%i$' % (ii+1))
 #            sns.distplot(np.asarray(distances)[:, ii], axlabel="distances", label='M%i' % (ii))   
-    plt.title("Development of Metric Distances")
+    #plt.title("Development of Metric Distances")
     plt.xlabel('Iteration')
-    plt.ylabel('Distance')
+    plt.ylabel('Distance $\Delta$ in metric')
     plt.legend()
     plt.savefig('%s/Metrics.png' % (surveypath))
 
@@ -173,10 +173,10 @@ def plot_abctraces(pools, surveypath=''):
     print(thetas.shape)
     f, ax = plt.subplots()
     for ii in range(thetas.shape[2]):
-        ax.errorbar(np.arange(len(thetas)), np.mean(thetas, axis=1)[:, ii], np.std(thetas, axis=1)[:, ii], label='theta %i' % (ii+1))
-    plt.title("Development of Parameters")
+        ax.errorbar(np.arange(len(thetas)), np.mean(thetas, axis=1)[:, ii], np.std(thetas, axis=1)[:, ii], label='$\\theta_%i$' % (ii+1))
+    #plt.title("Development of Parameters")
     plt.xlabel('Iteration')
-    plt.ylabel('Theta')
+    plt.ylabel('$\\theta_i$')
     plt.legend()
     plt.savefig('%s/Thetas.png' % (surveypath))
     
@@ -200,11 +200,11 @@ def plot_abctraces(pools, surveypath=''):
     fig, ax = plt.subplots()
     eps_values = np.array([pool.eps for pool in pools])
     for ii in range(distances.shape[2]):
-        ax.plot(eps_values[:, ii], label='M%i' % (ii))
+        ax.plot(eps_values[:, ii], label='$\epsilon_%i$' % (ii))
     ax.set_xlabel("Iteration")
     ax.set_ylabel(r"$\epsilon$", fontsize=15)
     ax.legend(loc="best")
-    ax.set_title("Thresholds")
+    #ax.set_title("Thresholds $\epsilon$")
     plt.savefig('%s/Thresholds.png' % (surveypath))
 
 

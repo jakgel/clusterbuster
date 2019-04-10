@@ -137,7 +137,7 @@ class Survey(object):
         angles, z_outer = np.meshgrid(angle, outer, sparse=True)
         self.AreaHist = (2 * np.pi)**2 / len(angle) * (z_outer ** 2 - z_inner ** 2)
 
-    def polar(self, aligned=True, normalize=True, positive=False,  mirrored=False, mode='flux', conv=0.127):
+    def polar(self, aligned=True, normalize=True, positive=False, density=False, mirrored=False, mode='flux', conv=0.127):
 
         """ 
         Input: needs to histogram of the survey to be set, radial axis: 2 N, polar axis: 4 M
@@ -217,6 +217,9 @@ class Survey(object):
             radial = gaussian_filter1d(radial, conv/self.hist_main.width[1], mode='constant')
             if normalize:
                 radial = radial/np.sum(radial)
+            if density:
+                radial = radial*ndist/distmax
+
             return halfHist, (radial, ticks_r), halfHist_plot, sigstats, mesh
         else:
             return None, (None, None), None, None, None
