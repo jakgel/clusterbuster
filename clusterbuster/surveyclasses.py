@@ -117,7 +117,7 @@ class Survey(object):
         self.surmodel = surmodel
 
         if surmodel is not None:
-            filter_pca_kwargs = {"a":surmodel.relic_filter_pca_a,"b":surmodel.relic_filter_pca_a}
+            filter_pca_kwargs = {"a":surmodel.relic_filter_pca_a, "b":surmodel.relic_filter_pca_b}
             self.relic_filter_kwargs.update({"filter_pca_kwargs":filter_pca_kwargs})
 
     def set_binning(self, histo=None):

@@ -184,7 +184,7 @@ def CreateRadioCube( snapred, Rmodel, z,  nuobs=1.4, logging = True):
     # Get the density right
     nurest = float(nuobs)*(1+z)  # [GHz] It differs from observing frequency!
     z_snap = 1/snap.head['aexpan'] -1
-    f_cor  = (z+1.)/(z_snap+1.)   # Now we compute the cube at the correct redshift ... we just have to compute a correction factor! :-)
+    f_cor  = (1.+z)/(1.+z_snap)   # Now we compute the cubes properties at the correct redshift. We apply a correction factor! :-)
 
     rho_conv = f_cor**3*loadsnap.conversion_fact_gadget_rho_to_nb( snap.head )*loadsnap.conversion_fact_ne_per_nb()*1e4 # in [electrons 10^-4 cm^-3] az z=z_obs
     T_conv   = loadsnap.conversion_fact_gadget_U_to_keV(  snap.head )/8.61732814974056e-08     # K
@@ -220,7 +220,7 @@ def CreateRadioCube( snapred, Rmodel, z,  nuobs=1.4, logging = True):
     f_boost = np.array(snap.rdow*0,dtype='float64')
     """Is based on the idea of a boosting-factor, and is related to more recent discussion of our working group.
        The presumption is that an additional CR population exists. In the following model it is assumed that
-       it steems from accretion shocks. M.Hoeft derived a boosting factor 'f_boosed' based on this assumption.
+       the time since the last shock is density dependent. M.Hoeft derived a boosting factor 'f_boosed' based on this assumption.
        
        remark:
        Some authours say, that merger shocks put more energy (and even more highly relativistic particles) in the cluster. This model is not considered here
@@ -283,14 +283,14 @@ def PlotParticleFilter(snap, iL, savefile, particleW=lambda x: x.mach**2, labels
     
 
     """ I couldnt come up with omething better to take the inverse """
-    mask = np.ones(snap.rho.shape,dtype=bool)
+    mask = np.ones(snap.rho.shape, dtype=bool)
     mask[iL]=0
     
     fig = plt.figure(figsize=(7, 3))
     ax1 = fig.add_subplot(121, title='particles')
     
-    plotrange = [[-10,2], [2.0,10]]
-    bins      = (90,60)  #(30,30)
+    plotrange = [[-10, 2], [2.0, 10]]
+    bins      = (90, 60)  #(30,30)
     
     """Image 1 excluded"""
     H_mass_full, xedges, yedges = np.histogram2d ( np.log10(snap.rho*fac), np.log10(snap.u*facU), range=plotrange, bins=bins) #weights=np.ones( (iL.shape[0])), 
@@ -407,7 +407,7 @@ def PlotParticleFilter(snap, iL, savefile, particleW=lambda x: x.mach**2, labels
         y1 =   3.3 - 0.65*x
         y2 = -11.0 - 3.5*x
         y3 =   6.6 + 0.5*x
-        y  = np.maximum(np.maximum(y1,y2),y3)
+        y = np.maximum(np.maximum(y1,y2), y3)
         
         """Image 1 excluded"""
         fig = plt.figure(figsize=(8, 3))

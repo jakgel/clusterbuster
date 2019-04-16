@@ -30,8 +30,8 @@ import matplotlib.patches as mpatches
 def main():
 
     create_NVSS = False
-    create_ABC_plots = True
-    create_PhDplots = False
+    create_ABC_plots = False
+    create_PhDplots = True
     create_CWpaperplots = False
     print('###==== PostProcessing: Importing self written .py subroutines ====###')
 
@@ -373,7 +373,7 @@ def main():
                         ]
 
             eps_use_wide = [0.95, 4, 1]
-            eps_use_narrow = [0.4, 0.5, 1]
+            eps_use_narrow = [0.4, 0.5, 0.1]
             line_select = lambda x: [float(x[0]), float(x[1]), float(x[2]),
                                      np.log10(float(x[4])), np.log10(float(x[5])), float(x[6]),
                                      np.log10(float(x[7])), np.log10(float(x[8])), np.log10(float(x[9]))]
@@ -391,7 +391,15 @@ def main():
                    "contourf_kwargs": {'cmap': used_cmap, 'colors': None}}
 
 
-
+        if 1==1:
+            all_selected = []
+            for line in open(folderN + '/logfile.txt'):
+                line = line.rstrip('\n')
+                listWords = line.split(" ")
+                listWords = [i for i in listWords if i]
+                all_selected.append(line_select(listWords))
+            all_selected = np.asarray(all_selected)
+            np.save('%s/Converted_logfile.npy' % (folderN), all_selected)
 
 
         launch_pools = iom.unpickleObjectS(folderN+'/launch_pools.pickle')
@@ -533,8 +541,8 @@ def main():
         plt.style.use('ggplot')
         
         #proclist = range(0, 36)  # range(40), 313
-        proclist = range(476, 476+36)  # range(40), 313
-        folder = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_09/'
+        proclist = range(1308, 1308+36)  # range(40), 313
+        folder = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_10/'
                 # '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_20kpc/'
                 # '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_100kpc_3times_sensitivity/surveys/'
                 # '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_100kpc_10times_sensitivity/surveys/'
@@ -605,7 +613,7 @@ def main():
                 ax.tick_params(direction="in", which='both')
                 ax.tick_params(direction="in", which='major', right=False, top=True, labelright=False)
 
-                plt.savefig('/data/ClusterBuster-Output/Signal_distance%s.pdf' % ('_radial' * positive) )
+                plt.savefig('/data/ClusterBuster-Output/Signal_distance%s.pdf' % ('_radial' * positive))
                 plt.clf()
             return 0
 
@@ -632,7 +640,7 @@ def main():
                 survey.scatterkwargs = {"alpha": 0.15, "fmt": "^", "markersize": 7}
                 survey.histkwargs = {"alpha": 0.15}
                 survey.set_binning(Histo)
-                survey.relic_filter_kwargs = {"Filter": True, 'minrms': 8, "shape_pca": True}
+                survey.relic_filter_kwargs.update({"Filter": True, 'minrms': 8, "shape_pca": True})
 
                 SurveysSample_full.append(survey)
 
@@ -665,15 +673,13 @@ def main():
                     continue
 
                 # just a tweek for now
-                survey.relic_filter_kwargs = {"Filter": True, 'minrms': 8, "shape_pca": True}
-                #try:
-                #    print(survey.surmodel)
-                #except:
-                #    surmodel = sur.SurModel()
-                #    survey.set_surmodel(surmodel)
+                #survey.relic_filter_kwargs.update({"Filter": True, 'minrms': 8, "shape_pca": True})
+                try:
+                    surmodel = survey.surmodel
+                except:
+                    surmodel = sur.SurModel()
+                survey.set_surmodel(surmodel)
                 survey.set_seed_dropout()
-                print(survey.name, survey.Rmodel.kappa, survey.relic_filter_kwargs)
-
                 survey.dinfo = survey.GCls[0].dinfo
                 survey.scatterkwargs = {"alpha": 0.15, "fmt": "^", "markersize": 7}
                 survey.cnt_levels = [9e-4, 1.8e-3, 3.6e-3, 7.2e-3, 1.44e-2, 2.88e-2, 5.76e-2]
@@ -693,7 +699,7 @@ def main():
             print(data.shape)
             import pandas as pd
             dataset = pd.DataFrame({'folder': folder, 'number_cluster': data[:, 0], 'number': data[:, 1],
-                                    'polarHisto': data[:, 2],"alpha": data[:, 3], "2DKS": data[:, 4],
+                                    'polarHisto': data[:, 2], "alpha": data[:, 3], "2DKS": data[:, 4],
                                     "flux_kolm": data[:, 5]})
 
             from os.path import normpath, basename
@@ -718,7 +724,7 @@ def main():
             survey.dinfo = survey.GCls[0].dinfo
             survey.scatterkwargs = {"alpha": 0.15, "fmt": "^", "markersize": 7}
             survey.cnt_levels = [9e-4, 1.8e-3, 3.6e-3, 7.2e-3, 1.44e-2, 2.88e-2, 5.76e-2]
-            survey.relic_filter_kwargs = {"Filter": True, 'minrms': 8, "shape_pca": True}
+            survey.relic_filter_kwargs.update({"Filter": True, 'minrms': 8, "shape_pca": True})
             survey.histkwargs = {"alpha": 0.15}
             survey.set_binning(Histo)
             survey.emi_max = 2e-2
@@ -829,7 +835,8 @@ def main():
                 # Only the brightest objects
                 kwargs = {"minimumLAS": 4, "GClflux": 5}
                 usethem = survey.FilterCluster(**kwargs)
-                print('len(usethem)',len(usethem),len(survey.FilterCluster(**kwargs)),len(survey.FilterCluster()),len(survey.GCls))
+                print('len(usethem)', len(usethem), len(survey.FilterCluster(**kwargs)),
+                      len(survey.FilterCluster()), len(survey.GCls))
                 fiut.sparse_array_to_fits(usethem, survey.outfolder)
                 fiut.sparse_array_to_fits(usethem, survey.outfolder, maptype="Subtracted", source_type="compacts")
                 fiut.sparse_array_to_fits(usethem, survey.outfolder, maptype="Temperature")

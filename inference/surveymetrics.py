@@ -49,13 +49,14 @@ def ABC_dist_severalMetrices(SurveyA, SurveyB, metrics=['number'], outpath='', d
 
     if stochdrop:
         SurveyB.set_seed_dropout()
-
-    if len([gcl.updateInformation() for gcl in SurveyB.FilterCluster(**SurveyB.cluster_filter_kwargs)]) < 3:
-        distances = [1e9 for m in metrics]
     else:
         distances = []
         SurveyA.FilterCluster(**SurveyA.cluster_filter_kwargs)
         SurveyB.FilterCluster(**SurveyB.cluster_filter_kwargs)
+
+        if len(SurveyB.filteredClusters) < 3:
+            distances = [1e9 for m in metrics]
+
         print('SurveyA.GCls', len(SurveyA.GCls), '-->', 'SurveyB.filteredClusters', len(SurveyA.filteredClusters))
         print('SurveyB.GCls', len(SurveyB.GCls), '-->', 'SurveyB.filteredClusters', len(SurveyB.filteredClusters))
 
