@@ -49,103 +49,104 @@ def ABC_dist_severalMetrices(SurveyA, SurveyB, metrics=['number'], outpath='', d
 
     if stochdrop:
         SurveyB.set_seed_dropout()
-    else:
-        distances = []
-        SurveyA.FilterCluster(**SurveyA.cluster_filter_kwargs)
-        SurveyB.FilterCluster(**SurveyB.cluster_filter_kwargs)
 
-        if len(SurveyB.filteredClusters) < 3:
-            distances = [1e9 for m in metrics]
+    distances = []
+    SurveyA.FilterCluster(**SurveyA.cluster_filter_kwargs)
+    SurveyB.FilterCluster(**SurveyB.cluster_filter_kwargs)
 
-        print('SurveyA.GCls', len(SurveyA.GCls), '-->', 'SurveyB.filteredClusters', len(SurveyA.filteredClusters))
-        print('SurveyB.GCls', len(SurveyB.GCls), '-->', 'SurveyB.filteredClusters', len(SurveyB.filteredClusters))
+    if len(SurveyB.filteredClusters) < 3:
+        distances = [1e9 for m in metrics]
+        return distances
 
-        relicsA = SurveyA.fetch_totalRelics()
-        A = np.array([min(-1, relic.alpha()) for relic in relicsA])
-        for metric in metrics:
-            print('metric:', metric)
-            if metric == 'number':
-                distance = ABC_summaryStatistics_number_relics([SurveyA,SurveyB], verbose=verbose)
-            elif metric == 'number_cluster':
-                distance = ABC_summaryStatistics_number_cluster([SurveyA,SurveyB], verbose=verbose)
-            elif metric == 'flux_kolm':
-                distance = ABC_summaryStatistics_flux_komogorov([SurveyA,SurveyB])
-            elif metric == 'polarHisto':
-                distance = ABC_summaryStatistics_polarHisto([SurveyA,SurveyB])
-            elif metric == 'polarHisto_simple':
-                distance = ABC_summaryStatistics_polarHisto_simple([SurveyA,SurveyB])
-            elif metric == 'logMach':
-                distance = ABC_summaryStatistics_logMach([SurveyA,SurveyB])
-            elif metric == 'alpha':
-                distance = ABC_summaryStatistics_alpha([SurveyA,SurveyB])
-            elif metric == '2DKS':
-                distance = ABC_summaryStatistics_2DKS([SurveyA,SurveyB])
-            elif metric == 'PCA':
-                distance = ABC_summaryStatistics_PCA([SurveyA,SurveyB])
-            else:
-                print(metric, 'is not an implemented metric!')
-            distances.append(distance)
-                     
-        print('surveymetrics::ABC_dist_severalMetrices::', SurveyA.name, 'VS', SurveyB.name, 'metric disimilarity:',
-              ['%s: %.3e' % (m,d) for (m,d) in zip(metrics,distances)])
-            
-        
-        """ This puts the survey to a bagged survey folder and increases the counter.
-        It might be interesting to know if this number is also the number of the runs.
-        """
-        if delal:
-            file_path = "%s/pickled/Survey.pickle" % (SurveyB.outfolder)
-            if os.path.isfile(file_path):             
-                n = 0
-                while n < 10:  
-                    try:
-                        with open('%s/count.txt' % (outpath), 'r') as f:
-                            SURVEYCOUNT = int(float(f.readline()))
-                        print('SURVEYCOUNT', SURVEYCOUNT) # Is implemented to write the correct survey output files for the ABC abbroach
-                        with open('%s/count.txt' % (outpath), 'w') as f:
-                            f.write(str(SURVEYCOUNT+1))
+    print('SurveyA.GCls', len(SurveyA.GCls), '-->', 'SurveyB.filteredClusters', len(SurveyA.filteredClusters))
+    print('SurveyB.GCls', len(SurveyB.GCls), '-->', 'SurveyB.filteredClusters', len(SurveyB.filteredClusters))
 
-                        SurveyB.name = "%s_%05i" % (SurveyB.name_short, SURVEYCOUNT)
-                        outfolder_old = SurveyB.outfolder
-                        SurveyB.outfolder = '/data/ClusterBuster-Output/%s' % (SurveyB.name)
+    relicsA = SurveyA.fetch_totalRelics()
+    A = np.array([min(-1, relic.alpha()) for relic in relicsA])
+    for metric in metrics:
+        print('metric:', metric)
+        if metric == 'number':
+            distance = ABC_summaryStatistics_number_relics([SurveyA,SurveyB], verbose=verbose)
+        elif metric == 'number_cluster':
+            distance = ABC_summaryStatistics_number_cluster([SurveyA,SurveyB], verbose=verbose)
+        elif metric == 'flux_kolm':
+            distance = ABC_summaryStatistics_flux_komogorov([SurveyA,SurveyB])
+        elif metric == 'polarHisto':
+            distance = ABC_summaryStatistics_polarHisto([SurveyA,SurveyB])
+        elif metric == 'polarHisto_simple':
+            distance = ABC_summaryStatistics_polarHisto_simple([SurveyA,SurveyB])
+        elif metric == 'logMach':
+            distance = ABC_summaryStatistics_logMach([SurveyA,SurveyB])
+        elif metric == 'alpha':
+            distance = ABC_summaryStatistics_alpha([SurveyA,SurveyB])
+        elif metric == '2DKS':
+            distance = ABC_summaryStatistics_2DKS([SurveyA,SurveyB])
+        elif metric == 'PCA':
+            distance = ABC_summaryStatistics_PCA([SurveyA,SurveyB])
+        else:
+            print(metric, 'is not an implemented metric!')
+        distances.append(distance)
 
-                        if verbose:
-                            print('surveymetrics::ABC_dist_severalMetrices:: SurveyB.name, surveyB.outfolder:',
-                                  SurveyB.name, SurveyB.outfolder)
-                            print('surveymetrics::ABC_dist_severalMetrices:: file_path, os.path.isfile(file_path)',
-                                  file_path, os.path.isfile(file_path))
+    print('surveymetrics::ABC_dist_severalMetrices::', SurveyA.name, 'VS', SurveyB.name, 'metric disimilarity:',
+          ['%s: %.3e' % (m,d) for (m,d) in zip(metrics,distances)])
 
-                        iom.check_mkdir(outpath+'surveys/')
-                        iom.pickleObject(SurveyB, "%s/surveys/" % outpath, "Survey_%05i" % SURVEYCOUNT)  #obj, location, oname, append = False
-                        print("shutil.rmtree:", outfolder_old)
-                        shutil.rmtree(outfolder_old)
-                        n = 10
-                    except:
-                        n += 1
-                        time.sleep(0.2)
-                        print('surveymetrics::ABC_dist_severalMetrices:: Could not write counter.')
-                        print("___ cp -rf %s/pickled/Survey.pickle %s/surveys/Survey_unknown.pickle" % (SurveyB.outfolder, outpath))
 
-            """ We increment the current logfile number by one ... just to show how much we have progressed """
-            with open("%s/logfile.txt" % outpath, "a") as f:
-                Rm  = SurveyB.Rmodel
-                Sm  = SurveyB.surmodel
-                eff = SurveyB.Rmodel.effList[0]
+    """ This puts the survey to a bagged survey folder and increases the counter.
+    It might be interesting to know if this number is also the number of the runs.
+    """
+    if delal:
+        file_path = "%s/pickled/Survey.pickle" % (SurveyB.outfolder)
+        if os.path.isfile(file_path):
+            n = 0
+            while n < 10:
+                try:
+                    with open('%s/count.txt' % (outpath), 'r') as f:
+                        SURVEYCOUNT = int(float(f.readline()))
+                    print('SURVEYCOUNT', SURVEYCOUNT) # Is implemented to write the correct survey output files for the ABC abbroach
+                    with open('%s/count.txt' % (outpath), 'w') as f:
+                        f.write(str(SURVEYCOUNT+1))
 
-                line = ''
-                for dist in distances:
-                    line += "%8.5e " % dist
-                line += '%7i %+.4e %+.4e %+.4e' % (SURVEYCOUNT, eff, Rm.B0, Rm.kappa)
+                    SurveyB.name = "%s_%05i" % (SurveyB.name_short, SURVEYCOUNT)
+                    outfolder_old = SurveyB.outfolder
+                    SurveyB.outfolder = '/data/ClusterBuster-Output/%s' % (SurveyB.name)
 
-                if isinstance(Rm, cbclass.PreModel_Hoeft):
-                    line += ' %+.4e %+.4e %+.4e %+.4e %+.4e' % (Rm.t0, Rm.t1, Rm.ratio, Rm.n0, Rm.n1)
-                if isinstance(Rm, cbclass.PreModel_Gelszinnis):
-                    line += ' %+.4e %+.4e %+.4e %+.4e' % (Rm.p0, Rm.p_sigma, Rm.sigmoid_0, Rm.sigmoid_width)
-                if Sm is not None:
-                    line += ' %+.4e %+.4e' % (Sm.relic_filter_pca_a, Sm.relic_filter_pca_b)
-                line += '\n'
+                    if verbose:
+                        print('surveymetrics::ABC_dist_severalMetrices:: SurveyB.name, surveyB.outfolder:',
+                              SurveyB.name, SurveyB.outfolder)
+                        print('surveymetrics::ABC_dist_severalMetrices:: file_path, os.path.isfile(file_path)',
+                              file_path, os.path.isfile(file_path))
 
-                f.write(line)
+                    iom.check_mkdir(outpath+'surveys/')
+                    iom.pickleObject(SurveyB, "%s/surveys/" % outpath, "Survey_%05i" % SURVEYCOUNT)  #obj, location, oname, append = False
+                    print("shutil.rmtree:", outfolder_old)
+                    shutil.rmtree(outfolder_old)
+                    n = 10
+                except:
+                    n += 1
+                    time.sleep(0.2)
+                    print('surveymetrics::ABC_dist_severalMetrices:: Could not write counter.')
+                    print("___ cp -rf %s/pickled/Survey.pickle %s/surveys/Survey_unknown.pickle" % (SurveyB.outfolder, outpath))
+
+        """ We increment the current logfile number by one ... just to show how much we have progressed """
+        with open("%s/logfile.txt" % outpath, "a") as f:
+            Rm  = SurveyB.Rmodel
+            Sm  = SurveyB.surmodel
+            eff = SurveyB.Rmodel.effList[0]
+
+            line = ''
+            for dist in distances:
+                line += "%8.5e " % dist
+            line += '%7i %+.4e %+.4e %+.4e' % (SURVEYCOUNT, eff, Rm.B0, Rm.kappa)
+
+            if isinstance(Rm, cbclass.PreModel_Hoeft):
+                line += ' %+.4e %+.4e %+.4e %+.4e %+.4e' % (Rm.t0, Rm.t1, Rm.ratio, Rm.n0, Rm.n1)
+            if isinstance(Rm, cbclass.PreModel_Gelszinnis):
+                line += ' %+.4e %+.4e %+.4e %+.4e' % (Rm.p0, Rm.p_sigma, Rm.sigmoid_0, Rm.sigmoid_width)
+            if Sm is not None:
+                line += ' %+.4e %+.4e' % (Sm.relic_filter_pca_a, Sm.relic_filter_pca_b)
+            line += '\n'
+
+            f.write(line)
     
     return distances
 

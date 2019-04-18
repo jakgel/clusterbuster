@@ -297,7 +297,7 @@ def main():
         plottings = []
         model_samples_total = 0
         mode = "4vs3_new"   #"4vs3_new"
-        folderN = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_10/' #'/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_08/'
+        folderN = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_11/' #'/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_08/'
         show_metrics = True
         metric_log = True
 
@@ -350,7 +350,28 @@ def main():
                         ]
             metric_log = False
             eps_use_wide = [4 ,2, 1]
-            eps_use_narrow = [0.4, 0.38, 0.78]
+            #eps_use_narrow = [0.35, 0.38, 0.62]
+            eps_use_narrow = [0.35668561, 0.31255057, 0.74173276]
+            line_select = lambda x: [float(x[0]), float(x[1]), float(x[2]),
+                                     np.log10(float(x[4])), np.log10(float(x[5])), float(x[6]),float(x[8])]
+
+            if not show_metrics:
+                labelset = labelset[3:]
+                rangeset = rangeset[3:]
+        elif mode == "4vs3_new_wo_pca_b":
+            labelset = ["$\Delta_\mathrm{count}$", "$\Delta_\mathrm{average\,relic}$", "$\Delta_\mathrm{2DKS}$",
+                        r"$\log_{10} \xi_e$", r"$\log_{10} B_0$", r"$\kappa$", "$b_\mathrm{pca\,filter}$"]
+            rangeset = [[0, 2.0],
+                        [0, 1.0],
+                        [0, 1.0],
+                        [-5.5, -4.0],
+                        [-0.5, 2.5],
+                        [-0.5, 2.0],
+                        [-0.5,0.1]
+                        ]
+            metric_log = False
+            eps_use_wide = [4 ,2, 1]
+            eps_use_narrow = [0.35, 0.38, 0.62]
             #eps_use_narrow = [0.35668561, 0.31255057, 0.74173276]
             line_select = lambda x: [float(x[0]), float(x[1]), float(x[2]),
                                      np.log10(float(x[4])), np.log10(float(x[5])), float(x[6]),float(x[8])]
@@ -501,9 +522,6 @@ def main():
 
 
         if 1 ==1:
-            eps_use1 = 0.4 #0.25048182 #0.35668561
-            eps_use2 = 0.38 #0.28804793 #0.31255057
-            eps_use3 = 0.78 #0.67796783 #0.74173276
             all_selected = []
             for line in open(folderN + '/logfile.txt'):
                 line = line.rstrip('\n')
@@ -541,8 +559,8 @@ def main():
         plt.style.use('ggplot')
         
         #proclist = range(0, 36)  # range(40), 313
-        proclist = range(1308, 1308+36)  # range(40), 313
-        folder = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_10/'
+        proclist = range(47475-8, 47475)  # range(40), 313
+        folder = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_06/'
                 # '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_20kpc/'
                 # '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_100kpc_3times_sensitivity/surveys/'
                 # '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_100kpc_10times_sensitivity/surveys/'
@@ -664,6 +682,31 @@ def main():
 
 
         if 1 == 1:
+
+            surlist = []
+            for surveyname in surveynames:
+                print('%s/%s' % (folder, surveyname))
+                try:
+                    survey = iom.unpickleObject('%s/%s' % (folder, surveyname))
+                    survey.relic_filter_kwargs = {"Filter": True, "shape": False, "minrms": 8}
+                    survey.cluster_filter_kwargs = {'minrel': 1, 'zmin': 0.05}
+                    for gcl in survey.GCls:
+                        for relic in gcl.relics:
+                            #relic.corrupt_alpha()
+                            relic.fpre.label = '$f_\mathrm{Pre}$'
+
+                    surlist.append(survey)
+                except:
+                    continue
+            ioclass.create_scattermatrix(surlist,
+                                         [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.alpha, lambda x: x.Dproj_pix,
+                                          lambda x: x.GCl.z, lambda x: x.GCl.M200, lambda x: x.LAS, lambda x: x.fpre],
+                                          logs=[True, True, False, True, False, True, True, True], suffix='_testPhD', shade=True,
+                                          statistics=False)
+
+        exit()
+
+        if 1 == 1:
             distances_list = []
             for surveyname in surveynames:
                 print('%s/%s' % (folder, surveyname))
@@ -674,10 +717,11 @@ def main():
 
                 # just a tweek for now
                 #survey.relic_filter_kwargs.update({"Filter": True, 'minrms': 8, "shape_pca": True})
-                try:
-                    surmodel = survey.surmodel
-                except:
-                    surmodel = sur.SurModel()
+                #try:
+                #    surmodel = survey.surmodel
+                #except:
+                #    surmodel = sur.SurModel()
+                print(survey.relic_filter_kwargs)
                 survey.set_surmodel(surmodel)
                 survey.set_seed_dropout()
                 survey.dinfo = survey.GCls[0].dinfo

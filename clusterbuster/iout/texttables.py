@@ -84,12 +84,11 @@ def create_table_frame(protoobj, caption, dictionary, delimiter='&', ender='\\',
     capline  = '\caption{%s} \n' % (caption)
     delime   = '\hline\hline\n'
     
-    for ii,entry in enumerate(dictionary):
+    for ii, entry in enumerate(dictionary):
         tabline += ' %s ' % entry[2]
-        if  not isinstance(entry[0], list) and isinstance(entry[0](protoobj), dbclass.measurand):
+        if not isinstance(entry[0], list) and isinstance(entry[0](protoobj), dbclass.measurand):
             idline += entry[0](protoobj).label
             unline += entry[0](protoobj).unit_string()
-             
         else:
              idline += entry[3]
              unline += entry[4]
@@ -150,12 +149,12 @@ def create_table_columns(objectlist, dictionary, delimiter='&', ender='\\\\'):
                 line += entry[1] % tuple([e(obj) for e in  entry[0]])  #else: mhhh
             elif len(entry)>3:
                 """ One single entry """
-                line += entry[1] %  entry[0](obj)  #else:
+                line += entry[1] % entry[0](obj)  #else:
             else:
                 """ Measurand """
-                line += entry[1] %  entry[0](obj)()  #else:
+                line += entry[1] % entry[0](obj)()  #else:
             if ii < len(dictionary) - 1: line += delimiter       
-        line += '%s \n' % (ender)
+        line += '%s \n' % ender
         columns.append(line)
         
     return "".join(columns)
@@ -177,38 +176,37 @@ def RList2table_paper(location, survey, longtab=False):
     
     survey.FilterCluster(**survey.cluster_filter_kwargs)
     RList = survey.fetch_totalRelics()
-    RList.sort(key = iom.Object_natural_keys)
+    RList.sort(key=iom.Object_natural_keys)
 
-#'', r/ö/, .label, .unit, rrrr}  
 #lambda x: cbclass.measurand( x.R200/1000       , '$R_{200}$', un = 'Mpc' )  
     dictionary = [ [lambda x: x.name.replace('_', ' '), '%25s', 'l', 'Identifier', ''],
                    [lambda x: x.RA , '%5.2f', 'r'],
                    [lambda x: x.Dec, '%+7.2f', 'r'],
                    #[lambda x: x.Mach, '%.1f', 'r'],
-                   [lambda x: x.alpha, '%.2f', 'r'],
+                   #[lambda x: x.alpha, '%.2f', 'r'],
+                   [[lambda x: x.alpha(), lambda x: x.alpha.std[0]], '$%.2f\pm%0.2f$', 'r', '$\\alpha_\mathrm{int}$', ''],
                    [[lambda x: x.flux(), lambda x: x.flux.std[0]], '$%7.1f\pm%5.1f$', 'r', '$S_{1.4}$', '[mJy]'],
-                   [[lambda x: np.log10(x.P_rest()), lambda x: np.log10((x.P_rest()+x.P_rest.std[0])/x.P_rest()), lambda x:np.log10((x.P_rest()-x.P_rest.std[0])/x.P_rest())], '$%5.2f^{+%4.2f}_{%4.2f}$', 'r', 'log$_{10}(P_{1.4})$', '$\mathrm{[W/Hz^{-1}]}$'],
-                   [lambda x: x.LAS, '%5.2f', 'r'], #add error if you like
-                   [lambda x: x.LLS, '%5.0f', 'r'], #add error if you like
-                   #[Omega not needed],
+                   [[lambda x: np.log10(x.P_rest()), lambda x: np.log10((x.P_rest()+x.P_rest.std[0])/x.P_rest()),
+                     lambda x:np.log10((x.P_rest()-x.P_rest.std[0])/x.P_rest())], '$%5.2f^{+%4.2f}_{%4.2f}$', 'r', 'log$_{10}(P_{1.4})$', '$\mathrm{[W/Hz^{-1}]}$'],
+                   [lambda x: x.LAS, '%5.2f', 'r'],
+                   [lambda x: x.LLS, '%5.0f', 'r'],
                    [lambda x: x.iner_rat(), '%.2f', 'r', '$\lambda_2/\lambda_1$', ''],
                    [lambda x: x.Dproj_pix, '%.0f', 'r'],
-                   [lambda x: x.theta_rel(), '%.1f', 'r', '$\phi$', '[deg]']
+                   #[lambda x: x.theta_rel(), '%.1f', 'r', '$\phi$', '[deg]']
                  ]
-    caption = 'Radio relic emission islands identified in the %s images'  % (survey.name)
+    caption = 'Radio relic emission islands identified in the %s images' % (survey.name)
     table = create_table(RList, dictionary, caption=caption)
             
     # WRITE COMMON FILE
-    mf = open(location,"w")
+    mf = open(location, "w")
     mf.write(table)
     mf.close()
 
 
 def GClList2table_paper(location, survey, shortlist=None, longtab=False):   
-    
 
     outer = False
-    n_clusters=0
+    n_clusters = 0
     n_compact_sources = 0
   
     if longtab:
@@ -247,28 +245,21 @@ Cluster               &  z   &  $M_{200}$          &  $F_\mathrm{NVSS}$   &   $F
     (1)               & (2)  &  (3)                &        (4)           &          (5)                 &  (6)          &     (7)    \\\\\hline\hline                  
                       
 """
-        foot = '\hline\hline\n\\end{tabular}\n'+int(outer)*'\\end{center}\n\\label{tab:NVSSrelics}\n\\end{table*}'  
-    
-
-
-    
+        foot = '\hline\hline\n\\end{tabular}\n'+int(outer)*'\\end{center}\n\\label{tab:NVSSrelics}\n\\end{table*}'
     
     #RList.sort(key= iom.Object_natural_keys ) 
     """ Start with relic cluster """
-    mf = open(location,"w")
+    mf = open(location, "w")
     mf.write(head)
 
-
     for m in survey.GCls:
-        
-        
+
         # WRITE COMMON FILE
         if m.getstatusstring()[0] is not None:
           
             # PS$^1$  &
             # \'\'/Mpc  &
             #   %4.1f &      1000./(m.cosmoPS*60)
-        	
     #        if m.P_rest() == 0:
     #              print '!!!!!!!! m.Prest == 0', m.name,  m.P_rest
             string = "%25s & $%.3f$ &  %.1f & %s & $%5.1f$ &"   % (m.name, m.z.value, m.M200.value/1e14, m.getstatusstring()[1], m.flux_lit.value)  +   '%s' % (m.gettypestring())  + '& %s - %s\\\\' % (findshort(m.Lx.ref.ident, shortlist) , findshort(m.flux_lit.ref.ident, shortlist) )
@@ -277,7 +268,7 @@ Cluster               &  z   &  $M_{200}$          &  $F_\mathrm{NVSS}$   &   $F
 
     print('n_clusters:',  n_clusters)
 
-    mf.write( foot )
+    mf.write(foot)
     mf.close()
     
 

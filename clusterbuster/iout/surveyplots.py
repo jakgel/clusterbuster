@@ -712,7 +712,7 @@ def joinpandas(df):
     return df_combined
 
 
-def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix='', shade=True):
+def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix='', shade=True, statistics=True):
     sns.set(style="ticks", color_codes=True)
 
     """ Creates a scatter matrix, off a list of quantities ... nice! 
@@ -768,16 +768,17 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix='', sh
         import pandas as pd
         df_clean = df.dropna()
         rho = df_clean.corr()
-        pval = np.zeros([df_clean.shape[1], df_clean.shape[1]])
-        for i in range(df_clean.shape[1]):  # rows are the number of rows in the matrix.
-            for j in range(df_clean.shape[1]):
-                if df_clean.keys()[i] != "Survey" and df_clean.keys()[j] != "Survey":
-                    print(i, j, df_clean.shape)
-                    JonI = pd.ols(y=df_clean.iloc[:,i], x=df_clean.iloc[:,j], intercept=True)
-                    pval[i, j] = JonI.f_stat['p-value']
-                    print("Scatterplot, pval for %s-%s" % (df_clean.keys()[i], df_clean.keys()[j]), pval[i, j])
+        if statistics:
+            pval = np.zeros([df_clean.shape[1], df_clean.shape[1]])
+            for i in range(df_clean.shape[1]):  # rows are the number of rows in the matrix.
+                for j in range(df_clean.shape[1]):
+                    if df_clean.keys()[i] != "Survey" and df_clean.keys()[j] != "Survey":
+                        print(i, j, df_clean.shape)
+                        JonI = pd.ols(y=df_clean.iloc[:,i], x=df_clean.iloc[:,j], intercept=True)
+                        pval[i, j] = JonI.f_stat['p-value']
+                        print("Scatterplot, pval for %s-%s" % (df_clean.keys()[i], df_clean.keys()[j]), pval[i, j])
 
-                    """ Only for PhD Thesis, draw line from de gasperin and on fit."""
+                        """ Only for PhD Thesis, draw line from de gasperin and on fit."""
 
 
         xlabels, ylabels = [], []
@@ -797,7 +798,7 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix='', sh
                     print("Fit results: mu = %.2f,  std = %.2f" % (mu, std))
                 #    g.axes[j, i].text(0.5, 0.1+numbered*0.07, '#%i' % (df_clean.shape[0]), zorder=1e10, horizontalalignment='left',
                 #                      verticalalignment='center', transform=g.axes[j, i].transAxes)
-                if i < j and abs(rho.values[i,j]) > 0.01:
+                if i < j and statistics and abs(rho.values[i,j]) > 0.01:
                     g.axes[j, i].text(0.5, 0.1+numbered*0.07, 'correlation: %0.2f' % rho.values[j,i], horizontalalignment='center',
                                       verticalalignment='center', transform=g.axes[j, i].transAxes)
                     slope, intercept, r_value, p_value, std_err = stats.linregress(df_clean.iloc[:,i], df_clean.iloc[:,j])

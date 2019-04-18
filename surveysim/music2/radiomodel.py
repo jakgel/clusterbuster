@@ -32,7 +32,7 @@ def PrepareRadioCube(snap, psiFile='Hoeft_radio/mach_psi_table.txt', machFile='H
     if log: print('###==== Step 0a:  Prepare cluster data cubes ====###')
     #==== Load psiFile   for psi factor & machfile for mach-numbers conversion factors
     H_mach = np.loadtxt(machFile,skiprows=0)
-    H_psi  = np.loadtxt(psiFile,skiprows=0)[:,1::] # you wont get the temperature values ... this is why we read them separetely
+    H_psi  = np.loadtxt(psiFile,skiprows=0)[:, 1::] # you wont get the temperature values ... this is why we read them separetely
 
     psi_x, psi_y = interpolate.LoadFile_psi(psiFile)
     
@@ -183,7 +183,7 @@ def CreateRadioCube( snapred, Rmodel, z,  nuobs=1.4, logging = True):
     
     # Get the density right
     nurest = float(nuobs)*(1+z)  # [GHz] It differs from observing frequency!
-    z_snap = 1/snap.head['aexpan'] -1
+    z_snap = 1/snap.head['aexpan'] - 1
     f_cor  = (1.+z)/(1.+z_snap)   # Now we compute the cubes properties at the correct redshift. We apply a correction factor! :-)
 
     rho_conv = f_cor**3*loadsnap.conversion_fact_gadget_rho_to_nb( snap.head )*loadsnap.conversion_fact_ne_per_nb()*1e4 # in [electrons 10^-4 cm^-3] az z=z_obs
@@ -196,7 +196,7 @@ def CreateRadioCube( snapred, Rmodel, z,  nuobs=1.4, logging = True):
         rho_e = rho_conv*snap.rdow[MF] #Downstream density
         B = B0*np.power(rho_e, kappa)  # in [muG] - using formula for B-field strength
     else:
-        R = np.divide(snap.rdow[MF],snap.rup[MF])**compress  # Compress of 1 would show the same behavior like the Nuza model, just for an lower magnetic field
+        R = np.divide(snap.rdow[MF], snap.rup[MF])**compress  # Compress of 1 would show the same behavior like the Nuza model, just for an lower magnetic field
         rho_e = rho_conv*snap.rup[MF]        # Upstream density
 
         """ DEVELOPMENT """
@@ -209,7 +209,7 @@ def CreateRadioCube( snapred, Rmodel, z,  nuobs=1.4, logging = True):
             print('Parametrization of the magnetic field is unknown. Choose BFieldModel.B_para.') 
         B[B > 1e5] = 1e5    # set a maximumB field, this has to be done as in some cases for odd magnetic values, we get overflow of magnetic fields valus, as it seems ....
     
-    snap.B = np.array(snap.u*0,dtype='float64')   #Used to initiate a numpy array of the same size and shape as the others; the large float currently comes from radio emision which is to high
+    snap.B = np.array(snap.u*0, dtype='float64')   #Used to initiate a numpy array of the same size and shape as the others; the large float currently comes from radio emision which is to high
     snap.B[MF] = B
     Bcmb = 3.25*(1+z)**2.                    # in [muG] - taken from equ. shortly before 2.43 in  Galactic and Intergalactic Magnetic Fields by Ulrich Klein, Andrew Fletcher - 2014 , Science]
     # Compute additional factors needed for radio flux computations
@@ -217,7 +217,7 @@ def CreateRadioCube( snapred, Rmodel, z,  nuobs=1.4, logging = True):
     factor_B = np.power(B, 1.+snap.s[MF]/2.) / (B**2. + Bcmb**2.)       # Magnetic field strength
     factor_fudge = f_cor**3/f_cor**2 / (1+z)**0.0  # First time for density factor, second term for area third term is just to make it fit ... It is set to 1 (no correction) as I interpret the radio emissivity in sebastians cube as the one for the observers frequency
 
-    f_boost = np.array(snap.rdow*0,dtype='float64')
+    f_boost = np.array(snap.rdow*0, dtype='float64')
     """Is based on the idea of a boosting-factor, and is related to more recent discussion of our working group.
        The presumption is that an additional CR population exists. In the following model it is assumed that
        the time since the last shock is density dependent. M.Hoeft derived a boosting factor 'f_boosed' based on this assumption.
