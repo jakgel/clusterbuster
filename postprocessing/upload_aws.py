@@ -6,6 +6,8 @@ from boto.s3.key import Key
 AWS_ACCESS_KEY_ID = ''
 AWS_SECRET_ACCESS_KEY = ''
 
+#https://docs.aws.amazon.com/AmazonS3/latest/user-guide/upload-objects.html
+
 bucket_name = AWS_ACCESS_KEY_ID.lower() + '-dump'
 conn = boto.connect_s3(AWS_ACCESS_KEY_ID,
         AWS_SECRET_ACCESS_KEY)

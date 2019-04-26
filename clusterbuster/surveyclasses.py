@@ -1183,13 +1183,13 @@ class Relic:
         self.area     = dbc.measurand(area, 'area', label='$A_\\mathrm{relic}$', un="arcmin^2", std=0.2*np.sqrt(area/dinfo.Abeam[1]))
         
         #=== All Fluxes are in mJy  
-        self.flux_ps = dbc.measurand(F_ps, 'F_ps', label='$F_\\mathrm{ps}$', un='mJy', std=0.10*F_ps)  #shoud be a function!
+        self.flux_ps = dbc.measurand(F_ps, 'F_ps', label='$S_\\mathrm{ps}$', un='mJy', std=0.10*F_ps)  #shoud be a function!
         flux_err     = np.sqrt((dinfo.rms*1e3*self.area()/dinfo.Abeam[1])**2 + (0.05*self.flux_ps())**2 + (0.10*F)**2)
         self.flux    = dbc.measurand(F, 'F', un='mJy', std=flux_err)
                     
                     
         #=== Literature values
-        self.flux_lit = dbc.measurand(F_lit, 'F_lit', label='$F_\\mathrm{lit}$', un='mJy', std=0.10*F_ps)  #F_lit  #Flux at 1.4 GHz
+        self.flux_lit = dbc.measurand(F_lit, 'F_lit', label='$S_\\mathrm{lit}$', un='mJy', std=0.10*F_ps)  #F_lit  #Flux at 1.4 GHz
         self.LLS_lit  = dbc.measurand(LLS_lit, 'LLS_lit', label='LLS', un='kpc', std=max(0.1*LLS_lit, 100.))   #sLLS_lit*1000
           
         #=== spectral index and k correction
@@ -1340,27 +1340,27 @@ class Relic:
         # See Nuza et all. 2012
         self.bw_cor = 1./(1.+GCl.z.value)     # Bandwidth quenching not covered by luminousity distance
         P           = self.bw_cor * self.flux.value*GCl.flux2power_woRedening()
-        self.P      = dbc.measurand(P, 'P', label='$P_\\mathrm{obs}$', un="W/Hz",
-                                      std=P*np.sqrt( (self.flux.std[0]/self.flux.value)**2 + ( self.region.alpha_err*np.log(1+GCl.z.value)*(1+GCl.z.value)**self.alpha_z() )**2) )  # include z error
-        self.P_rest = dbc.measurand( self.P.value*self.speccor(GCl), 'P_rest', label='$P_\\mathrm{rest}$', un = "W/Hz",
-                                      std=[std*self.speccor(GCl) for std in self.P.std])   #!!! generall alpha;
-        self.P_lit  = dbc.measurand( self.flux_lit()*1e-29*(4* np.pi*np.power(GCl.cosmoDL * 1e-2, 2)), 'Plit', label='$P_\\mathrm{lit}$', un = "W/Hz")
+        self.P      = dbc.measurand(P, 'P', label='$P_\\mathrm{obs,\,1.4}$', un="W/Hz",
+                                      std=P*np.sqrt( (self.flux.std[0]/self.flux.value)**2 + (self.region.alpha_err*np.log(1+GCl.z.value)*(1+GCl.z.value)**self.alpha_z() )**2) )  # include z error
+        self.P_rest = dbc.measurand(self.P.value*self.speccor(GCl), 'P_rest', label='$P_\\mathrm{rest,\,1.4}$', un="W/Hz",
+                                      std=[std*self.speccor(GCl) for std in self.P.std])   #!!! generall alpha
+        self.P_lit  = dbc.measurand(self.flux_lit()*1e-29*(4* np.pi*np.power(GCl.cosmoDL * 1e-2, 2)), 'Plit', label='$P_\\mathrm{lit}$', un="W/Hz")
 
         self.vec_GCl   = [(GCl.RA.value-self.RA())*np.cos(self.Dec()*np.pi/180), self.Dec.value-GCl.Dec.value]       # corrected for spherical coordiante system
         self.theta_GCl = (np.angle(self.vec_GCl[0]+self.vec_GCl[1]*1j, deg=True)+360) % 360  # in deg;  The complex number form  allows for np.angle. Theta increases counterclockwise
 
-        self.Dproj     = dbc.measurand( np.linalg.norm(self.vec_GCl)*3600*GCl.cosmoPS, 'Dproj', label='$D_\\mathrm{proj}$', un='kpc')
-        self.Dproj_rel = dbc.measurand( np.linalg.norm(self.vec_GCl)*3600*GCl.cosmoPS, 'Dproj', label='$D_\\mathrm{proj}$', un='kpc')
+        self.Dproj     = dbc.measurand(np.linalg.norm(self.vec_GCl)*3600*GCl.cosmoPS, 'Dproj', label='$D_\\mathrm{proj}$', un='kpc')
+        self.Dproj_rel = dbc.measurand(np.linalg.norm(self.vec_GCl)*3600*GCl.cosmoPS, 'Dproj', label='$D_\\mathrm{proj}$', un='kpc')
 
         if self.Dproj > 1e4:
             self.Dproj.value = 0
 
         if self.theta_elong:  # [ Ellipsecontours, Moment of Inertia, Ellipse moments ]
             self.theta_elong = self.theta_elong                                                  # in deg; vector measured     np.angle
-            self.theta_rel   = dbc.measurand(maut.MinAngle_quarter(self.theta_elong, self.theta_GCl), 'theta_rel', label='$\\theta_\mathrm{relic-GCl}$', un='$^\circ$', vrange=[0,90])   # in deg; vector measured     np.angle
+            self.theta_rel = dbc.measurand(maut.MinAngle_quarter(self.theta_elong, self.theta_GCl), 'theta_rel', label='$\\theta_\mathrm{relic-GCl}$', un='$^\circ$', vrange=[0,90])   # in deg; vector measured     np.angle
         else:
             self.theta_elong = False
-            self.theta_rel   = False
+            self.theta_rel = False
 
     def alpha_z(self, default=True):
         if default or self.alpha is None:
@@ -1370,7 +1370,7 @@ class Relic:
         return alpha
 
     def speccor(self, GCl, default=True):
-        speccor = 1./np.power(1.+GCl.z(), self.alpha_z(default) )
+        speccor = 1./np.power(1.+GCl.z(), self.alpha_z(default))
         self.spec_cor = speccor
         return speccor
         

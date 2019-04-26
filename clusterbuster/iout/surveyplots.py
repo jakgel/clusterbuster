@@ -658,13 +658,13 @@ def plot_fluxRatio_LAS(surveys):
     l_iii  = [ax.scatter([],[], s=leg, edgecolors='none', alpha=0.6, color=colors[0]) for leg in legl]
     labels = ['%i' %powe for powe in powers]
     plt.legend(l_iii, labels, ncol=4, frameon=False, fontsize=9, handlelength=1, loc = 1, borderpad=0.4,
-               handletextpad=0.2, framealpha=0.70, title='$F_\\mathrm{1.4,\\,NVSS}\\,\mathrm{[mJy]}$', scatterpoints=1)
+               handletextpad=0.2, framealpha=0.70, title='$S_\\mathrm{1.4,\\,NVSS}\\,\mathrm{[mJy]}$', scatterpoints=1)
 
     ax.set_xlim(0, 20.0)
     ax.set_ylim(ymin=0)
     ax.set_xticks(np.arange(min(ax.get_xlim()), max(ax.get_xlim())+0.5, 3.0))
-    ax.set_xlabel('largest $\\mathrm{LAS}\,[\\mathrm{arcmin}]$')
-    ax.set_ylabel('$F_\\mathrm{1.4,\\,NVSS} / F_\\mathrm{1.4,\\,lit}$')
+    ax.set_xlabel("largest $\\mathrm{LAS}\,[\\mathrm{'}]$")
+    ax.set_ylabel('$S_\\mathrm{1.4,\\,NVSS} / S_\\mathrm{1.4,\\,lit}$')
     ax.tick_params(direction="in", which='both')
     #ax.set_aspect(1.0/ax.get_data_ratio())
 
@@ -723,6 +723,7 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix='', sh
     original_keys = df[0].keys()
     df_combined = joinpandas(df)
     NSurveys = len(SurveySamples)
+    NSurveys_unique = df_combined['Survey'].unique().shape[0]
 
     """ Examples of additional plots 
     def hexbin(x, y, color, **kwargs):
@@ -749,14 +750,14 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix='', sh
     g = sns.PairGrid(df_combined, hue="Survey", palette="Set2", dropna=True)
     g = g.map_upper(sns.regplot, scatter_kws={'edgecolors': "white", "linewidth": 1, "alpha": 0.5/np.sqrt(NSurveys)})  #plt.scatter , , edgecolor="white"
     #g = g.map_diag(sns.distplot)
-    g = g.map_diag(sns.kdeplot, lw=3, legend=False, alpha=1.0/np.sqrt(NSurveys), shade=True)  #histtype="step"  {'cmap':['Blues_d','Blues']},  ... distplot
+    g = g.map_diag(sns.kdeplot, lw=3, legend=False, alpha=1.0/np.sqrt(NSurveys_unique), shade=True)  #histtype="step"  {'cmap':['Blues_d','Blues']},  ... distplot
 
     colormaps = ('BuGn', 'Oranges', 'Red') #("Blues", "Blues_d", "Blues_d") #
     #colormaps = sns.cubehelix_palette(8, start=2, rot=0, dark=0, light=.95, reverse=True)
 
     make_kde.cmap_cycle = cycle(colormaps[0:len(df_combined.Survey.unique())])    #,
 
-    g = g.map_lower(make_kde, alpha=1.0/np.sqrt(NSurveys), shade=shade, shade_lowest=False)
+    g = g.map_lower(make_kde, alpha=1.0/np.sqrt(NSurveys_unique), shade=shade, shade_lowest=False)
 
     # from https://stackoverflow.com/questions/52118245/python-seaborn-jointplot-does-not-show-the-correlation-coefficient-and-p-value-o
     for numbered, survey in enumerate(SurveySamples):

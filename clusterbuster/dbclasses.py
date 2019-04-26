@@ -99,7 +99,7 @@ class measurand(entry):
             unit = ' %s' % (self.unit_string())
 
         if log:
-            return '$log_{10}($%s%s$)$' % (self.label, unit)
+            return '$\log_{10}($%s%s$)$' % (self.label, unit)
         else:
             return '%s%s' % (self.label, unit)
         
