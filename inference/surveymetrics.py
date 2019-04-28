@@ -123,7 +123,7 @@ def ABC_dist_severalMetrices(SurveyA, SurveyB, metrics=['number'], outpath='', d
                     n = 10
                 except:
                     n += 1
-                    time.sleep(0.2)
+                    time.sleep(2)
                     print('surveymetrics::ABC_dist_severalMetrices:: Could not write counter.')
                     print("___ cp -rf %s/pickled/Survey.pickle %s/surveys/Survey_unknown.pickle" % (SurveyB.outfolder, outpath))
 

@@ -29,8 +29,8 @@ import matplotlib.patches as mpatches
 
 def main():
 
-    create_NVSS = True
-    create_ABC_plots = False
+    create_NVSS = False
+    create_ABC_plots = True
     create_PhDplots = False
     create_CWpaperplots = False
     print('###==== PostProcessing: Importing self written .py subroutines ====###')
@@ -55,9 +55,7 @@ def main():
     NVSSsurvey.expScale = 0.75
     NVSSsurvey.seed_dropout = None
     NVSSsurvey.relic_filter_kwargs = {"Filter": True, "shape":False, "minrms": 8}
-    NVSSsurvey.cluster_filter_kwargs = {'minrel':1, 'zmin':0.05}
-
-
+    NVSSsurvey.cluster_filter_kwargs = {'minrel': 1, 'zmin': 0.05}
 
     def cluster_return_polar(Histo, GCl, survey, aligned=False):
         shiftHist = np.roll(Histo.hist.T, -int(aligned * (GCl.relic_pro_index)), axis=1) / survey.AreaHist ** (survey.expA)
@@ -231,10 +229,12 @@ def main():
         cmap = sns.diverging_palette(220, 10, as_cmap=True)
 
         # Draw the heatmap with the mask and correct aspect
-        corr_rounded = copy.deepcopy(corr)
-        corr_rounded.iloc[:, :] = np.round(corr_rounded.values, decimals=2)
-        sns.heatmap(corr_rounded, mask=mask, cmap=cmap, vmin=.65, vmax=.65, center=0,
-                    square=True, linewidths=.5, annot=True, fmt="+.2f", annot_kws={},
+        #corr_rounded = copy.deepcopy(corr)
+        #corr_rounded.iloc[:, :] = np.round(corr_rounded.values, decimals=2)
+
+
+        sns.heatmap(corr, mask=mask, cmap=cmap, vmin=.65, vmax=.65, center=0,
+                    square=True, linewidths=.5, annot=True, fmt="+.2f", annot_kws={'size':12*8/(corr.data.shape[0]+2)},
                     cbar_kws={"shrink": .6, "orientation": "horizontal", "label": "correlation"})
 
         # Rotate the tick labels and set their alignment.
@@ -293,10 +293,7 @@ def main():
     def add_correlation(corner_plot, x, text=('top')):
         import pandas as pd
         df_clean = pd.DataFrame(x)
-        print(df_clean.shape)
         rho = df_clean.corr()
-        print(rho)
-        print(rho.shape)
         rows = rho.shape[0]
         for i in range(rows*rows):
             if i % rows < int(i/rows):
@@ -311,10 +308,10 @@ def main():
         allpools  = []
         plottings = []
         model_samples_total = 0
-        mode = "4vs3_new"   #"4vs3_new"
-        folderN = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_11/' #'/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_08/'
-        show_metrics = False
-        metric_log = True
+        mode = "thesis_largestRun"   #"4vs3_new"
+        folderN = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_12/' #'/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_08/'
+        show_metrics = True
+        metric_log = False
 
 
         if mode == "1vs1":
@@ -333,7 +330,6 @@ def main():
             rangeset = [[-1, 1],
                         [-6, -3.5],
                         ]
-            show_metrics = True
         elif mode == "3vs3_old":
             labelset = [r'$\log_{10} \Delta_\mathrm{count}$', r'$\log_{10} \Delta_\mathrm{average\,relic}$',
                         r'$\log_{10} \Delta_\mathrm{2DKS}$', r"$\log_{10} \xi_e$", r"$log_{10} B_0$", r"$\kappa$"]
@@ -344,14 +340,12 @@ def main():
                         [-0.8, 2.0],
                         [-1.2, 1.0]
                         ]
-            show_metrics = True
         elif mode == "3vs3_new":
             labelset = [r"$\log_{10} \xi_e$", r"$\log_{10} B_0$", r"$\kappa$"]
             rangeset = [[-6, -4.0],
                         [-0.5, 3.0],
                         [-0.0, 3.0]
                         ]
-            show_metrics = False
         elif mode == "4vs3_new":
             labelset = ["$\Delta_\mathrm{count}$", "$\Delta_\mathrm{average\,relic}$", "$\Delta_\mathrm{2DKS}$",
                         r"$\log_{10} \xi_e$", r"$\log_{10} B_0$", r"$\kappa$", "$b_\mathrm{pca\,filter}$"]
@@ -363,19 +357,15 @@ def main():
                         [-0.5, 2.0],
                         [-0.3,0.3]
                         ]
-            metric_log = False
             #eps_use_wide = [4 ,2, 1]
             eps_use_wide = [1.39420435, 0.41220674, 0.90492575]
             #eps_use_narrow = [0.35668561, 0.31255057, 0.74173276]
-            eps_use_narrow = [0.7, 0.30, 0.74]
+            eps_use_narrow = [0.62275237, 0.29084472, 0.695507]  # Last iteration
             eps_select = lambda x: [float(x[0]), float(x[1]), float(x[2]),
                                      np.log10(float(x[4])), np.log10(float(x[5])), float(x[6]), float(x[8])]
             #par_select = lambda x: (float(x[5]) < 1.0 and float(x[6]) > 0.0) and float(x[8]) > -0.3
             par_select = lambda x: float(x[5]) < 10 #and float(x[8]) > -0.0
             par_select = lambda x: float(x[8]) > -0.0 #float(x[8]) < 0.10 and
-            if not show_metrics:
-                labelset = labelset[3:]
-                rangeset = rangeset[3:]
         elif mode == "4vs3_new_wo_pca_b":
             labelset = ["$\Delta_\mathrm{count}$", "$\Delta_\mathrm{average\,relic}$", "$\Delta_\mathrm{2DKS}$",
                         r"$\log_{10} \xi_e$", r"$\log_{10} B_0$", r"$\kappa$", "$b_\mathrm{pca\,filter}$"]
@@ -387,22 +377,18 @@ def main():
                         [-0.5, 2.0],
                         [-0.5,0.1]
                         ]
-            metric_log = False
-            eps_use_wide = [4 ,2, 1]
+            eps_use_wide = [4, 2, 1]
             eps_use_narrow = [0.35, 0.38, 0.62]
             #eps_use_narrow = [0.35668561, 0.31255057, 0.74173276]
             eps_select = lambda x: [float(x[0]), float(x[1]), float(x[2]),
                                      np.log10(float(x[4])), np.log10(float(x[5])), float(x[6]), float(x[8])]
-
-            if not show_metrics:
-                labelset = labelset[3:]
-                rangeset = rangeset[3:]
         elif mode == "3vs5_new":
             labelset = ["$\Delta_\mathrm{count}$", "$\Delta_\mathrm{average\,relic}$", "$\Delta_\mathrm{alpha,mean}$",
-                        r"$\log_{10} \xi_e$", r"$\log_{10} B_0 [\mu G]$", r"$\kappa$", r"$\log_{10}\,\Xi_\mathrm{ratio}$", r"$\log_{10} t_1 \mathrm{[Gyr]}$", r"$\log_{10} t_2 \mathrm{[Gyr]}$"]
-            rangeset = [[-2, 0.0],
-                        [-0.4, 0.2],
-                        [-2.3, -1.0],
+                        r"$\log_{10} \xi_e$", r"$\log_{10} B_0 [\mu G]$", r"$\kappa$",
+                        r"$\log_{10}\,\Xi_\mathrm{ratio}$", r"$\log_{10} t_1 \mathrm{[Gyr]}$", r"$\log_{10} t_2 \mathrm{[Gyr]}$"]
+            rangeset = [[0, 2.0],
+                        [0, 1.0],
+                        [0, 0.1],
                         [-6, -4.0],
                         [-0.8, 3.0],
                         [-0.5, 3.0],
@@ -411,15 +397,42 @@ def main():
                         [-1.3, 2.0]
                         ]
 
-            eps_use_wide = [0.95, 4, 1]
-            eps_use_narrow = [0.4, 0.5, 0.1]
+            eps_use_wide = [0.95, 4, 0.1]
+            eps_use_narrow = [0.4, 0.5, 0.02]
             eps_select = lambda x: [float(x[0]), float(x[1]), float(x[2]),
                                      np.log10(float(x[4])), np.log10(float(x[5])), float(x[6]),
                                      np.log10(float(x[7])), np.log10(float(x[8])), np.log10(float(x[9]))]
 
-            if not show_metrics:
-                labelset = labelset[3:]
-                rangeset = rangeset[3:]
+        elif mode == "thesis_largestRun":
+            labelset = ["$\Delta_\mathrm{count}$", "$\Delta_\mathrm{average\,relic}$", "$\Delta_\mathrm{2DKS}$", "$\Delta_\mathrm{alpha,mean}$",
+                        r"$\log_{10} \xi_e$", r"$\log_{10} B_0 [\mu G]$", r"$\kappa$", "$b_\mathrm{pca\,filter}$",
+                        r"$\log_{10}\,\Xi_\mathrm{ratio}$", r"$\log_{10} t_1 \mathrm{[Gyr]}$", r"$\log_{10} t_2 \mathrm{[Gyr]}$"]
+
+            rangeset = [[0, 2.0],
+                        [0, 1.0],
+                        [0, 1.0],
+                        [0, 0.1],
+                        [-5.5, -4.0],
+                        [-0.5, 2.5],
+                        [-0.5, 2.0],
+                        [-0.3, 0.3],
+                        [-5, 0.5],
+                        [-1.3, 1.0],
+                        [-1.3, 1.0]
+                        ]
+
+            eps_use_wide = [4, 0.7, 0.98, 0.1]
+            eps_use_narrow = [0.54, 0.3, 0.6, 0.02]
+            eps_use_narrow = [2, 0.6, 0.9, 0.04]
+            eps_select = lambda x: [float(x[0]), float(x[1]), float(x[2]), float(x[3]),
+                                     np.log10(float(x[5])), np.log10(float(x[6])), float(x[7]), float(x[14]),
+                                     np.log10(float(x[10])), np.log10(float(x[8])), np.log10(float(x[9]))]
+            par_select = lambda x: float(x[14]) > -0.0
+        if not show_metrics:
+            labelset = labelset[len(eps_use_wide):]
+            rangeset = rangeset[len(eps_use_wide):]
+
+
 
         quantiles = [0.16, 0.5, 0.84]
         levels = quantiles #(1 - np.exp(-0.16), 1 - np.exp(-0.5), 1 - np.exp(-0.84),)
@@ -430,17 +443,6 @@ def main():
         kwargs2 = {"quantiles": quantiles, "levels": levels, "labels": labelset, "show_titles": True,
                    "label_kwargs": {"fontsize": 18}, "title_kwargs": {"fontsize": 18},
                    "contourf_kwargs": {'cmap': used_cmap, 'colors': None}}
-
-
-        if 1==1:
-            all_selected = []
-            for line in open(folderN + '/logfile.txt'):
-                line = line.rstrip('\n')
-                listWords = line.split(" ")
-                listWords = [i for i in listWords if i]
-                all_selected.append(eps_select(listWords))
-            all_selected = np.asarray(all_selected)
-            np.save('%s/Converted_logfile.npy' % (folderN), all_selected)
 
 
         launch_pools = iom.unpickleObjectS(folderN+'/launch_pools.pickle')
@@ -468,12 +470,24 @@ def main():
                 print(plotting_old.shape)
                 allpools.append(pool)
                 plottings.append(plotting_old)
+        print('len(pools)', len(pools))
+
+
+        if 1==1:
+            all_selected = []
+            for line in open(folderN + '/logfile.txt'):
+                line = line.rstrip('\n')
+                listWords = line.split(" ")
+                listWords = [i for i in listWords if i]
+                all_selected.append(eps_select(listWords))
+            all_selected = np.asarray(all_selected)
+            np.save('%s/Converted_logfile.npy' % (folderN), all_selected)
+
 
         print('model_samples_total:', model_samples_total)
         print(np.asarray(plottings).shape)
 
 
-        print('len(pools)', len(pools))
         print('eps_use_wide', eps_use_wide)
         all_selected = []
         for line in open(folderN + '/logfile.txt'):
@@ -485,8 +499,8 @@ def main():
                 all_selected.append(eps_select(listWords))
         all_selected = np.asarray(all_selected)
         print(all_selected.shape)
-        print(all_selected[:,0].flatten().shape)
-        for ii in range(3):
+        print(all_selected[:, 0].flatten().shape)
+        for ii in range(len(eps_use_wide)):
             all_selected_hist = all_selected[:,ii].flatten()
             plt.close("all")
             plt.hist(all_selected_hist, cumulative=False, bins=40)
@@ -496,19 +510,9 @@ def main():
             plt.savefig('%s/Metric_CumHisto_%i.pdf' % (folderN, ii))
             plt.close("all")
 
-        # Ratio development
-        ratios = np.asarray([pool.ratio for pool in pools])
-        print(ratios.shape)
-        plt.plot(ratios[1:]/ratios[0:-1])
-        plt.xlabel('Iteration')
-        plt.ylabel('Relative change of acceptance rate since last iteration')
-        plt.savefig('%s/Acceptance_development.pdf' % (folderN))
-        plt.savefig('%s/Acceptance_development.png' % (folderN))
-        plt.close("all")
-
         # WideEpsilon
         if not show_metrics:
-            all_selected = all_selected[:,3:]
+            all_selected = all_selected[:, len(eps_use_wide):]
         plottet_corner = corner.corner(all_selected, **kwargs2)
         add_correlation(plottet_corner, all_selected)
         plt.savefig('%s/WideEpsilon.pdf' % (folderN))
@@ -520,12 +524,11 @@ def main():
             line = line.rstrip('\n')
             listWords = line.split(" ")
             listWords = [i for i in listWords if i]
-            if all( float(listWords[ii]) < eps_use for ii,eps_use in enumerate(eps_use_narrow)):
+            if all(float(listWords[ii]) < eps_use for ii,eps_use in enumerate(eps_use_narrow)):
                 all_selected.append(eps_select(listWords))
         all_selected = np.asarray(all_selected)
         if not show_metrics:
-            all_selected = all_selected[:,3:]
-        print(all_selected.shape)
+            all_selected = all_selected[:, len(eps_use_wide):]
         print(all_selected[:, 0].flatten().shape)
 
         # SecondLastEps
@@ -541,13 +544,12 @@ def main():
             line = line.rstrip('\n')
             listWords = line.split(" ")
             listWords = [i for i in listWords if i]
-            if all( float(listWords[ii]) < eps_use for ii,eps_use in enumerate(eps_use_narrow)):
+            if all(float(listWords[ii]) < eps_use for ii, eps_use in enumerate(eps_use_narrow)):
                 if par_select(listWords):
                     all_selected_priors.append(eps_select(listWords))
         all_selected_priors = np.asarray(all_selected_priors)
         if not show_metrics:
-            all_selected_priors = all_selected_priors[:,3:]
-        print(all_selected_priors.shape)
+            all_selected_priors = all_selected_priors[:,len(eps_use_wide):]
         print(all_selected_priors[:, 0].flatten().shape)
 
         # SecondLastEps
@@ -564,21 +566,28 @@ def main():
             plt.savefig('%s%i.png' % (folderN, ii))
 
 
+        # Ratio development
+        ratios = np.asarray([pool.ratio for pool in pools])
+        print(ratios.shape)
+        plt.plot(ratios[1:]/ratios[0:-1])
+        plt.xlabel('Iteration')
+        plt.ylabel('Relative change of acceptance rate since last iteration')
+        plt.savefig('%s/Acceptance_development.pdf' % (folderN))
+        plt.savefig('%s/Acceptance_development.png' % (folderN))
+        plt.close("all")
+
         #LastThree
-        if len(pools)>=3:
+        if len(pools) >= 3:
             corner.corner(np.concatenate((plottings[-3], plottings[-2], plottings[-1]), axis=0), **kwargs)
             plt.savefig('%s/LastThree.pdf' % (folderN))
             plt.savefig('%s/LastThree.png' % (folderN))
 
         #LastTwo
-        if len(pools)>=2:
+        if len(pools) >= 2:
             corner.corner(np.concatenate((plottings[-2], plottings[-1]), axis=0), **kwargs)
             plt.savefig('%s/LastTwo.pdf' % (folderN))
             plt.savefig('%s/LastTwo.png' % (folderN))
             plt.close("all")
-
-
-
 
         # Generate the pandas dataframe
         for hh, data in enumerate(plottings):
@@ -595,8 +604,8 @@ def main():
         plt.style.use('ggplot')
         
         #proclist = range(0, 36)  # range(40), 313
-        proclist = range(47475-18, 47475)  # range(40), 313
-        folder = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_06/'
+        proclist = range(100, 101)  # range(40), 313
+        folder = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_11/'
                 # '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_20kpc/'
                 # '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_100kpc_3times_sensitivity/surveys/'
                 # '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_100kpc_10times_sensitivity/surveys/'
@@ -717,7 +726,7 @@ def main():
                 ioclass.plot_cummulative_flux(SurveysSample_full)
 
 
-        if 1 == 1:
+        if 1 == 2:
 
             surlist = []
             for surveyname in surveynames:
@@ -744,7 +753,7 @@ def main():
                                           logs=[True, True, False, False, True], suffix='_testPhD', shade=True,
                                           statistics=False) #lambda x: x.GCl.z, lambda x: x.GCl.M200, lambda x: x.LAS,
 
-        exit()
+            exit()
 
         if 1 == 1:
             distances_list = []
@@ -756,13 +765,13 @@ def main():
                     continue
 
                 # just a tweek for now
-                #survey.relic_filter_kwargs.update({"Filter": True, 'minrms': 8, "shape_pca": True})
+                survey.relic_filter_kwargs.update({"Filter": True, 'minrms': 8, "shape_pca": True})
                 #try:
                 #    surmodel = survey.surmodel
                 #except:
                 #    surmodel = sur.SurModel()
                 print(survey.relic_filter_kwargs)
-                survey.set_surmodel(surmodel)
+                #survey.set_surmodel(surmodel)
                 survey.set_seed_dropout()
                 survey.dinfo = survey.GCls[0].dinfo
                 survey.scatterkwargs = {"alpha": 0.15, "fmt": "^", "markersize": 7}

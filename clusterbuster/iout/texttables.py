@@ -72,10 +72,7 @@ def ClusterVol_lum(surveys, location):
 def create_table_frame(protoobj, caption, dictionary, delimiter='&', ender='\\', longtab=False, outer=True):
     
     # l  r  r  r  r  r  r  r  r  r  r}
-    
-    
-    
-    
+
     tabline  = ''
     idline   = ''
     unline   = ''
@@ -105,7 +102,7 @@ def create_table_frame(protoobj, caption, dictionary, delimiter='&', ender='\\',
     
     
     if longtab:
-        tabline  = '\\begin{longtable}{'+tabline
+        tabline = '\\begin{longtable}{'+tabline
         capline += """\\\\"""
         head = """\\begin{landscape}\n\\begin{center}""" + sizeline + tabline + capline + delime + labeline +idline +unline + """
                             \\endfirsthead
@@ -116,38 +113,34 @@ def create_table_frame(protoobj, caption, dictionary, delimiter='&', ender='\\',
                             \\endfoot""" + delime + '\\endlastfoot'
         foot = '\hline\n\\end{longtable}\n\\end{center}\n\\end{landscape}'  
     else:
-        
-        tabline =  '\\begin{tabular}{' + tabline
-        
+        tabline = '\\begin{tabular}{' + tabline
         
         head =  ("""\\begin{table*}\n\\begin{center}""" + capline + sizeline) * int(outer) + tabline + delime +labeline + idline + unline + delime
         foot = '\hline\hline\n\\end{tabular}\n'+int(outer)*'\\end{center}\n\\end{table*}'
-                                   
-
-        
-                   
-#    lines = [taline,delime, idline,unlune]
-#    head  = "".join(lines)    
     
     return head, foot
-
-
 
 
 def create_table_columns(objectlist, dictionary, delimiter='&', ender='\\\\'):
     
     columns = []
     for obj in objectlist:
-        line= ''
-        for ii,entry in enumerate(dictionary):
+        line = ''
+        for ii, entry in enumerate(dictionary):
             """ Formats the line: For each object the entry ( a lambda variable) of the list is looked for 
             line += entry[1] %  entry[0](obj)  is the simple version, but because I allow for formating of several value sin one column, I
             
             """
             if isinstance(entry[0], list):
                 """ Multiple entries """
-                line += entry[1] % tuple([e(obj) for e in  entry[0]])  #else: mhhh
-            elif len(entry)>3:
+
+                #[[lambda x: x.alpha(), lambda x: x.alpha.std[0]], '$%.2f\pm%0.2f$', 'r', '$\\alpha_\mathrm{int}$', ''],
+
+                for e0, e1 in zip(entry[0], entry[1]):
+                    if not np.isnan(e0(obj)):
+                        #print('!!!!', e1)
+                        line += e1 % e0(obj)
+            elif len(entry) > 3:
                 """ One single entry """
                 line += entry[1] % entry[0](obj)  #else:
             else:
@@ -155,10 +148,10 @@ def create_table_columns(objectlist, dictionary, delimiter='&', ender='\\\\'):
                 line += entry[1] % entry[0](obj)()  #else:
             if ii < len(dictionary) - 1: line += delimiter       
         line += '%s \n' % ender
+        line = line.replace('$$','')
         columns.append(line)
         
     return "".join(columns)
-
 
 
 def create_table(objectlist, dictionary, caption='nocap', outer=False, longtab=False):
@@ -184,10 +177,11 @@ def RList2table_paper(location, survey, longtab=False):
                    [lambda x: x.Dec, '%+7.2f', 'r'],
                    #[lambda x: x.Mach, '%.1f', 'r'],
                    #[lambda x: x.alpha, '%.2f', 'r'],
-                   [[lambda x: x.alpha(), lambda x: x.alpha.std[0]], '$%.2f\pm%0.2f$', 'r', '$\\alpha_\mathrm{int}$', ''],
-                   [[lambda x: x.flux(), lambda x: x.flux.std[0]], '$%7.1f\pm%5.1f$', 'r', '$S_{1.4}$', '[mJy]'],
+                   [[lambda x: x.alpha(), lambda x: x.alpha.std[0]], ['$%.2f$', '$\pm%0.2f$'], 'l', '$\\alpha_\mathrm{int}$', ''],
+                   [[lambda x: x.flux(), lambda x: x.flux.std[0]], ['$%7.1f$', '$\pm%5.1f$'], 'r', '$S_{1.4}$', '[mJy]'],
                    [[lambda x: np.log10(x.P_rest()), lambda x: np.log10((x.P_rest()+x.P_rest.std[0])/x.P_rest()),
-                     lambda x:np.log10((x.P_rest()-x.P_rest.std[0])/x.P_rest())], '$%5.2f^{+%4.2f}_{%4.2f}$', 'r', 'log$_{10}(P_{1.4})$', '$\mathrm{[W/Hz^{-1}]}$'],
+                     lambda x:np.log10((x.P_rest()-x.P_rest.std[0])/x.P_rest())], ['$%5.2f$', '$^{+%4.2f}$', '$_{%4.2f}$'],
+                     'r', 'log$_{10}(P_{1.4})$', '$\mathrm{[W/Hz^{-1}]}$'],
                    [lambda x: x.LAS, '%5.2f', 'r'],
                    [lambda x: x.LLS, '%5.0f', 'r'],
                    [lambda x: x.iner_rat(), '%.2f', 'r', '$\lambda_2/\lambda_1$', ''],

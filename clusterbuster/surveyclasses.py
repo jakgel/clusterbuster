@@ -1060,9 +1060,9 @@ class RelicRegion(DetRegion):  # Define a new object: RelicRegion
       try:
        self.alpha_err = float(alpha_err)
       except: 
-       self.alpha_err = 0.2
+       self.alpha_err = np.nan #0.2
     else: 
-       self.alpha_err = 0.2
+       self.alpha_err = np.nan #0.2
        
        
     """DEVELOPMENT
@@ -1254,7 +1254,7 @@ class Relic:
     """ See Colafrancesco+2017 equ. 5 & 6 """
 
     def corrupt_alpha(self):
-        sigma = 1.5*max(0.005, 0.1439075398254617-0.04093582*np.log10(self.flux.value)) #0.18
+        sigma = 1.0*max(0.005, 0.1439075398254617-0.04093582*np.log10(self.flux.value)) #1.5
         self.alpha.value = self.alpha.value + np.random.normal(0, sigma, 1)[0]
 
     def infer_Mach(self, Mach=None):

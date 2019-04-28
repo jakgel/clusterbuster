@@ -224,10 +224,6 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
         if verbose: print('Length of GClList:', len(GClList))
         """ New approach: Create a list of modes for the radio emission (Rmodels)
         """
-        now = datetime.datetime.now()
-        writestring = 'y%i m%02i d%02i %02i:%02i:%02i ' % (now.year, now.month, now.day,
-                                                           now.hour, now.minute, now.second)
-
         surmodel = None
         if ABC is None:
             """CAVEAT: The issue with the currently used ABC routines is that you have to give them arrays. Which is why 
@@ -245,56 +241,39 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
             """ Vary only efficiency """
             (lgeff) = ABC
             RModel = cbclass.RModel(RModelID, effList=[10 ** lgeff], B0=1, kappa=0.5, compress=float(pase['compress']))
-            writestring += "%7i" % (RModelID) + ' %+.4e %+.4e %+.4e %+.3f\n' % (
-            RModel.effList[0], RModel.B0, RModel.kappa, RModel.compress)
         elif len(ABC) == 2:
             """ Vary efficiency and B0"""
             (lgeff, lgB0) = ABC
             RModel = cbclass.RModel(RModelID, effList=[10 ** lgeff], B0=10 ** lgB0, kappa=0.5,
                                     compress=float(pase['compress']))
-            writestring += "%7i" % (RModelID) + ' %+.4e %+.4e %+.4e %+.3f\n' % (
-            RModel.effList[0], RModel.B0, RModel.kappa, RModel.compress)
             print('#== Begin Processing task')
         elif len(ABC) == 3:
             """ Varies the standard model """
             (lgeff, lgB0, kappa) = ABC
             RModel = cbclass.RModel(RModelID, effList=[10 ** lgeff], B0=10 ** lgB0, kappa=kappa,
                                     compress=float(pase['compress']))
-            writestring += "%7i" % (RModelID) + ' %+.4e %+.4e %+.4e %+.3f\n' % (
-            RModel.effList[0], RModel.B0, RModel.kappa, RModel.compress)
         elif len(ABC) == 4:
             """ Varies the standard model + detection probability """
             (lgeff, lgB0, kappa, survey_filter_pca_b) = ABC
             RModel = cbclass.RModel(RModelID, effList=[10 ** lgeff], B0=10 ** lgB0, kappa=kappa,
                                     compress=float(pase['compress']))
             surmodel = cbclass.SurModel(b=survey_filter_pca_b)
-            writestring += "%7i" % (RModelID) + ' %+.4e %+.4e %+.4e %+.3f\n' % (
-            RModel.effList[0], RModel.B0, RModel.kappa, RModel.compress)
-        elif len(ABC) == 7:
-            (lgeff, lgB0, kappa, lgp0, p_sigma, lgsigmoid_0, sigmoid_width) = ABC
-            print(ABC)
-            RModel = cbclass.RModel(RModelID, effList=[10 ** lgeff], B0=10 ** lgB0, kappa=kappa,
-                                    compress=float(pase['compress']), pre=True, p0=10 ** lgp0, p_sigma=p_sigma,
-                                    sigmoid_0=10 ** lgsigmoid_0, sigmoid_width=sigmoid_width)
-            Rm = RModel
-            writestring += "Model #%7i parameters:" % (RModelID) + ' %+.4e %+.4e %+.4e %+.3f\n' % (
-            Rm.effList[0], Rm.B0, Rm.kappa, Rm.compress) + ' %+.4e %+.4e %+.4e %+.4e\n' % (
-                           Rm.p0, Rm.p_sigma, Rm.sigmoid_0, Rm.sigmoid_width)
         elif len(ABC) == 6:
             (lgeff, lgB0, kappa, lgt0, lgt1, lgratio) = ABC
-            print(ABC)
             RModel = cbclass.PreModel_Hoeft(RModelID, effList=[10 ** lgeff], B0=10 ** lgB0, kappa=kappa,
                                             compress=float(pase['compress']), t0=10**lgt0, t1=10**lgt1, ratio=10**lgratio)
             Rm = RModel
-            writestring += "Model #%7i parameters:" % (RModelID) + ' %+.4e %+.4e %+.4e %+.3f\n' % (
-            Rm.effList[0], Rm.B0, Rm.kappa, Rm.compress) + ' %+.4e %+.4e %+.4e\n' % (Rm.t0, Rm.t1, Rm.ratio)
+        elif len(ABC) == 7:
+            (lgeff, lgB0, kappa, survey_filter_pca_b, lgratio, lgt0, lgt1) = ABC
+            RModel = cbclass.PreModel_Hoeft(RModelID, effList=[10 ** lgeff], B0=10 ** lgB0, kappa=kappa,
+                                            compress=float(pase['compress']), t0=10 ** lgt0, t1=10 ** lgt1,
+                                            ratio=10 ** lgratio)
+            Rm = RModel
+            surmodel = cbclass.SurModel(b=survey_filter_pca_b)
         else:
             print('RunSurvey::main: model unknown')
             return
 
-        """ WARNING: BAD code! This is a racing condition! Not nice at all, but at least very inprobable to be triggered. Better would be a try, except control-structure !!! """
-        with open("%s%s.txt" % (logfolder, '/ProcessLog'), "a") as f:
-            f.write(writestring)
 
         """ Create survey """
         outfolder = '%s_%05i/' % (logfolder, RModelID)
@@ -343,33 +322,9 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
     return survey
 
 def main_ABC(params, parfile='MUSIC2_NVSS02_SSD.parset', Clfile='clusterCSV/MUSIC2', verbose=False):
-    """ ' parfile='MUSIC2_NVSS02_SSD_small.parset' """
-
-    """DEBUGGING
-    import clusterbuster.ClusterBuster_pythonClass as CBclass
-
-    # theta=0, phi=0, psi=0, proj='', snap=-1, z_snap=0, clid=-1, hsize=6000, binmax=1000):
-    dinfo   = cbclass.DetInfo(rms=1e-4)    
-    Rmodel=cbclass.RModel([], simu=True)
-
-    mockobs1 = cbclass.MockObs(0,snap=17,clid=1, snapfolder  = '/radioarchive/MergerTrees/WithCoolSfrAgn/snaps/', headerc='kpc')      #
-    GCl1     = cbclass.Galaxycluster_simulation('withCool_lowdens', 0, M200=1.41e15,  z=0.01, mockobs=mockobs1,dinfo=dinfo)
-    GCl1.updateInformation()
-
-    mockobs2 = cbclass.MockObs(0,snap=14,clid=1, snapfolder  = '/radioarchive/MergerTrees/Clusters/snaps/', headerc='Mpc')      #
-    GCl2     = cbclass.Galaxycluster_simulation('vanilla_lowdens', 0, M200=1.41e15,  z=0.01, mockobs=mockobs2,dinfo=dinfo)
-    GCl2.updateInformation()
-
-
-    survey = cbclass.Survey([GCl2,GCl1], 'SampleClusters', cnt_levels=[0], synonyms=[], Rmodel=Rmodel, emi_max=1e-2, m_cnt=2, 
-             saveFITS=True, dinfo=None, mainhist=None)
-#    return survey
-    DEBUGGING END"""
-
     survey = main(parfile, ABC=params, Clfile=Clfile, verbose=verbose)
 
     """ MUSIC-2 """
-    #    print('runsurvey::main_ABC()::', survey.outfolder,survey.name) #DEBUGGING
     survey.dinfo = survey.GCls[0].dinfo
     survey.scatterkwargs = {"alpha": 0.15, "fmt": "^", "markersize": 7}
     survey.histkwargs = {"alpha": 0.15}
@@ -386,7 +341,7 @@ def LoadSnap_multiprocessing(pase, realisations, Rmodel, getstring=False, verbos
 
     """ We load the radio cubes """
 
-    strSn      = (pase['snapfolder'] + 'SHOCKS_%05i/cluster.%05i.snap.%03i.shocks') % (gcl.mockobs.clid, gcl.mockobs.clid, gcl.mockobs.snap)   
+    strSn = (pase['snapfolder'] + 'SHOCKS_%05i/cluster.%05i.snap.%03i.shocks') % (gcl.mockobs.clid, gcl.mockobs.clid, gcl.mockobs.snap)
 
 #    if suut.TestPar(pase['useMiniCube']):     # subset of snapshot, pickled
 #        strSn   = strSn.replace('cluster.', 'clusterSUBSET.') 
@@ -413,8 +368,8 @@ def LoadSnap_multiprocessing(pase, realisations, Rmodel, getstring=False, verbos
                                     
     
     """psi and machfiles could become sharred (or global) arrays, but as they are quite small < 1MB, the impact on performance should be snmall"""
-    PreSnap    = radiomodel.PrepareRadioCube(snap, psiFile=pase['miscdata']+pase['PSItable'], machFile=pase['miscdata']+pase['DSAtable'])  
-    PreSnap    = ( radiomodel.PiggyBagSnap(PreSnap[0]), PreSnap[1] )
+    PreSnap = radiomodel.PrepareRadioCube(snap, psiFile=pase['miscdata']+pase['PSItable'], machFile=pase['miscdata']+pase['DSAtable'])
+    PreSnap = ( radiomodel.PiggyBagSnap(PreSnap[0]), PreSnap[1] )
 
     if getstring:
         return PreSnap, strSn, smt
@@ -465,7 +420,9 @@ def RadioAndMock_loaded(val, verbose=True):
     (radiosnap, subsmt) = radiomodel.CreateRadioCube(snapMF, Rmodel, realisations[0].mockobs.z_snap, nuobs=pase['nu_obs'], logging=False)[0:2]
     smt.MergeSMT_simple(subsmt, silent=True)
     ##=== Stage II - DoMockObs
-    if verbose: print('Start compiling MockObservations for further models of cluster #%5i snap #%3i with in total %i realisations.' % (realisations[0].mockobs.clid, realisations[0].mockobs.snap, len(realisations)))
+    if verbose:
+        print('Start compiling MockObservations for further models of cluster #%5i snap #%3i with in total %i realisations.'
+              % (realisations[0].mockobs.clid, realisations[0].mockobs.snap, len(realisations)))
 
     GClrealisations_used = []
     smt(task='Shed_DoMockObs_misc') 
@@ -479,9 +436,9 @@ def RadioAndMock_loaded(val, verbose=True):
         """ also possible: realisations[kk].Rvir       = radiocube[0].head['Rvir']"""
         if realisations[kk].M200.value == 0:
             try:
-                realisations[kk].M200.value       = radiosnap.head['M200']
+                realisations[kk].M200.value = radiosnap.head['M200']
             except:
-                realisations[kk].Mvir.value       = radiosnap.head['Mvir']
+                realisations[kk].Mvir.value = radiosnap.head['Mvir']
             realisations[kk].updateInformation(massproxis=True)
 
         """ Here we add the radio emission due to pre-existing electrons """
@@ -496,7 +453,8 @@ def RadioAndMock_loaded(val, verbose=True):
         """ Here we compute the volume weighted radio emission """   
         radiosum      = np.sum(radiosnap.radi)
         borders       = 2*realisations[0].R200*radiosnap.head ['hubble']/radiosnap.head ['aexpan']
-        whereR200     = np.where(np.sqrt(np.power(radiosnap.pos[:,0],2) + np.power(radiosnap.pos[:,1],2) + np.power(radiosnap.pos[:,2],2) ) < borders/2)
+        whereR200     = np.where(np.sqrt(np.power(radiosnap.pos[:,0], 2) + np.power(radiosnap.pos[:,1], 2)
+                                         + np.power(radiosnap.pos[:,2], 2)) < borders/2)
         radiosum_R200 = np.sum(radiosnap.radi[whereR200])
         # update information on the total radio power (at the rest frame frequency) in the simulational volume
         realisations[kk].P_rest.value    = radiosum       # This is for a frequency differing from 1.4 GHz and an efficiency of 1, in PostProcessing.py we apply a further correction
@@ -504,6 +462,12 @@ def RadioAndMock_loaded(val, verbose=True):
 
         if not suut.TestPar(pase['cutradio']):
             radiosnapUse = copy.deepcopy(radiosnap)
+
+            if hasattr(radiosnapUse, 'radiPre'):
+                radiosnapUse.radi += radiosnapUse.radiPre
+                print('Run_MockObs:: Ratio of PREs to total emission',
+                      (np.sum(radiosnapUse.radiPre)) / (np.sum(radiosnapUse.radi) + np.sum(radiosnapUse.radiPre)))
+
             radiocube = (radiosnapUse, Rmodel, survey)  # Rmodel is added to the tuple
         else:
             print('Beware, This is slow and should not be paralised!!!! This part is not implemented')
@@ -520,10 +484,9 @@ def RadioAndMock_loaded(val, verbose=True):
 
 
 def RadioAndMock(val, verbose=True):
-    smt = iom.SmartTiming(); 
+    smt = iom.SmartTiming()
     smt(task='RadioAndMock_initialization')
 
-           
     (pase, realisations, survey) = val
     Rmodel = survey.Rmodel
 
@@ -533,13 +496,7 @@ def RadioAndMock(val, verbose=True):
         snapMF = PreSnap
         (radiosnap, subsmt) = radiomodel.CreateRadioCube(snapMF, Rmodel, realisations[0].mockobs.z_snap, nuobs=pase['nu_obs'])[0:2]
         smt.MergeSMT_simple(subsmt, silent=True) 
-        
-#    """ In case of pre-existing electrons """
-#    if len(PreSnap) > 1:
-#        snapMF = (PreSnap[1], PreSnap[2])
-#        (radiosnap_pre,subsmt)  = radiomodel.CreateRadioCube(snapMF, Rmodel, realisations[0].mockobs.z_snap, nuobs=pase['nu_obs'])[0:2]   
-#        smt.MergeSMT_simple(subsmt, silent=True)
-    
+
     """ This weird interresult comes from
         output.put( outp + (Rmodel,)) #Rmodel is added to the tuple
         (radiocube, subsmt, Rmodel) = stage1_out.get()
@@ -566,12 +523,13 @@ def RadioAndMock(val, verbose=True):
                  realisations[kk].updateInformation(massproxis=True)
              
     """ Here we compute the volume weighted radio emission """         
-    radiosum      = np.sum(radiocube[0].radi)    
-    borders       = 2*realisations[0].R200*radiocube[0].head ['hubble']/radiocube[0].head ['aexpan']
-    whereR200     = np.where( np.sqrt(np.power(radiocube[0].pos[:,0],2) + np.power(radiocube[0].pos[:,1],2) + np.power(radiocube[0].pos[:,2],2) ) < borders/2 )
+    radiosum  = np.sum(radiocube[0].radi)
+    borders   = 2*realisations[0].R200*radiocube[0].head ['hubble']/radiocube[0].head ['aexpan']
+    whereR200 = np.where( np.sqrt(np.power(radiocube[0].pos[:,0],2) + np.power(radiocube[0].pos[:,1],2) + np.power(radiocube[0].pos[:,2],2) ) < borders/2 )
     radiosum_R200 = np.sum(radiocube[0].radi[whereR200])
-    
-    for kk,real in enumerate(realisations):                     # update information on the total radio power (at the rest frame frequency) in the simulational volume
+
+    # update information on the total radio power (at the rest frame frequency) in the simulational volume
+    for kk,real in enumerate(realisations):
          realisations[kk].P_rest.value    = radiosum       # This is for a frequency differing from 1.4 GHz and an efficiency of 1, in PostProcessing.py we apply a further correction
          realisations[kk].Prest_vol.value = radiosum_R200  # This is for a frequency differing from 1.4 GHz and an efficiency of 1, in PostProcessing.py we apply a further correction
 
@@ -586,7 +544,7 @@ def RadioAndMock(val, verbose=True):
     (nouse, subsmt, GClrealisations_used, Rmodel) = mockobs.Run_MockObs(radiocubeUse, realisations, saveFITS=survey.saveFITS, savewodetect=survey.savewodetect, writeClusters=True) #Mach=pase['Mach'], Dens=pase['Dens'],
     smt.MergeSMT_simple(subsmt, silent=True)
 
-    return ((GClrealisations_used,  Rmodel), smt)  
+    return (GClrealisations_used,  Rmodel), smt
 
 
 def RadioCuts(val, compradio=False):
@@ -598,25 +556,25 @@ def RadioCuts(val, compradio=False):
     Rmodel = survey.Rmodel
     snapMF, strSn, smt_add = LoadSnap_multiprocessing(pase,realisations,Rmodel, getstring=True)
     if compradio:   
-        (snap,subsmt)          = radiomodel.CreateRadioCube(snapMF, Rmodel, realisations[0].mockobs.z_snap, nuobs=pase['nu_obs'])[0:2]   
+        (snap,subsmt) = radiomodel.CreateRadioCube(snapMF, Rmodel, realisations[0].mockobs.z_snap, nuobs=pase['nu_obs'])[0:2]
         smt.MergeSMT_simple(subsmt, silent=True)
         
         smt(task='UpdateHeader')  
-        realisations[0].z.value       = realisations[0].mockobs.z_snap  
-        realisations[0].Mvir.value    = snap.head['Mvir']*snap.head['hubble']
+        realisations[0].z.value    = realisations[0].mockobs.z_snap
+        realisations[0].Mvir.value = snap.head['Mvir']*snap.head['hubble']
         realisations[0].updateInformation()
-        snap.head['M200']             = realisations[0].M200.value 
+        snap.head['M200'] = realisations[0].M200.value
                      
         """ Here we compute the volume weighted radio emission """         
         radiosum      = np.sum(snap.radi)    
         borders       = 2*realisations[0].R200*snap.head ['hubble']/snap.head ['aexpan']
         whereR200     = np.where( np.sqrt(np.power(snap.pos[:,0],2) + np.power(snap.pos[:,1],2) + np.power(snap.pos[:,2],2) ) < borders/2 )
         radiosum_R200 = np.sum(snap.radi[whereR200])
-        
-        
-        for kk,real in enumerate(realisations):                     # update information on the total radio power (at the rest frame frequency) in the simulational volume
-             realisations[kk].P_rest.value     = radiosum       # This is for a frequency differing from 1.4 GHz and an efficiency of 1, in PostProcessing.py we apply a further correction
-             realisations[kk].Prest_vol.value  = radiosum_R200  # This is for a frequency differing from 1.4 GHz and an efficiency of 1, in PostProcessing.py we apply a further correction
+
+        # update information on the total radio power (at the rest frame frequency) in the simulational volume
+        for kk,real in enumerate(realisations):
+             realisations[kk].P_rest.value    = radiosum       # This is for a frequency differing from 1.4 GHz and an efficiency of 1, in PostProcessing.py we apply a further correction
+             realisations[kk].Prest_vol.value = radiosum_R200  # This is for a frequency differing from 1.4 GHz and an efficiency of 1, in PostProcessing.py we apply a further correction
     else:
         (snap, MF) = snapMF
 
@@ -631,7 +589,7 @@ def RadioCuts(val, compradio=False):
     if compradio:
          print('np.sum(radiocube[0].radi)', np.sum(snap.radi), '-->', np.sum(redsnap.radi), 'i.e.', radiosum, radiosum_R200, 'pickled to', strSn)
          
-    return ((realisations, Rmodel), smt)
+    return (realisations, Rmodel), smt
 
 
 def mupro_Output_NicePickleClusters( in_queue, output):
@@ -650,9 +608,9 @@ def mupro_Output_NicePickleClusters( in_queue, output):
 def DoRun(inputs, smt, verbose=False, countmax=200):
     """ Please mind that this procedure determines early if the number of detected relics becomes to large!"""  
     (pase, survey) = inputs
-    #===
-    count  = 0
-    realisations      = [] 
+
+    count = 0
+    realisations = []
     realisations_list = [] # rotated realisations of one and the same cluster
     survey.GCls = sorted(survey.GCls, key= iom.Object_natural_keys)
     # This checks if the snapshot has to be loaded ...  I would use a pool of loaded, snapshots ... but this is cumbersome
@@ -747,9 +705,6 @@ def create_ClusterLibrary(snapfolder='/radioarchive/MergerTrees/Clusters/snaps/'
                     os.system('rm %s'  % (strSn))           
     return 0
     UTILITY FOR THESIS END """     
-           
-
-
 
     MissList     = []  
     index        = 0
@@ -780,8 +735,6 @@ def create_ClusterLibrary(snapfolder='/radioarchive/MergerTrees/Clusters/snaps/'
                     # ID SNAP z M200  
                     df.loc[index] = [clid, snapID, z, cl.M200.value, strSn]    
                     index += 1
-                    
-#                    Outlist.append('%5i %4i %0.4f %.4e' % (clid, snapID, z, cl.M200.value)) #but you would have to get M200, .... mhhh so vreate a galaxy cluster class
                     print(strSn + ' was loaded')
                     
                     
@@ -801,12 +754,6 @@ def create_ClusterLibrary(snapfolder='/radioarchive/MergerTrees/Clusters/snaps/'
                 else:
                     print('  skipping misslist step')
                     MissList.append('%5i %4i' % (clid, snapID))
-                    
-                    
-                    
-
-                    
-                  
 
         if index > 0:
             df.to_csv('%s_allclusters.csv' % (Clfile))
@@ -820,10 +767,7 @@ def create_ClusterLibrary(snapfolder='/radioarchive/MergerTrees/Clusters/snaps/'
         for item in MissList:
             thefile.write("%s\n" % item)
         thefile.close()   
-     
 
-            
-            
     return 0
     
 
@@ -858,7 +802,7 @@ def ReloadSurvey(survey=None,parfrom='MUSIC2COOL_NVSS_SSD.parset', parto='MUSIC2
         GCl.relics = []  #do not consider any previous detections
         if reform: 
             """ Changes that format from compatible with the radiative simulation to the adiabatic simulation """
-            GCl.mockobs.snap   -= 3     #or +3
+            GCl.mockobs.snap -= 3     #or +3
             GCl.mockobs.headerc = 'Mpc' #or 'kpc'
             GCl.mockobs.snapfolder = '/data2/MUSIC-2/'
             GCl.mockobs.xrayfolder = '/radioarchive/MergerTrees/Clusters/'
@@ -911,17 +855,15 @@ def copy_ClusterOuts(snapfolder = '/data/ClusterBuster-Output/', copyfolder = '/
                 folderDe = '%s/abcpmc_MUSIC_NVSS02_Run_02/MUSIC2_NVSS02_SSD_%05i' % (copyfolder, run) 
                 os.system('mv %s.txt %s.txt' % (folderSn, folderDe))
                 try:
-                   shutil.copy ('%s.txt' % (folderSn), ' %s.txt' % folderDe)
+                   shutil.copy ('%s.txt' % folderSn, ' %s.txt' % folderDe)
                 except:
-                   print('%s.txt' % (folderSn), ' %s.txt' % folderDe, 'could not be copied')
+                   print('%s.txt' % folderSn, ' %s.txt' % folderDe, 'could not be copied')
     return 0
 
 
 def test_main_ABC():
     test = main_ABC([-7, -1.0, -2.0, -1.0, 0.0, -4.0], verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset
-    print(type(test))
-    print(test)
-
+    print("main_ABC returns:", type(test), test)
 
 if __name__ == "__main__":
 #    create_ClusterLibrary(snaps=range(0,15), copyfolder=None)
@@ -957,4 +899,3 @@ if __name__ == "__main__":
 
 #    survey = main('ShockTest_prep.parset', Clfile = 'clusterCSV/ShockTest', verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset
     test_main_ABC()
-
