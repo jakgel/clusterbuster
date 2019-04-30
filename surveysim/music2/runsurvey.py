@@ -30,6 +30,7 @@ import clusterbuster.constants      as myu
 
 
 import time
+import timeit
 import random 
 from random import uniform
 from astropy.cosmology import FlatLambdaCDM
@@ -283,7 +284,7 @@ def main(parfile, workdir=None, ABC=None, verbose=False, survey=None, index=None
                                 saveFITS=(ABC is None), savewodetect=suut.TestPar(pase['savewodetect']), dinfo=dinfo,
                                 surshort='MUSIC2', Rmodel=RModel, outfolder=outfolder, logfolder=logfolder)
         survey.set_surmodel(surmodel)
-
+        survey.set_seed_dropout()
     else:
         """ If you directly loaded a survey, just use its internal Rmodel """
         RModel = survey.Rmodel
@@ -417,14 +418,12 @@ def RadioAndMock_loaded(val, verbose=True):
     (snapMF,  pase, realisations, survey) = val
     Rmodel = survey.Rmodel
 
-    (radiosnap, subsmt) = radiomodel.CreateRadioCube(snapMF, Rmodel, realisations[0].mockobs.z_snap, nuobs=pase['nu_obs'], logging=False)[0:2]
-    smt.MergeSMT_simple(subsmt, silent=True)
     ##=== Stage II - DoMockObs
     if verbose:
         print('Start compiling MockObservations for further models of cluster #%5i snap #%3i with in total %i realisations.'
               % (realisations[0].mockobs.clid, realisations[0].mockobs.snap, len(realisations)))
 
-    GClrealisations_used = []
+    GClrealisations_return = []
     smt(task='Shed_DoMockObs_misc') 
     # This result of this computation is  independent of rotation and because of this was put here
     
@@ -432,6 +431,9 @@ def RadioAndMock_loaded(val, verbose=True):
         """ This is wrong and has to be fixed in the future!!!! 
         Currently, we make this code really SMELLY and hard to understand
         """
+        (radiosnap, subsmt, poisson_factor) = radiomodel.CreateRadioCube(snapMF, Rmodel, realisation.mockobs.z_snap,
+                                                         nuobs=pase['nu_obs'], logging=False)[0:3]
+        smt.MergeSMT_simple(subsmt, silent=True)
 
         """ also possible: realisations[kk].Rvir       = radiocube[0].head['Rvir']"""
         if realisations[kk].M200.value == 0:
@@ -447,9 +449,8 @@ def RadioAndMock_loaded(val, verbose=True):
             realisation.PreNorm = randfactor*Rmodel.p0
             radiosnap.radiPre += realisations.PreNorm * radiosnap.radiPre
         elif isinstance(Rmodel, cbclass.PreModel_Hoeft):
-            randfactor = 1  # get it from the other procedure
-            #radiosnap.radiPre += realisations.PreNorm * radiosnap.radiPre
-            
+            realisation.poisson_factor = poisson_factor
+
         """ Here we compute the volume weighted radio emission """   
         radiosum      = np.sum(radiosnap.radi)
         borders       = 2*realisations[0].R200*radiosnap.head ['hubble']/radiosnap.head ['aexpan']
@@ -461,12 +462,11 @@ def RadioAndMock_loaded(val, verbose=True):
         realisations[kk].Prest_vol.value = radiosum_R200  # This is for a frequency differing from 1.4 GHz and an efficiency of 1, in PostProcessing.py we apply a further correction
 
         if not suut.TestPar(pase['cutradio']):
-            radiosnapUse = copy.deepcopy(radiosnap)
 
+            radiosnapUse = copy.deepcopy(radiosnap)
             if hasattr(radiosnapUse, 'radiPre'):
                 radiosnapUse.radi += radiosnapUse.radiPre
-                print('Run_MockObs:: Ratio of PREs to total emission',
-                      (np.sum(radiosnapUse.radiPre)) / (np.sum(radiosnapUse.radi) + np.sum(radiosnapUse.radiPre)))
+                #print('Run_MockObs:: Ratio of PREs to total emission', (np.sum(radiosnapUse.radiPre)) / (np.sum(radiosnapUse.radi) + np.sum(radiosnapUse.radiPre)))
 
             radiocube = (radiosnapUse, Rmodel, survey)  # Rmodel is added to the tuple
         else:
@@ -477,10 +477,10 @@ def RadioAndMock_loaded(val, verbose=True):
         (nouse, subsmt, GClrealisation_used, Rmodel) = mockobs.Run_MockObs(radiocube, [realisation],
                                                                            saveFITS=survey.saveFITS,  savewodetect=survey.savewodetect,
                                                                            side_effects=True)
-        GClrealisations_used += GClrealisation_used
+        GClrealisations_return += GClrealisation_used
         smt.MergeSMT_simple(subsmt, silent=True)
         
-    return (GClrealisations_used, Rmodel), smt
+    return (GClrealisations_return, Rmodel), smt
 
 
 def RadioAndMock(val, verbose=True):
@@ -605,11 +605,12 @@ def mupro_Output_NicePickleClusters( in_queue, output):
     return
 
 
-def DoRun(inputs, smt, verbose=False, countmax=200):
+def DoRun(inputs, smt, verbose=False, countmax=500, countmax_relics=1500):
     """ Please mind that this procedure determines early if the number of detected relics becomes to large!"""  
     (pase, survey) = inputs
 
     count = 0
+    count_relics = 0
     realisations = []
     realisations_list = [] # rotated realisations of one and the same cluster
     survey.GCls = sorted(survey.GCls, key= iom.Object_natural_keys)
@@ -663,12 +664,15 @@ def DoRun(inputs, smt, verbose=False, countmax=200):
                 To prevent this I stop the computation if the weighted relic count is way higher than the expected relic count.
                 In this case I should let the procedure stop early and  give it the minimum score in the metric ...(also in the metric test)
             """
-            for gcl_test in realisations:
+            for gcl_test in stage1_outSmall[0]:
                 # print(survey.outfolder, gcl_test.stoch_drop(survey.seed_dropout))
-                if len(gcl_test.filterRelics(**survey.relic_filter_kwargs)) > 1:
+                count_relics_now = len(gcl_test.filterRelics(**survey.relic_filter_kwargs))
+                if count_relics_now > 0:
                     count += 1
-                if count > countmax:
-                    print('Because the (weighted) number of relics already now is larger than %i the function DoRun() is terminated.' % countmax)
+                    count_relics += count_relics_now
+                    #print(count, count_relics)
+                if count > countmax or count_relics > countmax_relics:
+                    print('Because the number of relics already now is larger than %i the function DoRun() is terminated.' % countmax_relics)
                     return False, smt
             """  Block END """
 

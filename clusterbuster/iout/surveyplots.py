@@ -803,15 +803,15 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix='', sh
                     g.axes[j, i].text(0.5, 0.1+numbered*0.07, 'correlation: %0.2f' % rho.values[j,i], horizontalalignment='center',
                                       verticalalignment='center', transform=g.axes[j, i].transAxes)
                     slope, intercept, r_value, p_value, std_err = stats.linregress(df_clean.iloc[:,i], df_clean.iloc[:,j])
-                    g.axes[j, i].text(0.2, 0.8, "sl=%.2f, ic=%.2f, stde=%.2f" % (slope, intercept, std_err),
+                    g.axes[j, i].text(0.2, 0.8, "sl=%.2f, ic=%.2f, stde=%.2f" % (df_clean.keys()[i], df_clean.keys()[j], slope, intercept, std_err),
                                   horizontalalignment='center',
                                   verticalalignment='center', transform=g.axes[j, i].transAxes)
-                    print("Fit results for pairs i,j: sl=%.2f, ic=%.2f, stde=%.2f" % (slope, intercept, std_err))
+                    print("Fit results for pairs %s-%s: sl=%.2f, ic=%.2f, stde=%.2f" % (slope, intercept, std_err))
                     slope, intercept, r_value, p_value, std_err = stats.linregress(df_clean.iloc[:,j], df_clean.iloc[:,i])
-                    g.axes[j, i].text(0.2, 0.87, "sl=%.2f,  ic=%.2f, stde=%.2f" % (slope, intercept, std_err),
+                    g.axes[j, i].text(0.2, 0.87, "sl=%.2f,  ic=%.2f, stde=%.2f" % (df_clean.keys()[j], df_clean.keys()[i], slope, intercept, std_err),
                                   horizontalalignment='center',
                                   verticalalignment='center', transform=g.axes[j, i].transAxes)
-                    print("Fit results for pairs j,i: sl=%.2f,  ic=%.2f, stde=%.2f" % (slope, intercept, std_err))
+                    print("Fit results for pairs %s-%s: sl=%.2f,  ic=%.2f, stde=%.2f" % (slope, intercept, std_err))
 
                 if i > j:
                     pass

@@ -480,7 +480,7 @@ class Galaxycluster(object):
                 if ((relic.flux() > self.minflux) and (relic.region.rtype.classi in regard) and
                     ((shape is False) or (relic.shape_advanced().value < maxcomp))) and
                     ((shape_pca is False) or
-                     (surut.discovery_prop_pca(relic, **filter_pca_kwargs) > self.random_detection_quality))]
+                     (surut.discovery_prop_pca(relic, **filter_pca_kwargs) > (1-self.random_detection_quality)))]
 
     def add_regions(self, regions, **filterargs):
 

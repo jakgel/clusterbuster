@@ -57,6 +57,7 @@ def main():
     NVSSsurvey.relic_filter_kwargs = {"Filter": True, "shape":False, "minrms": 8}
     NVSSsurvey.cluster_filter_kwargs = {'minrel': 1, 'zmin': 0.05}
 
+
     def cluster_return_polar(Histo, GCl, survey, aligned=False):
         shiftHist = np.roll(Histo.hist.T, -int(aligned * (GCl.relic_pro_index)), axis=1) / survey.AreaHist ** (survey.expA)
         return shiftHist
@@ -234,7 +235,7 @@ def main():
 
 
         sns.heatmap(corr, mask=mask, cmap=cmap, vmin=.65, vmax=.65, center=0,
-                    square=True, linewidths=.5, annot=True, fmt="+.2f", annot_kws={'size':12*8/(corr.data.shape[0]+2)},
+                    square=True, linewidths=.5, annot=True, fmt="+.2f", annot_kws={'size':12*8/(corr.values.shape[0]+2)},
                     cbar_kws={"shrink": .6, "orientation": "horizontal", "label": "correlation"})
 
         # Rotate the tick labels and set their alignment.
@@ -309,7 +310,7 @@ def main():
         plottings = []
         model_samples_total = 0
         mode = "thesis_largestRun"   #"4vs3_new"
-        folderN = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_12/' #'/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_08/'
+        folderN = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_13/' #'/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_08/'
         show_metrics = True
         metric_log = False
 
@@ -423,7 +424,7 @@ def main():
 
             eps_use_wide = [4, 0.7, 0.98, 0.1]
             eps_use_narrow = [0.54, 0.3, 0.6, 0.02]
-            eps_use_narrow = [2, 0.6, 0.9, 0.04]
+            eps_use_narrow = [2, 0.41, 0.96, 0.05]
             eps_select = lambda x: [float(x[0]), float(x[1]), float(x[2]), float(x[3]),
                                      np.log10(float(x[5])), np.log10(float(x[6])), float(x[7]), float(x[14]),
                                      np.log10(float(x[10])), np.log10(float(x[8])), np.log10(float(x[9]))]
@@ -443,6 +444,16 @@ def main():
         kwargs2 = {"quantiles": quantiles, "levels": levels, "labels": labelset, "show_titles": True,
                    "label_kwargs": {"fontsize": 18}, "title_kwargs": {"fontsize": 18},
                    "contourf_kwargs": {'cmap': used_cmap, 'colors': None}}
+
+        if 1==1:
+            all_selected = []
+            for line in open(folderN + '/logfile.txt'):
+                line = line.rstrip('\n')
+                listWords = line.split(" ")
+                listWords = [i for i in listWords if i]
+                all_selected.append(eps_select(listWords))
+            all_selected = np.asarray(all_selected)
+            np.save('%s/Converted_logfile.npy' % (folderN), all_selected)
 
 
         launch_pools = iom.unpickleObjectS(folderN+'/launch_pools.pickle')
@@ -471,17 +482,6 @@ def main():
                 allpools.append(pool)
                 plottings.append(plotting_old)
         print('len(pools)', len(pools))
-
-
-        if 1==1:
-            all_selected = []
-            for line in open(folderN + '/logfile.txt'):
-                line = line.rstrip('\n')
-                listWords = line.split(" ")
-                listWords = [i for i in listWords if i]
-                all_selected.append(eps_select(listWords))
-            all_selected = np.asarray(all_selected)
-            np.save('%s/Converted_logfile.npy' % (folderN), all_selected)
 
 
         print('model_samples_total:', model_samples_total)
@@ -539,6 +539,7 @@ def main():
         plt.close("all")
 
 
+
         all_selected_priors = []
         for line in open(folderN + '/logfile.txt'):
             line = line.rstrip('\n')
@@ -559,12 +560,12 @@ def main():
         plt.savefig('%s/SecondLastEps_with_priors.png' % (folderN))
         plt.close("all")
 
+
         for ii, plotting in enumerate(plottings):
             print(np.asarray(plotting).shape)
             corner.corner(np.asarray(plotting), **kwargs)
             plt.savefig('%s%i.pdf' % (folderN, ii))
             plt.savefig('%s%i.png' % (folderN, ii))
-
 
         # Ratio development
         ratios = np.asarray([pool.ratio for pool in pools])

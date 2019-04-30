@@ -225,6 +225,7 @@ def CreateRadioCube( snapred, Rmodel, z,  nuobs=1.4, logging = True):
        remark:
        Some authours say, that merger shocks put more energy (and even more highly relativistic particles) in the cluster. This model is not considered here
     """
+    poisson_factor = 1
     if Rmodel.pre:
         
         if isinstance(Rmodel, cbclass.PreModel_Hoeft):
@@ -232,13 +233,12 @@ def CreateRadioCube( snapred, Rmodel, z,  nuobs=1.4, logging = True):
             delta_n = np.log10(Rmodel.n0)-np.log10(Rmodel.n1)  # should be 5
             delta_t = np.log10(Rmodel.t0)-np.log10(Rmodel.t1)  # should be < 0
             slope = delta_t / delta_n
-
             t_shocked = Rmodel.t0 * (rho_e / Rmodel.n0) ** slope
             t_shocked[rho_e < Rmodel.n0] = Rmodel.t0
             t_shocked[rho_e > Rmodel.n1] = Rmodel.t1
-            poisson_factor = math.nextTime(1)   # stochastic event
-            #t_shocked = t_shocked*poisson_factor
-            gamma_boost = 2.4e4/t_shocked/((B/R)**2. + Bcmb**2.)  #Magnetic field before enhancement through compression
+
+            poisson_factor = np.random.exponential(1, 1)
+            gamma_boost = 2.4e4/t_shocked*poisson_factor/((B/R)**2. + Bcmb**2.)  #Magnetic field before enhancement through compression
             f_boost[MF] = Rmodel.ratio*gamma_boost**(snap.s[MF]-2)
         
         elif isinstance(Rmodel, cbclass.PreModel_Gelszinnis):
@@ -266,7 +266,7 @@ def CreateRadioCube( snapred, Rmodel, z,  nuobs=1.4, logging = True):
     if logging: print('  Total radio power in cube: %5.2e W/Hz at %5.2f GHz rest frame frequency' % (np.sum(snap.radi[MF]), nurest))
     radiofolder = 'ToImplement'  #strSn.replace('shocks','radio')  
     
-    return (snap, smt, radiofolder)  # A tuple, only [0:2] is relevant
+    return (snap, smt, poisson_factor, radiofolder)  # A tuple, only [0:2] is relevant
     
 
 
