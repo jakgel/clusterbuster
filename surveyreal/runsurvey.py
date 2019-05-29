@@ -414,6 +414,7 @@ def survey_run(surveys, infolder='', outfoldertop='/data/ClusterBuster-Output/',
                     ('CIZA J0107.7+5408', 'CIZA J0107'),
                     ('CIZA J2242.8+5301', 'CIZA J2243'),  # CIZA J2243+53
                     ('MACS J0025-1222', 'MACS J0025'),
+                    ('MACS J0152.5-2852', 'MACS J0152'),  # MCS J0717+37
                     ('MACS J0717.5+3745', 'MACS J0717'),  # MCS J0717+37
                     ('MACS J1149.5+2223', 'MACS J1149'),  # J1149+22
                     ('MACS J1752.0+4440', 'MACS J1752'),  # MCS J1752+44

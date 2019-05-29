@@ -29,8 +29,8 @@ import matplotlib.patches as mpatches
 
 def main():
 
-    create_NVSS = False
-    create_ABC_plots = True
+    create_NVSS = True
+    create_ABC_plots = False
     create_PhDplots = False
     create_CWpaperplots = False
     print('###==== PostProcessing: Importing self written .py subroutines ====###')
@@ -58,9 +58,28 @@ def main():
     NVSSsurvey.cluster_filter_kwargs = {'minrel': 1, 'zmin': 0.05}
 
 
-    def cluster_return_polar(Histo, GCl, survey, aligned=False):
-        shiftHist = np.roll(Histo.hist.T, -int(aligned * (GCl.relic_pro_index)), axis=1) / survey.AreaHist ** (survey.expA)
-        return shiftHist
+    if 1 == 2:
+        NVSSsurvey.GCls = [GCl for GCl in NVSSsurvey.GCls if GCl.name == "A2256"]
+        #print(NVSSsurvey.GCls)
+        ioclass.plot_Clusters(NVSSsurvey, dynamicscale=False, relicregions=False, DS9regions=False, sectors=False,
+                              colorbar=False, infolabel=True, subtracted=True, label_sheme='bright',
+                             filterargs={'zmin': 0.05, 'minimumLAS': 0, 'GClflux': 3.6, 'index': None})
+        exit()
+
+    if 1 == 2:
+        fetched = NVSSsurvey.fetch_totalRelics()
+        print("==== Big. nearby")
+        for relic in fetched:
+            if relic.Dproj.value/relic.GCl.R200.value < 0.5 and relic.LLS > 1200:
+                print(relic.name, relic.Dproj, relic.LLS)
+        print("\n ==== Small, distant")
+        for relic in fetched:
+            if relic.Dproj.value/relic.GCl.R200.value > 0.6 and relic.LLS < 500:
+                print(relic.name, relic.Dproj/relic.GCl.R200.value, relic.LLS)
+        def cluster_return_polar(Histo, GCl, survey, aligned=False):
+            shiftHist = np.roll(Histo.hist.T, -int(aligned * (GCl.relic_pro_index)), axis=1) / survey.AreaHist ** (survey.expA)
+            return shiftHist
+        exit()
 
     if 1 == 2:
         if NVSSsurvey.hist_main is not None:
@@ -258,21 +277,25 @@ def main():
     if create_NVSS:
         """ NVSS """
         #        ioclass.plot_Clusters(NVSSsurvey, dynamicscale=False, relicregions=True, DS9regions=False, sectors=False, colorbar=False, subtracted=False, shapes=False)
-        ioclass.plot_cummulative_flux([NVSSsurvey])
+        #ioclass.plot_cummulative_flux([NVSSsurvey])
         ioclass.create_shape_LAS_plot([NVSSsurvey])
-        ioclass.plot_fluxRatio_LAS([NVSSsurvey])
+        #ioclass.plot_fluxRatio_LAS([NVSSsurvey])
 
         ioclass_tt.GClList2table_paper('/home/jakobg/Dropbox/PhDThesis/tables/GClTable', NVSSsurvey, longtab=False, shortlist=shortlist)
         ioclass_tt.RList2table_paper('/home/jakobg/Dropbox/PhDThesis/tables/RelicsTable', NVSSsurvey, longtab=False)
-        ioclass.plot_RelicEmission_polar(NVSSsurvey, additive=True, single=True, mirrored=False, plottype='flux',
-                                         cbar=True, aligned=False, dpi=600, title=None, add_pi=0.5)
+        #ioclass.plot_RelicEmission_polar(NVSSsurvey, additive=True, single=True, mirrored=False, plottype='flux',
+        #                                 cbar=True, aligned=False, dpi=600, title=None, add_pi=0.5)
 
         newdist = lambda x: dbc.measurand(x.Dproj_pix() / x.GCl.R200(), 'Dproj', label='$D_\mathrm{proj,rel}$',
                                           un='$R_{200}$')
         newalpha = lambda x: dbc.measurand(np.abs(x.alpha()), '|alpha|', label='$|\\alpha|$', un=None)
         logs_alpha = [True, True, False, True, False, True]
         logs_alpha_new  = [True, True, False, False]
+        ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.M200, lambda x: x.P_rest, lambda x: x.z], logs=[True,True,False], suffix='_z_Gcls', gcls=True)
+        exit()
         ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.alpha, lambda x: x.Dproj_pix], logs=[False,True])
+        ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.alpha, newdist], logs=[False,True], suffix='_PhDplot' )
+        ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.P_rest, lambda x: x.GCl.M200], logs=[True,True], suffix='_PhDplot')
         #ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.GCl.z, lambda x: x.Mach], suffix='_Mach-z')
         #ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.alpha, lambda x: x.Dproj_pix], logs=logs_alpha, suffix='_large')
         #ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.Mach, lambda x: x.Dproj_pix], suffix='_large_mach')
@@ -309,9 +332,9 @@ def main():
         allpools  = []
         plottings = []
         model_samples_total = 0
-        mode = "thesis_largestRun"   #"4vs3_new"
-        folderN = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_13/' #'/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_08/'
-        show_metrics = True
+        mode = "thesis_largestRun" # "4vs3_new"
+        folderN = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_13'
+        show_metrics = False
         metric_log = False
 
 
@@ -321,9 +344,6 @@ def main():
             rangeset = [[-0.03,  0.3],
                         [-4.9, -4.4]
                         ]
-            show_metrics = False
-            metric_log = False
-
         elif mode == "effic-B-tiny":
 
             labelset = [r'$\log_{10} \Delta_\mathrm{count}$', r'$\log_{10} \Delta_\mathrm{average\,relic}$',
@@ -365,8 +385,8 @@ def main():
             eps_select = lambda x: [float(x[0]), float(x[1]), float(x[2]),
                                      np.log10(float(x[4])), np.log10(float(x[5])), float(x[6]), float(x[8])]
             #par_select = lambda x: (float(x[5]) < 1.0 and float(x[6]) > 0.0) and float(x[8]) > -0.3
-            par_select = lambda x: float(x[5]) < 10 #and float(x[8]) > -0.0
-            par_select = lambda x: float(x[8]) > -0.0 #float(x[8]) < 0.10 and
+            par_select = lambda x: float(x[5]) < 5 #and float(x[8]) > -0.0
+            #par_select = lambda x: float(x[8]) > -0.0 #float(x[8]) < 0.10 and
         elif mode == "4vs3_new_wo_pca_b":
             labelset = ["$\Delta_\mathrm{count}$", "$\Delta_\mathrm{average\,relic}$", "$\Delta_\mathrm{2DKS}$",
                         r"$\log_{10} \xi_e$", r"$\log_{10} B_0$", r"$\kappa$", "$b_\mathrm{pca\,filter}$"]
@@ -422,9 +442,10 @@ def main():
                         [-1.3, 1.0]
                         ]
 
-            eps_use_wide = [4, 0.7, 0.98, 0.1]
-            eps_use_narrow = [0.54, 0.3, 0.6, 0.02]
-            eps_use_narrow = [2, 0.41, 0.96, 0.05]
+            eps_use_wide = [3, 0.7, 0.98, 0.1]
+            eps_use_narrow = [1.13, 0.30, 0.835, 0.01966]
+            eps_use_narrow = [0.98398749, 0.27925968, 0.78109853, 0.01610189]
+            #eps_use_narrow = [0.63, 0.25, 0.78, 0.01]
             eps_select = lambda x: [float(x[0]), float(x[1]), float(x[2]), float(x[3]),
                                      np.log10(float(x[5])), np.log10(float(x[6])), float(x[7]), float(x[14]),
                                      np.log10(float(x[10])), np.log10(float(x[8])), np.log10(float(x[9]))]
@@ -442,8 +463,8 @@ def main():
                   "label_kwargs": {"fontsize": 18}, "title_kwargs": {"fontsize": 18},
                   "contourf_kwargs": {'cmap': used_cmap, 'colors': None},  "range": rangeset}
         kwargs2 = {"quantiles": quantiles, "levels": levels, "labels": labelset, "show_titles": True,
-                   "label_kwargs": {"fontsize": 18}, "title_kwargs": {"fontsize": 18},
-                   "contourf_kwargs": {'cmap': used_cmap, 'colors': None}}
+                   "label_kwargs": {"fontsize": 18}, "contourf_kwargs": {'cmap': used_cmap, 'colors': None},
+                   "title_kwargs":{"fontsize": 18, "loc":'left'}}
 
         if 1==1:
             all_selected = []
@@ -466,8 +487,10 @@ def main():
                 print('create_ABC_plots:pool.thetas.shape', pool.thetas.shape)
                 print('create_ABC_plots:pool.eps', pool.eps)
                 print('create_ABC_plots:pool.ratio', pool.ratio)
-                print('create_ABC_plots:pool.dists[0:4]', pool.dists[0:4])
-                print('create_ABC_plots:pool.thetas[0:4]', pool.thetas[0:4])
+                print('create_ABC_plots:pool.dists[0:2]', pool.dists[0:2])
+                print('create_ABC_plots:pool.thetas[0:2]', pool.thetas[0:2])
+                print('create_ABC_plots:pool.dists[-1]', pool.dists[-1])
+                print('create_ABC_plots:pool.thetas[-1]', pool.thetas[-1])
                 model_samples_total += int(pool.dists.shape[0]/pool.ratio)
 
                 if show_metrics:
@@ -605,9 +628,10 @@ def main():
         plt.style.use('ggplot')
         
         #proclist = range(0, 36)  # range(40), 313
-        proclist = range(100, 101)  # range(40), 313
-        folder = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_11/'
-                # '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_20kpc/'
+        proclist = range(5600, 5600+50)  # range(1360, 3288+250)  '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_11/'
+        folder = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_20kpc/'
+                #'/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_13/'
+                #
                 # '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_100kpc_3times_sensitivity/surveys/'
                 # '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_100kpc_10times_sensitivity/surveys/'
                  #'/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_100kpc/surveys/'
@@ -687,7 +711,7 @@ def main():
 
         if 1 == 2:
             CombinedSurvey_Statistics()
-            #exit()
+            exit()
 
         SurveysSample_full = [NVSSsurvey]
         if 1 == 2:
@@ -723,18 +747,20 @@ def main():
                 #df_combined = ioclass.joinpandas(df)
                 #df_combined.to_csv("/data/surveys_compressed.csv")
 
-                ioclass.create_shape_LAS_plot(SurveysSample_full)
-                ioclass.plot_cummulative_flux(SurveysSample_full)
+            ioclass.create_shape_LAS_plot(SurveysSample_full)
+            ioclass.plot_cummulative_flux(SurveysSample_full)
+            exit()
 
-
-        if 1 == 2:
+        if 1 == 1:
 
             surlist = []
             for surveyname in surveynames:
                 print('%s/%s' % (folder, surveyname))
                 try:
                     survey = iom.unpickleObject('%s/%s' % (folder, surveyname))
-                    survey.relic_filter_kwargs = {"Filter": True, "shape": False, "minrms": 8}
+                    survey.set_seed_dropout(None)
+                    print(survey.relic_filter_kwargs)
+                    #survey.relic_filter_kwargs = {"Filter": True, 'minrms': 8, "shape_pca": False}
                     survey.cluster_filter_kwargs = {'minrel': 1, 'zmin': 0.05}
                     for gcl in survey.GCls:
                         for relic in gcl.relics:
@@ -745,18 +771,17 @@ def main():
                 except:
                     continue
 
-
             newdist = lambda x: dbc.measurand(x.Dproj_pix() / x.GCl.R200(), 'Dproj', label='$D_\mathrm{proj,rel}$',
                                               un='$R_{200}$')
             ioclass.create_scattermatrix(surlist,
                                          [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.alpha, newdist,
                                           lambda x: x.fpre],
                                           logs=[True, True, False, False, True], suffix='_testPhD', shade=True,
-                                          statistics=False) #lambda x: x.GCl.z, lambda x: x.GCl.M200, lambda x: x.LAS,
+                                          statistics=True) #lambda x: x.GCl.z, lambda x: x.GCl.M200, lambda x: x.LAS,
 
             exit()
 
-        if 1 == 1:
+        if 1 == 2:
             distances_list = []
             for surveyname in surveynames:
                 print('%s/%s' % (folder, surveyname))

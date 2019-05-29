@@ -365,7 +365,7 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
                   colorbar=False, beam=True, shapes=False, recenter=True, infolabel = False, sectors=False,
                   xray=False, highres=False, show_rot=False, vectors=False, label_sheme='balanced',
                   filterargs={'zborder': 0, 'ztype': '>', 'minimumLAS': 4, 'GClflux': 20, 'index': None}):
-    print('plot_Clusters:BUGS: THere not always the full contours shown')
+    print('plot_Clusters:BUG: There are not always the full contours shown.')
 
     sns.set(style="white", color_codes=True)
     pdfs = []
@@ -536,13 +536,12 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
 
         if beam:
             f.add_beam()
-            f.beam.show()
             f.beam.set_major(GCl.dinfo.beam[0] * u.arcsecond)
             f.beam.set_minor(GCl.dinfo.beam[1] * u.arcsecond)
             f.beam.set_angle(GCl.dinfo.beam[2])  # degrees
-            f.beam.set(facecolor=baargs['color'], alpha=0.8, edgecolor='black')
-            f.beam.set_color(baargs['color'])
-
+            f.beam.show(frame=False)
+            f.beam.set(facecolor=baargs['color'], alpha=0.8, edgecolor='black') #baargs['color']
+            #f.beam.set_color(baargs['color'])
         if show_rot:
             f.add_label(0.97, 0.12, '$\\theta=%.3f$' % (GCl.mockobs.theta), relative=True, style='oblique', size='large', horizontalalignment='right', **laargs) #-0.01*len(Cl_name)
             f.add_label(0.97, 0.08, '$\\phi  =%.3f$' % (GCl.mockobs.phi)  , relative=True, style='oblique', size='large', horizontalalignment='right', **laargs) #-0.01*len(Cl_name)
@@ -560,6 +559,11 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
             f.colorbar.show()
 #            f.colorbar.set_axis_label_text('%s flux density [Jy/beam]' % (survey.name_short))
             f.colorbar.set_axis_label_text(cbar_text)
+
+        #f.add_label(0.2, 0.2, 'R_{200}', relative=True, style='oblique', size='xx-large',
+        #            horizontalalignment='right', **laargs)
+        f.add_label(0.2, 0.8, '$R_{200}$', relative=True, style='oblique', size='xx-large',
+                    horizontalalignment='right', **laargs)
 
         """DEVELOPMENT"""
         if vectors:
@@ -712,14 +716,14 @@ def joinpandas(df):
     return df_combined
 
 
-def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix='', shade=True, statistics=True):
+def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix='', shade=True, statistics=True, gcls=False):
     sns.set(style="ticks", color_codes=True)
 
     """ Creates a scatter matrix, off a list of quantities ... nice! 
     Input: SurveySamples ... there is currently no differnciation between different Survey Samples (symbol-wise or else)
     """
 
-    df = [survey.fetch_pandas(plotmeasures, logs=logs) for survey in SurveySamples]
+    df = [survey.fetch_pandas(plotmeasures, logs=logs, gcls=gcls, surname=False) for survey in SurveySamples]
     original_keys = df[0].keys()
     df_combined = joinpandas(df)
     NSurveys = len(SurveySamples)
@@ -745,14 +749,15 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix='', sh
     print('df_combined.Survey.unique()', df_combined.Survey.unique())
     print(df_combined.keys())
 
-    df_combined.to_csv(path_or_buf='/data/Test-%s.csv' % (SurveySamples[0].name))
+    df_combined.to_csv(path_or_buf='/data/Test-%s.csv' % (SurveySamples[0].name_short))
 
     g = sns.PairGrid(df_combined, hue="Survey", palette="Set2", dropna=True)
-    g = g.map_upper(sns.regplot, scatter_kws={'edgecolors': "white", "linewidth": 1, "alpha": 0.5/np.sqrt(NSurveys)})  #plt.scatter , , edgecolor="white"
+    g = g.map_upper(sns.regplot, scatter_kws={'edgecolors': "white", "linewidth": 0.1, "alpha": 1.0/np.power(NSurveys,0.3),
+                                              "s": 10/np.power(NSurveys,0.3)})  #plt.scatter , , edgecolor="white"
     #g = g.map_diag(sns.distplot)
     g = g.map_diag(sns.kdeplot, lw=3, legend=False, alpha=1.0/np.sqrt(NSurveys_unique), shade=True)  #histtype="step"  {'cmap':['Blues_d','Blues']},  ... distplot
 
-    colormaps = ('BuGn', 'Oranges', 'Red') #("Blues", "Blues_d", "Blues_d") #
+    colormaps = ('BuGn', 'Oranges', 'RdPu') #("Blues", "Blues_d", "Blues_d") #
     #colormaps = sns.cubehelix_palette(8, start=2, rot=0, dark=0, light=.95, reverse=True)
 
     make_kde.cmap_cycle = cycle(colormaps[0:len(df_combined.Survey.unique())])    #,
@@ -760,16 +765,17 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix='', sh
     g = g.map_lower(make_kde, alpha=1.0/np.sqrt(NSurveys_unique), shade=shade, shade_lowest=False)
 
     # from https://stackoverflow.com/questions/52118245/python-seaborn-jointplot-does-not-show-the-correlation-coefficient-and-p-value-o
-    for numbered, survey in enumerate(SurveySamples):
-        df = survey.fetch_pandas(plotmeasures, logs=logs)
-        print('Keys:', df.keys())
+    if statistics:
+        for numbered, survey_unique in enumerate(df_combined["Survey"].unique()):
+            print(survey_unique)
+            df = df_combined[df_combined["Survey"] == survey_unique]
+            print('Keys:', df.keys())
 
-        # from https://stackoverflow.com/questions/289.971882/pandas-columns-correlation-with-statistical-significance
-        # construct two arrays, one of the correlation and the other of the p-vals
-        import pandas as pd
-        df_clean = df.dropna()
-        rho = df_clean.corr()
-        if statistics:
+            # from https://stackoverflow.com/questions/289.971882/pandas-columns-correlation-with-statistical-significance
+            # construct two arrays, one of the correlation and the other of the p-vals
+            import pandas as pd
+            df_clean = df.dropna()
+            rho = df_clean.corr()
             pval = np.zeros([df_clean.shape[1], df_clean.shape[1]])
             for i in range(df_clean.shape[1]):  # rows are the number of rows in the matrix.
                 for j in range(df_clean.shape[1]):
@@ -782,39 +788,39 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix='', sh
                         """ Only for PhD Thesis, draw line from de gasperin and on fit."""
 
 
-        xlabels, ylabels = [], []
-        for ax in g.axes[-1, :]:
-            xlabel = ax.xaxis.get_label_text()
-            xlabels.append(xlabel)
-        for ax in g.axes[:, 0]:
-            ylabel = ax.yaxis.get_label_text()
-            ylabels.append(ylabel)
+            xlabels, ylabels = [], []
+            for ax in g.axes[-1, :]:
+                xlabel = ax.xaxis.get_label_text()
+                xlabels.append(xlabel)
+            for ax in g.axes[:, 0]:
+                ylabel = ax.yaxis.get_label_text()
+                ylabels.append(ylabel)
 
-        for i in range(len(xlabels)):
-            for j in range(len(ylabels)):
-                #g.axes[j, i].xaxis.set_label_text(xlabels[i])
-                #g.axes[j, i].yaxis.set_label_text(ylabels[j])
-                if i == j:
-                    mu, std = norm.fit(df_clean.iloc[:,j])
-                    print("Fit results: mu = %.2f,  std = %.2f" % (mu, std))
-                #    g.axes[j, i].text(0.5, 0.1+numbered*0.07, '#%i' % (df_clean.shape[0]), zorder=1e10, horizontalalignment='left',
-                #                      verticalalignment='center', transform=g.axes[j, i].transAxes)
-                if i < j and statistics and abs(rho.values[i,j]) > 0.01:
-                    g.axes[j, i].text(0.5, 0.1+numbered*0.07, 'correlation: %0.2f' % rho.values[j,i], horizontalalignment='center',
-                                      verticalalignment='center', transform=g.axes[j, i].transAxes)
-                    slope, intercept, r_value, p_value, std_err = stats.linregress(df_clean.iloc[:,i], df_clean.iloc[:,j])
-                    g.axes[j, i].text(0.2, 0.8, "sl=%.2f, ic=%.2f, stde=%.2f" % (df_clean.keys()[i], df_clean.keys()[j], slope, intercept, std_err),
-                                  horizontalalignment='center',
-                                  verticalalignment='center', transform=g.axes[j, i].transAxes)
-                    print("Fit results for pairs %s-%s: sl=%.2f, ic=%.2f, stde=%.2f" % (slope, intercept, std_err))
-                    slope, intercept, r_value, p_value, std_err = stats.linregress(df_clean.iloc[:,j], df_clean.iloc[:,i])
-                    g.axes[j, i].text(0.2, 0.87, "sl=%.2f,  ic=%.2f, stde=%.2f" % (df_clean.keys()[j], df_clean.keys()[i], slope, intercept, std_err),
-                                  horizontalalignment='center',
-                                  verticalalignment='center', transform=g.axes[j, i].transAxes)
-                    print("Fit results for pairs %s-%s: sl=%.2f,  ic=%.2f, stde=%.2f" % (slope, intercept, std_err))
+            for i in range(len(xlabels)):
+                for j in range(len(ylabels)):
+                    #g.axes[j, i].xaxis.set_label_text(xlabels[i])
+                    #g.axes[j, i].yaxis.set_label_text(ylabels[j])
+                    if i == j:
+                        mu, std = norm.fit(df_clean.iloc[:,j])
+                        print("Fit results: mu = %.2f,  std = %.2f" % (mu, std))
+                    #    g.axes[j, i].text(0.5, 0.1+numbered*0.07, '#%i' % (df_clean.shape[0]), zorder=1e10, horizontalalignment='left',
+                    #                      verticalalignment='center', transform=g.axes[j, i].transAxes)
+                    if i < j and statistics : #and abs(rho.values[i,j]) > 0.01
+                        g.axes[j, i].text(0.5, 0.1+numbered*0.07, 'correlation: %0.2f' % rho.values[j,i], horizontalalignment='center',
+                                          verticalalignment='center', transform=g.axes[j, i].transAxes)
+                        slope, intercept, r_value, p_value, std_err = stats.linregress(df_clean.iloc[:,i], df_clean.iloc[:,j])
+                        #g.axes[j, i].text(0.2, 0.8, "sl=%.2f, ic=%.2f, stde=%.2f" % (slope, intercept, std_err),
+                        #              horizontalalignment='center',
+                        #              verticalalignment='center', transform=g.axes[j, i].transAxes)
+                        print("Fit results for pairs %s-%s: sl=%.2f, ic=%.2f, stde=%.2f" % (df_clean.keys()[i], df_clean.keys()[j], slope, intercept, std_err))
+                        slope, intercept, r_value, p_value, std_err = stats.linregress(df_clean.iloc[:,j], df_clean.iloc[:,i])
+                        #g.axes[j, i].text(0.2, 0.87, "sl=%.2f,  ic=%.2f, stde=%.2f" % (slope, intercept, std_err),
+                        #              horizontalalignment='center',
+                        #              verticalalignment='center', transform=g.axes[j, i].transAxes)
+                        print("Fit results for pairs %s-%s: sl=%.2f,  ic=%.2f, stde=%.2f" % (df_clean.keys()[j], df_clean.keys()[i], slope, intercept, std_err))
 
-                if i > j:
-                    pass
+                    if i > j:
+                        pass
 
     #== Save file
     nowfile = 'Scattermatrix'
@@ -823,8 +829,8 @@ def create_scattermatrix( SurveySamples, plotmeasures, logs=None,  suffix='', sh
     print('Gonna save:  %s' % (nowfolder + nowfile))
     plt.savefig('%s%s%s.png' % (nowfolder, nowfile, suffix), dpi=400)
     plt.savefig('%s%s%s.pdf' % (nowfolder, nowfile, suffix))
-
     plt.clf()
+    print(NSurveys, np.power(NSurveys,0.3))
 
 
 # Taken from https://stackoverflow.com/questions/40726733/plotting-multiple-datasets-on-a-seaborn-pairgrid-as-kdeplots-with-different-colo
@@ -896,8 +902,9 @@ def create_shape_LAS_plot(surveys):
             zi = k(np.vstack([xi.flatten(), yi.flatten()]))
 
             # contour
-            ax.pcolormesh(xi, yi, zi.reshape(xi.shape), shading='gouraud', cmap=plt.cm.Oranges_r) # plt.cm.BuGn_r, sns.palplot(sns.light_palette("orange", reverse=True))
+            cf = ax.pcolormesh(xi, yi, zi.reshape(xi.shape), shading='gouraud', cmap=plt.cm.Oranges_r) # plt.cm.BuGn_r, sns.palplot(sns.light_palette("orange", reverse=True))
             ax.contour(xi, yi, zi.reshape(xi.shape), cmap=plt.cm.Oranges_r)
+            fig.colorbar(cf, ax=ax)
 
             if 1==2:
                 g = sns.jointplot(x, y, kind="scatter", color="orange", alpha=0.2, ratio=5)

@@ -284,7 +284,7 @@ class Survey(object):
           
         return sum([GCl.hist for GCl in self.GCls], 0)
      
-    def fetch_pandas(survey, plotmeasures, logs=None,  surname=True, keys="label"):
+    def fetch_pandas(survey, plotmeasures, logs=None,  surname=True, keys="label", gcls=False):
         """ Return a panda array generated from the survey catalogue 
         
         survey: A ClusterBusterSurvey
@@ -306,33 +306,51 @@ class Survey(object):
     
         """ This very ugly steps just creates a List of (relic,GCL) from the survey
         As in the future galaxy clusters will gain be a property of relics again this step will be shorter  and more readable"""
-        for GCl in survey.FilterCluster(**survey.cluster_filter_kwargs):
+        filtered = survey.FilterCluster(**survey.cluster_filter_kwargs)
+        for GCl in filtered:
                 GCl.updateInformation()
-                list_full.append([(GCl,relic) for relic in GCl.filterRelics(**survey.relic_filter_kwargs)])
-                
-        list_full = [item for sublist in list_full for item in sublist]
-            
-        for GCl, relic in list_full:
-    
-            relic.asign_cluster(GCl)
-            datavalues = []
-            for measure, log in zip(plotmeasures, logs):
-                data = measure(relic).value
-                if log:
-                    data = np.log10(data)
-                datavalues.append(data)
-            
-            datalist.append(datavalues)
 
+        if gcls:
+            list_full = filtered
+
+            for GCl in list_full:
+                datavalues = []
+                for measure, log in zip(plotmeasures, logs):
+                    data = measure(GCl).value
+                    if log:
+                        data = np.log10(data)
+                    datavalues.append(data)
+
+                datalist.append(datavalues)
+            labelobj = GCl
+        else:
+            for GCl in filtered:
+                list_full.append([(GCl,relic) for relic in GCl.filterRelics(**survey.relic_filter_kwargs)])
+            list_full = [item for sublist in list_full for item in sublist]
+            
+            for GCl, relic in list_full:
+
+                relic.asign_cluster(GCl)
+                datavalues = []
+                for measure, log in zip(plotmeasures, logs):
+                    data = measure(relic).value
+                    if log:
+                        data = np.log10(data)
+                    datavalues.append(data)
+
+                datalist.append(datavalues)
+            labelobj= relic
         """ Create a pandas dataframe """
         if keys == "label":
-            columns = [measure(relic).labels(log=log) for measure,log in zip(plotmeasures, logs)]
+            columns = [measure(labelobj).labels(log=log) for measure,log in zip(plotmeasures, logs)]
         if keys == "dic":
-            columns = [measure(relic).dic for measure, log in zip(plotmeasures, logs)]
+            columns = [measure(labelobj).dic for measure, log in zip(plotmeasures, logs)]
 
         pdframe = pd.DataFrame(datalist, columns=columns)
         if surname:
             pdframe['Survey'] = survey.name
+        else :
+            pdframe['Survey'] = survey.name_short
 
         if len(pdframe) < 3:
             print('Only %i elements in the pdframe, will skip this one' % (len(pdframe)))
@@ -419,7 +437,7 @@ class Galaxycluster(object):
 
 
         ## All Fluxes are in mJy
-        self.flux_lit = dbc.measurand(flux_lit, 'F_lit', un='mJy', label='$F_\mathrm{lit}$')    # Literature flux
+        self.flux_lit = dbc.measurand(flux_lit, 'S_lit', un='mJy', label='$S_\mathrm{lit}$')    # Literature flux
         self.Prest100 = Prest100
         #  contaminating sources:
         self.contSour = []         # A list of contaminating sources, The source themself could be represented by objects
