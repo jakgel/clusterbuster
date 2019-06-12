@@ -29,7 +29,7 @@ import matplotlib.patches as mpatches
 
 def main():
 
-    create_NVSS = True
+    create_NVSS = ['plot_Clusters']
     create_ABC_plots = False
     create_PhDplots = False
     create_CWpaperplots = False
@@ -57,6 +57,19 @@ def main():
     NVSSsurvey.relic_filter_kwargs = {"Filter": True, "shape":False, "minrms": 8}
     NVSSsurvey.cluster_filter_kwargs = {'minrel': 1, 'zmin': 0.05}
 
+
+    if 1==2:
+        NVSSsurvey.FilterCluster()
+        usethem = NVSSsurvey.filteredClusters
+        Nrelics = np.array([len(gcl.filterRelics()) for gcl in usethem])
+        M200 = np.array([gcl.M200() for gcl in usethem])
+        z = np.array([gcl.z() for gcl in usethem])
+        Nrelics = np.expand_dims(Nrelics, axis=1)
+        M200 = np.expand_dims(M200, axis=1)
+        z = np.expand_dims(z, axis=1)
+        measures = np.concatenate((M200, z, Nrelics), axis=1)
+        np.save("/data/clustersNVSS_with_mass_redshift", measures)
+        exit()
 
     if 1 == 2:
         NVSSsurvey.GCls = [GCl for GCl in NVSSsurvey.GCls if GCl.name == "A2256"]
@@ -277,39 +290,42 @@ def main():
     if create_NVSS:
         """ NVSS """
         #        ioclass.plot_Clusters(NVSSsurvey, dynamicscale=False, relicregions=True, DS9regions=False, sectors=False, colorbar=False, subtracted=False, shapes=False)
-        #ioclass.plot_cummulative_flux([NVSSsurvey])
-        ioclass.create_shape_LAS_plot([NVSSsurvey])
-        #ioclass.plot_fluxRatio_LAS([NVSSsurvey])
+        if 'create_misc':
+            #ioclass.plot_cummulative_flux([NVSSsurvey])
+            ioclass.create_shape_LAS_plot([NVSSsurvey])
+            #ioclass.plot_fluxRatio_LAS([NVSSsurvey])
 
-        ioclass_tt.GClList2table_paper('/home/jakobg/Dropbox/PhDThesis/tables/GClTable', NVSSsurvey, longtab=False, shortlist=shortlist)
-        ioclass_tt.RList2table_paper('/home/jakobg/Dropbox/PhDThesis/tables/RelicsTable', NVSSsurvey, longtab=False)
-        #ioclass.plot_RelicEmission_polar(NVSSsurvey, additive=True, single=True, mirrored=False, plottype='flux',
-        #                                 cbar=True, aligned=False, dpi=600, title=None, add_pi=0.5)
+        if 'create_tables' in create_NVSS:
+            ioclass_tt.GClList2table_paper('/home/jakobg/Dropbox/PhDThesis/tables/GClTable', NVSSsurvey, longtab=False, shortlist=shortlist)
+            ioclass_tt.RList2table_paper('/home/jakobg/Dropbox/PhDThesis/tables/RelicsTable', NVSSsurvey, longtab=False)
+            #ioclass.plot_RelicEmission_polar(NVSSsurvey, additive=True, single=True, mirrored=False, plottype='flux',
+            #                                 cbar=True, aligned=False, dpi=600, title=None, add_pi=0.5)
 
-        newdist = lambda x: dbc.measurand(x.Dproj_pix() / x.GCl.R200(), 'Dproj', label='$D_\mathrm{proj,rel}$',
-                                          un='$R_{200}$')
-        newalpha = lambda x: dbc.measurand(np.abs(x.alpha()), '|alpha|', label='$|\\alpha|$', un=None)
-        logs_alpha = [True, True, False, True, False, True]
-        logs_alpha_new  = [True, True, False, False]
-        ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.M200, lambda x: x.P_rest, lambda x: x.z], logs=[True,True,False], suffix='_z_Gcls', gcls=True)
-        exit()
-        ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.alpha, lambda x: x.Dproj_pix], logs=[False,True])
-        ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.alpha, newdist], logs=[False,True], suffix='_PhDplot' )
-        ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.P_rest, lambda x: x.GCl.M200], logs=[True,True], suffix='_PhDplot')
-        #ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.GCl.z, lambda x: x.Mach], suffix='_Mach-z')
-        #ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.alpha, lambda x: x.Dproj_pix], logs=logs_alpha, suffix='_large')
-        #ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.Mach, lambda x: x.Dproj_pix], suffix='_large_mach')
-        ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.alpha, newdist], logs=logs_alpha, suffix='_newdist')
-        ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.alpha, newdist], logs=logs_alpha_new, suffix='_newdistB')
-        ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.alpha, newdist, lambda x: x.GCl.z, lambda x: x.GCl.M200], logs=logs_alpha, suffix='_OWH')
-        ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.alpha, lambda x: x.Dproj_pix, lambda x: x.GCl.z, lambda x: x.GCl.M200], logs=logs_alpha, suffix='_OWH2')
-        ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.GCl.z], logs=logs_alpha, suffix='_z')
-        #ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.GCl.z, lambda x: x.GCl.M200], logs=logs_alpha, suffix='_M200')
-        exit()
+        if 'create_scattermatrix' in create_NVSS:
+            newdist = lambda x: dbc.measurand(x.Dproj_pix() / x.GCl.R200(), 'Dproj', label='$D_\mathrm{proj,rel}$',
+                                              un='$R_{200}$')
+            newalpha = lambda x: dbc.measurand(np.abs(x.alpha()), '|alpha|', label='$|\\alpha|$', un=None)
+            logs_alpha = [True, True, False, True, False, True]
+            logs_alpha_new  = [True, True, False, False]
+            ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.M200, lambda x: x.P_rest, lambda x: x.z], logs=[True,True,False], suffix='_z_Gcls', gcls=True)
+            exit()
+            ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.alpha, lambda x: x.Dproj_pix], logs=[False,True])
+            ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.alpha, newdist], logs=[False,True], suffix='_PhDplot' )
+            ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.P_rest, lambda x: x.GCl.M200], logs=[True,True], suffix='_PhDplot')
+            #ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.GCl.z, lambda x: x.Mach], suffix='_Mach-z')
+            #ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.alpha, lambda x: x.Dproj_pix], logs=logs_alpha, suffix='_large')
+            #ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.Mach, lambda x: x.Dproj_pix], suffix='_large_mach')
+            ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.alpha, newdist], logs=logs_alpha, suffix='_newdist')
+            ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.alpha, newdist], logs=logs_alpha_new, suffix='_newdistB')
+            ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.alpha, newdist, lambda x: x.GCl.z, lambda x: x.GCl.M200], logs=logs_alpha, suffix='_OWH')
+            ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.alpha, lambda x: x.Dproj_pix, lambda x: x.GCl.z, lambda x: x.GCl.M200], logs=logs_alpha, suffix='_OWH2')
+            ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.GCl.z], logs=logs_alpha, suffix='_z')
+            #ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.GCl.z, lambda x: x.GCl.M200], logs=logs_alpha, suffix='_M200')
 
         #print('len(NVSSsurvey.FilterCluster(minrel=1))', len(NVSSsurvey.FilterCluster(minrel=1))
-        #ioclass.plot_Clusters(NVSSsurvey, dynamicscale=False, relicregions=False, DS9regions=False, sectors=False, colorbar=False, infolabel=True, subtracted=True,
-        #                     filterargs={'zmin': 0.05, 'minimumLAS': 0, 'GClflux': 3.6, 'index': None})
+        if 'plot_Clusters' in create_NVSS:
+        ioclass.plot_Clusters(NVSSsurvey, dynamicscale=False, relicregions=False, DS9regions=False, sectors=False, colorbar=False, infolabel=True, subtracted=True,
+                             filterargs={'zmin': 0.05, 'minimumLAS': 0, 'GClflux': 3.6, 'index': None})
 
 
 
@@ -333,7 +349,7 @@ def main():
         plottings = []
         model_samples_total = 0
         mode = "thesis_largestRun" # "4vs3_new"
-        folderN = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_13'
+        folderN = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_14'
         show_metrics = False
         metric_log = False
 
