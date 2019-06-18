@@ -336,34 +336,10 @@ def plot_RelicEmission_polar(surveys, compsurvey=None, single=False, modeltext=T
 
     return 0
 
-def plot_Clusters_subfigure(survey, ids):
-    pass
-    """
-    fig = plt.figure(figsize=(8, 10))
-    gc = []
-
-    import copy
-    survey_use = copy.deepcopy(survey)
-
-    #for GCl in survey_use.GCls:
-    #    if GCl.name == ids:
-    #        gc.append(aplpy.FITSFigure(GCl.mapdic['Diffuse'], subplot=[0.05, 0.05, 0.9, 0.3], figure=fig))
-
-    path = "/data/ClusterBuster-Output/NVSS/Images"
-
-    gc.append(aplpy.FITSFigure(img1, subplot=[0.05, 0.05, 0.9, 0.3], figure=fig))
-    gc.append(aplpy.FITSFigure(img2, subplot=[0.05, 0.35, 0.9, 0.3], figure=fig))
-
-    for subfigure in gc:
-        subfigure.recenter(ra, dec, radius=0.5)
-        subfigure.tick_labels.hide()
-        subfigure.axis_labels.hide()
-    """
-
 
 def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=False, DS9regions=False, diamF=2.6,
                   colorbar=False, beam=True, shapes=False, recenter=True, infolabel = False, sectors=False,
-                  xray=False, highres=False, show_rot=False, vectors=False, label_sheme='balanced',
+                  xray=False, highres=False, show_rot=False, vectors=False, extralabels=False, label_sheme='balanced',
                   filterargs={'zborder': 0, 'ztype': '>', 'minimumLAS': 4, 'GClflux': 20, 'index': None}):
     print('plot_Clusters:BUG: There are not always the full contours shown.')
 
@@ -560,10 +536,15 @@ def plot_Clusters(survey, dynamicscale=False, subtracted=True, relicregions=Fals
 #            f.colorbar.set_axis_label_text('%s flux density [Jy/beam]' % (survey.name_short))
             f.colorbar.set_axis_label_text(cbar_text)
 
-        #f.add_label(0.2, 0.2, 'R_{200}', relative=True, style='oblique', size='xx-large',
-        #            horizontalalignment='right', **laargs)
-        f.add_label(0.2, 0.8, '$R_{200}$', relative=True, style='oblique', size='xx-large',
-                    horizontalalignment='right', **laargs)
+        if extralabels:
+            f.add_label(0.2, 0.8, '$R_{200}$', relative=True, style='oblique', size='xx-large',
+                        horizontalalignment='right', **laargs)
+            f.add_label(0.6, 0.6, 'LLS', relative=True, style='oblique', size='xx-large',
+                        horizontalalignment='right', **laargs)
+
+            iline = np.array([[0, 0],[1, 1]])
+            f.show_lines([iline], color="white", relative=True)
+            #f.show_lines([], layer=False, zorder=None, relative=True)
 
         """DEVELOPMENT"""
         if vectors:
@@ -638,7 +619,14 @@ def plot_fluxRatio_LAS(surveys):
 
         colors = ['b', 'g']
         area = np.power(df_clean['F'], 0.35)*4
-        ax.scatter(df_clean['LASmax'], df_clean['F']/df_clean['F_lit'], s=area,  alpha=0.60, color=colors[0], zorder=2)
+        ax.scatter(df_clean['LASmax'], df_clean['F']/df_clean['S_lit'], s=area,  alpha=0.60, color=colors[0], zorder=2)
+
+    print(df_clean['LASmax'], df_clean['LASmax'])
+    print(["%s %.2f" % (GCl.name, GCl.largestLAS.value) for GCl in survey.filteredClusters if GCl.largestLAS.value > 9])
+    ax.text(13,0.44, "A2256", fontsize=8, color='black', alpha=0.7)
+    ax.text(10.53,0.8, "CIZA J2243", fontsize=8, color='black', alpha=0.7)
+    ax.text(9.89,0.4, "A115", fontsize=8, color='black', alpha=0.7)
+    ax.text(9.67,0.68, "ZwCl 0008", fontsize=8, color='black', alpha=0.7)
 
     farnsw_x = [0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5,
                 10.0, 10.5, 11.0, 11.5, 12.0, 12.5, 13.0, 13.5, 14.0, 14.5, 15.0, 15.5, 16.0, 16.5, 17.0, 17.5,
@@ -679,11 +667,11 @@ def plot_fluxRatio_LAS(surveys):
      1Mpc z=0.05 16.16
      nominal Largest imagable angular scale by VLA configuration 16.94
     """
-    scales = [0.75, 8.98, 16.16, 16.94]
-    textl = ['$\\Theta_\\mathrm{FWHM}$','$\\Theta_\\mathrm{z=0.10}$', '$\\Theta_\\mathrm{z=0.05}$', '$\\mathrm{\\Theta_{VLA,D}}$']
-    color = ['black', 'b', 'b', 'black']
-    height = [ 0.14, 0.2, 0.2, 0.14]
-    mod = ((0,0), (0,0), (0,0), (0,0))
+    scales = [0.75, 8.98, 16.16, 16.94, 8.48]
+    textl = ['$\\Theta_\\mathrm{FWHM}$','$\\Theta_\\mathrm{z=0.10}$', '$\\Theta_\\mathrm{z=0.05}$', '$\\mathrm{\\Theta_{VLA,D}}$', '$\\mathrm{\\Theta_{max,NVSS}}$']
+    color = ['black', 'b', 'b', 'black','black']
+    height = [ 0.12, 0.2, 0.2, 0.12, 1.04]
+    mod = ((0,0), (0,0), (0,0), (0,0), (0,0) )
 
     for ii,m in enumerate(scales):
         ax.plot([m]*2, [ax.get_ylim()[0], height[ii] ], '-', c=color[ii], lw=1.8, linestyle=':', alpha=0.7 )
@@ -971,52 +959,56 @@ def plot_cummulative_flux(surveys, average_relic_count=False):
     min_vals, max_vals, cummulatives = [], [], []
     limit = surveys[-1].dinfo.rms*1e3*surveys[-1].relic_filter_kwargs['minrms']
 
-    n_bins = 1200
-    bins = np.linspace(np.log10(limit*0.5), np.log10(100000), num=n_bins)
-    for survey in [surveys[0]]:
-        clusters = survey.FilterCluster(minrel=1)
-        fluxes = [np.log10(cl.flux()) for cl in clusters]
-        n_relics = [len(cl.filterRelics(**survey.relic_filter_kwargs)) for cl in clusters]
 
-        min_val = min(fluxes)  # min_val = floor(min(data1 + data2))
-        max_val = max(fluxes)  # max_val = ceil(max(data1 + data2))
-        min_vals.append(min_val)
-        max_vals.append(max_val)
-        cummulatives.append(len(fluxes))
+    cummulatives = iom.unpickleObject("/data/ManySurveys")
 
-        # plot the cumulative histogram
-        n, bins, patches = ax.hist(fluxes, bins=bins, density=False, histtype='step',
-                                   cumulative=-1, color="blue", lw=2, zorder=1000, alpha=0.9)
-
-        if average_relic_count:
-            ax2 = ax.twinx()
-            ax2.hist(n_relics, bins=bins, density=False, histtype='step',
-                     cumulative=-1, color="blue", lw=5, zorder=1000, alpha=0.9, weights=len(clusters))
-            ax2.set_ylabel('average relic count', color='darkblue')
-            ax2.tick_params('y', colors='darkblue')
-
-    if len(surveys) > 1:
-        for survey in surveys[1:]:
+    if cummulatives:
+        n_bins = 1200
+        bins = np.linspace(np.log10(limit*0.5), np.log10(100000), num=n_bins)
+        for survey in [surveys[0]]:
             clusters = survey.FilterCluster(minrel=1)
             fluxes = [np.log10(cl.flux()) for cl in clusters]
             n_relics = [len(cl.filterRelics(**survey.relic_filter_kwargs)) for cl in clusters]
-
             min_val = min(fluxes)  # min_val = floor(min(data1 + data2))
             max_val = max(fluxes)  # max_val = ceil(max(data1 + data2))
             min_vals.append(min_val)
             max_vals.append(max_val)
             cummulatives.append(len(fluxes))
 
+            if average_relic_count:
+                ax2 = ax.twinx()
+                ax2.hist(n_relics, bins=bins, density=False, histtype='step',
+                         cumulative=-1, color="blue", lw=1, zorder=1000, alpha=1.0, weights=len(clusters))
+                ax2.set_ylabel('average relic count', color='darkblue')
+                ax2.tick_params('y', colors='darkblue')
+
+
+    for fluxes in [cummulatives[0]]:
+        # plot the cumulative histogram
+        n, bins, patches = ax.hist(fluxes, bins=bins, density=False, histtype='step',
+                                   cumulative=-1, color="royalblue", lw=2, zorder=1000, alpha=0.9)
+    if len(surveys) > 1:
+        for fluxes in cummulatives[1:]:
             # plot the cumulative histogram
             n, bins, patches = ax.hist(fluxes, bins=bins,  density=False, histtype='step',
-                                       cumulative=-1, color="red", lw=5, alpha=0.2)
+                                       cumulative=-1, color="darkorange", lw=1, alpha=0.2)
 
-        plt.legend([survey.name_short for survey in surveys[0:2]], loc='upper right')
+        #plt.legend([survey.name_short for survey in surveys[0:2]], loc='upper right')
+
+        from matplotlib.legend_handler import HandlerLine2D
+        def update_prop(handle, orig):
+            handle.update_from(orig)
+            handle.set_marker("")
+
+        plt.legend(handler_map={plt.Line2D: HandlerLine2D(update_func=update_prop)})
+
+    iom.pickleObject_old(cummulatives, "/data/ManySurveys_stats")
+
 
     ax.set_xlim([np.log10(limit), np.max(max_vals) + 0.05])
     ax.set_ylim([0, np.max(cummulatives) + 1])
-    ax.set_ylabel('cluster count') #$\sum\mathrm{cluster}\,F_\mathrm{1.4, cluster}>F$
-    ax.set_xlabel('$\log_{10}(F\,\mathrm{[mJy]})$')
+    ax.set_ylabel('cluster count with total relic flux $> S_{1.4}$') #$\sum\mathrm{cluster}\,F_\mathrm{1.4, cluster}>F$
+    ax.set_xlabel('$\log_{10}(S_{1.4}\,\mathrm{[mJy]})$')
     plt.tick_params(direction="in", which='both')
 
     nowfile = 'Flux-distr'

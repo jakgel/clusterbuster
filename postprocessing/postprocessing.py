@@ -29,9 +29,9 @@ import matplotlib.patches as mpatches
 
 def main():
 
-    create_NVSS = ['plot_Clusters']
+    create_NVSS = [] #'create_tables', 'create_scattermatrix'] #'create_misc'] #, 'plot_Clusters','correlation template'
     create_ABC_plots = False
-    create_PhDplots = False
+    create_PhDplots = True
     create_CWpaperplots = False
     print('###==== PostProcessing: Importing self written .py subroutines ====###')
 
@@ -57,7 +57,19 @@ def main():
     NVSSsurvey.relic_filter_kwargs = {"Filter": True, "shape":False, "minrms": 8}
     NVSSsurvey.cluster_filter_kwargs = {'minrel': 1, 'zmin': 0.05}
 
+    if 1==2:
+        import copy
+        NVSSsurvey_doubleRelics = copy.deepcopy(NVSSsurvey)
+        NVSSsurvey_doubleRelics.GCls = [GCl for GCl in NVSSsurvey.GCls if (GCl.gettypestring(vec=True)[2]>0) and (GCl.name != "CIZA J0107")]
+        NVSSsurvey = NVSSsurvey_doubleRelics
 
+        for GCl in  NVSSsurvey.GCls:
+            if GCl.name == "PLCK G287":
+                GCl.M200.value = 18.7e14
+
+        NVSSsurvey.FilterCluster(zmin=0.05) #NVSSsurvey.cluster_filter_kwargs
+        for GCl in NVSSsurvey.filteredClusters:
+            print("%20s %.2f %6.2f %.2f %.2f" % (GCl.name, np.log10(GCl.P_rest.value), GCl.P_rest.value/1e23, np.log10(GCl.M200.value), GCl.M200.value/1e14))
     if 1==2:
         NVSSsurvey.FilterCluster()
         usethem = NVSSsurvey.filteredClusters
@@ -72,10 +84,13 @@ def main():
         exit()
 
     if 1 == 2:
+
+        print(["%.3f %.3f" % (GCl.R(200)/GCl.R(120), GCl.R(200)/GCl.R(500)) for GCl in NVSSsurvey.GCls])
+
         NVSSsurvey.GCls = [GCl for GCl in NVSSsurvey.GCls if GCl.name == "A2256"]
         #print(NVSSsurvey.GCls)
         ioclass.plot_Clusters(NVSSsurvey, dynamicscale=False, relicregions=False, DS9regions=False, sectors=False,
-                              colorbar=False, infolabel=True, subtracted=True, label_sheme='bright',
+                              colorbar=False, infolabel=True, subtracted=True, label_sheme='bright', extralabels=True,
                              filterargs={'zmin': 0.05, 'minimumLAS': 0, 'GClflux': 3.6, 'index': None})
         exit()
 
@@ -207,35 +222,6 @@ def main():
         np.save("/data/comprad", comprad)
         np.save("/data/compol", comppol)
 
-    if 1 == 2:
-            mpl.rcParams['text.usetex'] = True
-            plt.style.use('default')
-            scale = 0.8
-            fig, ax = plt.subplots(figsize=(8 * scale, 4.7 * scale), dpi=200)
-
-            for gcl in NVSSsurvey.FilterCluster(**NVSSsurvey.cluster_filter_kwargs):
-                gcl.updateInformation(Filter=True)
-                gcl.relics_polarDistribution()
-                arrays = [val / max(gcl.fitarray_pro) for val in gcl.fitarray_pro]
-                ticks = [tick for tick in gcl.histo.ticks[0]]
-                ticks_relative = [((((tick - gcl.histo.ticks[0][
-                    gcl.relic_pro_index]) + 1 / 2 * np.pi) % np.pi) - 1 / 2 * np.pi) * 180 / np.pi for tick in
-                                  gcl.histo.ticks[0]]
-
-                ticks_rolled, arrays_rolled = zip(*sorted(zip(ticks_relative, arrays)))
-                ax.plot(ticks_rolled, arrays_rolled, alpha=0.3, c='cornflowerblue', lw=3.5)  # , lc='r'
-                #ax.scatter(ticks_rolled, arrays_rolled, alpha=0.1, c='r')  # , lc='r'
-
-                ticks_example = np.linspace(-90, 90, 100)
-                ax.plot(ticks_example, np.abs(np.cos(ticks_example / 180 * np.pi)), c='black')
-
-            ax.tick_params(direction="in", which='both')
-            ax.set_xlim([-90, 90])
-            ax.set_ylim([0,1])
-            plt.xlabel("$\phi_\\mathrm{corr}-\phi_\\mathrm{best}\;[^\circ]$")
-            plt.ylabel("$R(\phi_\\mathrm{corr}) / R(\phi_\\mathrm{best})$")
-            plt.savefig("/data/ClusterBuster-Output/NVSS/PostProcessing/Correlation-template.pdf")
-
 
     def plot_correlations(data, suffix):
         from string import ascii_letters
@@ -292,8 +278,40 @@ def main():
         #        ioclass.plot_Clusters(NVSSsurvey, dynamicscale=False, relicregions=True, DS9regions=False, sectors=False, colorbar=False, subtracted=False, shapes=False)
         if 'create_misc':
             #ioclass.plot_cummulative_flux([NVSSsurvey])
-            ioclass.create_shape_LAS_plot([NVSSsurvey])
-            #ioclass.plot_fluxRatio_LAS([NVSSsurvey])
+            ioclass.plot_fluxRatio_LAS([NVSSsurvey])
+            #ioclass.create_shape_LAS_plot([NVSSsurvey])
+
+        if "correlation template" in create_NVSS:
+            mpl.rcParams['text.usetex'] = True
+            plt.style.use('default')
+
+            plt.rc('text', usetex=True)
+            plt.rc('font', family='serif')
+            scale = 0.8
+            fig, ax = plt.subplots(figsize=(8 * scale, 4.7 * scale), dpi=200)
+
+            for gcl in NVSSsurvey.FilterCluster(**NVSSsurvey.cluster_filter_kwargs):
+                gcl.updateInformation(Filter=True)
+                gcl.relics_polarDistribution()
+                arrays = [val / max(gcl.fitarray_pro) for val in gcl.fitarray_pro]
+                ticks = [tick for tick in gcl.histo.ticks[0]]
+                ticks_relative = [((((tick - gcl.histo.ticks[0][
+                    gcl.relic_pro_index]) + 1 / 2 * np.pi) % np.pi) - 1 / 2 * np.pi) * 180 / np.pi for tick in
+                                  gcl.histo.ticks[0]]
+
+                ticks_rolled, arrays_rolled = zip(*sorted(zip(ticks_relative, arrays)))
+                ax.plot(ticks_rolled, arrays_rolled, alpha=0.4, c='cornflowerblue', lw=1.5)  # , lc='r'
+                # ax.scatter(ticks_rolled, arrays_rolled, alpha=0.1, c='r')  # , lc='r'
+
+                ticks_example = np.linspace(-90, 90, 100)
+                ax.plot(ticks_example, np.abs(np.cos(ticks_example / 180 * np.pi)), c='black')
+
+            ax.tick_params(direction="in", which='both')
+            ax.set_xlim([-90, 90])
+            ax.set_ylim([0, 1])
+            plt.xlabel("$\phi_\\mathrm{corr}-\phi_\\mathrm{best}\;[^\circ]$")
+            plt.ylabel("$R(\phi_\\mathrm{corr}) / R(\phi_\\mathrm{best})$")
+            plt.savefig("/data/ClusterBuster-Output/NVSS/PostProcessing/Correlation-template.pdf")
 
         if 'create_tables' in create_NVSS:
             ioclass_tt.GClList2table_paper('/home/jakobg/Dropbox/PhDThesis/tables/GClTable', NVSSsurvey, longtab=False, shortlist=shortlist)
@@ -307,7 +325,7 @@ def main():
             newalpha = lambda x: dbc.measurand(np.abs(x.alpha()), '|alpha|', label='$|\\alpha|$', un=None)
             logs_alpha = [True, True, False, True, False, True]
             logs_alpha_new  = [True, True, False, False]
-            ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.M200, lambda x: x.P_rest, lambda x: x.z], logs=[True,True,False], suffix='_z_Gcls', gcls=True)
+            ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.P_rest, lambda x: x.M200, lambda x: x.z], logs=[True,True,False], suffix='_z_Gcls', gcls=True)
             exit()
             ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.alpha, lambda x: x.Dproj_pix], logs=[False,True])
             ioclass.create_scattermatrix([NVSSsurvey], [lambda x: x.alpha, newdist], logs=[False,True], suffix='_PhDplot' )
@@ -324,8 +342,8 @@ def main():
 
         #print('len(NVSSsurvey.FilterCluster(minrel=1))', len(NVSSsurvey.FilterCluster(minrel=1))
         if 'plot_Clusters' in create_NVSS:
-        ioclass.plot_Clusters(NVSSsurvey, dynamicscale=False, relicregions=False, DS9regions=False, sectors=False, colorbar=False, infolabel=True, subtracted=True,
-                             filterargs={'zmin': 0.05, 'minimumLAS': 0, 'GClflux': 3.6, 'index': None})
+            ioclass.plot_Clusters(NVSSsurvey, dynamicscale=False, relicregions=False, DS9regions=False, sectors=False, colorbar=False, infolabel=True,
+                                  subtracted=True, filterargs={'zmin': 0.05, 'minimumLAS': 0, 'GClflux': 3.6, 'index': None})
 
 
 
@@ -643,8 +661,8 @@ def main():
         #========== My specific cohord plot =============#
         plt.style.use('ggplot')
         
-        #proclist = range(0, 36)  # range(40), 313
-        proclist = range(5600, 5600+50)  # range(1360, 3288+250)  '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_11/'
+        proclist = range(0, 36)  # range(0,36), 313
+        #proclist = range(5600, 5600+50)  # range(1360, 3288+250)  '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_11/'
         folder = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_20kpc/'
                 #'/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_13/'
                 #
@@ -767,7 +785,7 @@ def main():
             ioclass.plot_cummulative_flux(SurveysSample_full)
             exit()
 
-        if 1 == 1:
+        if 1 == 2:
 
             surlist = []
             for surveyname in surveynames:
@@ -842,6 +860,39 @@ def main():
             np.save("/data/metric_estimate%s" % outname, data)
             exit()
 
+
+        if 1 == 2:
+            SurveysSample = []
+            for surveyname in surveynames:
+                surveypath = '%s/%s' % (folder, surveyname)
+                print(surveypath)
+                try:
+                    survey = iom.unpickleObject(surveypath)
+                except:
+                    continue
+                #print(survey.name,  [np.log10(eff) for eff in survey.Rmodel.effList],  "np.log10(survey.Rmodel.B0):",
+                #                     'np.log10(survey.Rmodel.B0): %.2f' % np.log10(survey.Rmodel.B0), "survey.Rmodel.kappa", survey.Rmodel.kappa)
+                #exit()
+                survey.seed_dropout = None
+
+                survey.dinfo = survey.GCls[0].dinfo
+                survey.scatterkwargs = {"alpha": 0.15, "fmt": "^", "markersize": 7}
+                survey.cnt_levels = [9e-4, 1.8e-3, 3.6e-3, 7.2e-3, 1.44e-2, 2.88e-2, 5.76e-2]
+                survey.relic_filter_kwargs.update({"Filter": True, 'minrms': 8, "shape_pca": True})
+                survey.histkwargs = {"alpha": 0.15}
+                survey.set_binning(Histo)
+                survey.emi_max = 2e-2
+                survey.seed_dropout = None
+                survey.set_seed_dropout()
+                SurveysSample.append(survey)
+            iom.pickleObject_old(SurveysSample, "/data/ManySurveys", append = False)
+            print("I did it!!!!")
+
+        SurveysSample = [] #iom.unpickleObject("/data/ManySurveys")
+        yeaahh = [NVSSsurvey] + SurveysSample
+        print(len(yeaahh))
+        ioclass.plot_cummulative_flux(yeaahh)
+        exit()
 
         for surveyname in surveynames:
             SurveysSample = []
@@ -981,7 +1032,7 @@ def main():
 
                 #        ioclass.plot_Clusters(survey, dynamicscale=False, relicregions=False, DS9regions=False, sectors=True, colorbar=True)
                 ioclass.plot_Clusters(survey, xray=True, dynamicscale=False, relicregions=False, DS9regions=False,
-                                      sectors=False, colorbar=False, infolabel=False, subtracted=True,
+                                      sectors=False, colorbar=True, infolabel=False, subtracted=True,
                                       filterargs={'zmin': 0.05, 'minimumLAS': 0, 'GClflux': 3.6,
                                                   'index': None})
 

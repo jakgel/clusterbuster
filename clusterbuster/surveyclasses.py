@@ -635,7 +635,7 @@ class Galaxycluster(object):
         f_a = 3.0857e21  # kpc to cm
         f_b = 1.98855e33 # solar masses g to
         rho_crit = self.cosmo.critical_density(self.z.value) #<Quantity 9.31000324...e-30 g / cm3>
-        result = np.power( self.M(200)*f_b / ( 4*np.pi/3 * overdensity * rho_crit.value) ,  1./3. ) / f_a
+        result = np.power(self.M(200)*f_b / (4*np.pi/3 * overdensity * rho_crit.value),  1./3.) / f_a
         return dbc.measurand(result, 'R%i' % overdensity, label='$R_{%i}$' % overdensity, un='$kpc$')
 
     def infer_M200_LX(self):
@@ -743,7 +743,7 @@ class Galaxycluster(object):
                                                 abs(max(self.ratio_pro(),self.ratio_anti())-ratio_val)],
                                            vrange=[2e-3,1])
 
-    def gettypestring(self, vec=False) :
+    def gettypestring(self, vec=False):
         """ Returns a typestring for the diffusive emission components in this galaxy cluster.
         In the case of several emission types of different candidate status I have to think of an solution"""
 
