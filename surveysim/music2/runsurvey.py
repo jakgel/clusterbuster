@@ -645,6 +645,37 @@ def DoRun(inputs, smt, verbose=False, countmax=500, countmax_relics=1500):
             smt(task='PrepareRadioCubes')   
             PreSnap = radiomodel.PrepareRadioCube(snap, psiFile=pase['miscdata']+pase['PSItable'],
                                                   machFile=pase['miscdata']+pase['DSAtable'])
+
+
+            if 1==2:
+                snap_phd = radiomodel.PrepareRadioCube(snap, psiFile=pase['miscdata'] + pase['PSItable'],
+                                                      machFile=pase['miscdata'] + pase['DSAtable'], machmin=0.0)[0]
+
+                print(type(snap_phd.mach))
+                Mstat = np.asarray(snap_phd.mach)/1.045+1e-5
+                Astat = np.asarray(snap_phd.hsml)/np.asarray(loadsnap.comH_to_phys(snap_phd.head))**2
+                Rhostat = np.asarray(snap.rdow)
+                Tstat = np.asarray(snap.udow)
+                Psistat = np.asarray(snap.DSAPsi)
+
+                bins = np.linspace(-1, 3, num=1300, endpoint=True)
+                print(Mstat.shape, Tstat.shape, Psistat.shape)
+                M_hist, bin_edges = np.histogram(np.log10(Mstat), bins=bins)
+                A_hist, bin_edges = np.histogram(np.log10(Mstat), weights=Astat, bins=bins)
+                Rho_hist, bin_edges = np.histogram(np.log10(Mstat), weights=Rhostat, bins=bins)
+                T_hist, bin_edges = np.histogram(np.log10(Mstat), weights=Tstat, bins=bins)
+                Psi_hist, bin_edges = np.histogram(np.log10(Mstat), weights=Psistat, bins=bins)
+                Psi_A_hist, bin_edges = np.histogram(np.log10(Mstat), weights=Psistat*Astat, bins=bins)
+                Psi_A_T_hist, bin_edges = np.histogram(np.log10(Mstat), weights=Psistat*Astat*Tstat**(1.5), bins=bins)
+                Psi_A_T_Rho_hist, bin_edges = np.histogram(np.log10(Mstat), weights=Psistat*Rhostat*Astat*Tstat**(1.5), bins=bins)
+                Psi_A_Rho_hist, bin_edges = np.histogram(np.log10(Mstat), weights=Rhostat*Astat, bins=bins)
+
+                alltogether = np.stack((M_hist, A_hist, Rho_hist, T_hist, Psi_hist, Psi_A_hist, Psi_A_T_hist, Psi_A_T_Rho_hist,Psi_A_Rho_hist), axis=1)
+                print( len(snap.mach), alltogether.shape)
+
+                for fr in realisations:
+                    np.save("/data/TestForPhD/TestForPhD-%i" % (fr.ids), alltogether)
+
             PreSnap = (radiomodel.PiggyBagSnap(PreSnap[0], extended=True), PreSnap[1])
             if verbose:
                 print(' ___ Particles in snap ___ :', PreSnap[0].radi.shape)  # DEBUGGING
@@ -866,7 +897,8 @@ def copy_ClusterOuts(snapfolder = '/data/ClusterBuster-Output/', copyfolder = '/
 
 
 def test_main_ABC():
-    test = main_ABC([-7, -1.0, -2.0, -1.0, 0.0, -4.0], verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset
+    #test = main_ABC([-7, -1.0, -2.0, -1.0, 0.0, -4.0], verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset
+    test = main_ABC([-7, 0.0, 0.5], parfile='MUSIC2_NVSS01_SSD.parset', Clfile='clusterCSV/MUSIC2', verbose=True) #FullRun_testNuza3.parset') #NVSS_Berlin00C.parset
     print("main_ABC returns:", type(test), test)
 
 if __name__ == "__main__":

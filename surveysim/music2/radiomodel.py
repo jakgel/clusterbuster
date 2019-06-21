@@ -19,7 +19,8 @@ import clusterbuster.surveyclasses as cbclass
 from scipy.special import expit
 
 
-def PrepareRadioCube(snap, psiFile='Hoeft_radio/mach_psi_table.txt', machFile='Hoeft_radio/q_mach_machr_table.txt', log=False):
+def PrepareRadioCube(snap, psiFile='Hoeft_radio/mach_psi_table.txt', machFile='Hoeft_radio/q_mach_machr_table.txt', log=False,
+                     machmin=1.5):
     """ 
     This does some preparation steps that should be same, no matter, what model is used.
     I strongly recommend to use interpolated files like Hoeft_radio/mach_psi_tablefine(10,3).txt & Hoeft_radio/q_mach_machr_tablefine(10,3).txt
@@ -38,7 +39,7 @@ def PrepareRadioCube(snap, psiFile='Hoeft_radio/mach_psi_table.txt', machFile='H
     
     # First: Apply a filter for points with mach number > psi_y[0] = 1.23 equivalent to the minimal value in the machlist
     # I implement a lower cut of m=1.5 just because it decreases the number of computed particles quite significantly
-    MF = np.where(snap.mach > 1.5)
+    MF = np.where(snap.mach >= machmin)
     
     #==== Gets conversion factors
     rho_to_ne = loadsnap.conversion_fact_gadget_rho_to_nb( snap.head )*loadsnap.conversion_fact_ne_per_nb()  # [Msol parsec-3] com+h--> [electrons cm-3] physical

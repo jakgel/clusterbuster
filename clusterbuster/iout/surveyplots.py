@@ -954,6 +954,9 @@ def plot_cummulative_flux(surveys, average_relic_count=False):
     plt.rc('text', usetex=True)
     plt.rc('text.latex')
     scale = 1.0
+    n_bins = 1200
+
+
     fig, ax = plt.subplots(figsize=(6 * scale, 5.5 * scale), dpi=200)
     fig = plt.gcf()
     min_vals, max_vals, cummulatives = [], [], []
@@ -962,8 +965,8 @@ def plot_cummulative_flux(surveys, average_relic_count=False):
 
     cummulatives = iom.unpickleObject("/data/ManySurveys")
 
-    if cummulatives:
-        n_bins = 1200
+    if not cummulatives:
+
         bins = np.linspace(np.log10(limit*0.5), np.log10(100000), num=n_bins)
         for survey in [surveys[0]]:
             clusters = survey.FilterCluster(minrel=1)
@@ -985,12 +988,12 @@ def plot_cummulative_flux(surveys, average_relic_count=False):
 
     for fluxes in [cummulatives[0]]:
         # plot the cumulative histogram
-        n, bins, patches = ax.hist(fluxes, bins=bins, density=False, histtype='step',
+        n, bins, patches = ax.hist(fluxes, bins=n_bins, density=False, histtype='step',
                                    cumulative=-1, color="royalblue", lw=2, zorder=1000, alpha=0.9)
     if len(surveys) > 1:
         for fluxes in cummulatives[1:]:
             # plot the cumulative histogram
-            n, bins, patches = ax.hist(fluxes, bins=bins,  density=False, histtype='step',
+            n, bins, patches = ax.hist(fluxes, bins=n_bins,  density=False, histtype='step',
                                        cumulative=-1, color="darkorange", lw=1, alpha=0.2)
 
         #plt.legend([survey.name_short for survey in surveys[0:2]], loc='upper right')

@@ -30,8 +30,8 @@ import matplotlib.patches as mpatches
 def main():
 
     create_NVSS = [] #'create_tables', 'create_scattermatrix'] #'create_misc'] #, 'plot_Clusters','correlation template'
-    create_ABC_plots = False
-    create_PhDplots = True
+    create_ABC_plots = True
+    create_PhDplots = False
     create_CWpaperplots = False
     print('###==== PostProcessing: Importing self written .py subroutines ====###')
 
@@ -367,7 +367,7 @@ def main():
         plottings = []
         model_samples_total = 0
         mode = "thesis_largestRun" # "4vs3_new"
-        folderN = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_14'
+        folderN = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_13'
         show_metrics = False
         metric_log = False
 
@@ -523,6 +523,7 @@ def main():
                 print('create_ABC_plots:pool.ratio', pool.ratio)
                 print('create_ABC_plots:pool.dists[0:2]', pool.dists[0:2])
                 print('create_ABC_plots:pool.thetas[0:2]', pool.thetas[0:2])
+                print('create_ABC_plots:pool.ws[0:2]', pool.ws[0:2])
                 print('create_ABC_plots:pool.dists[-1]', pool.dists[-1])
                 print('create_ABC_plots:pool.thetas[-1]', pool.thetas[-1])
                 model_samples_total += int(pool.dists.shape[0]/pool.ratio)
@@ -543,6 +544,48 @@ def main():
 
         print('model_samples_total:', model_samples_total)
         print(np.asarray(plottings).shape)
+
+
+        #================
+        #import triangle
+        import abcpmc
+
+        samples = None
+        for pool in pools:
+
+            print(pool.eps, pool.dists.shape, pools[-1].eps)
+            selected = np.ones_like(pool.thetas[:,0])
+            print(pool.dists.shape, selected.shape)
+            for ii in range(pool.dists.shape[1]):
+                one_criterion= pool.dists[:,ii] < pools[-1].eps[ii]
+                selected = selected * one_criterion
+            print(selected.shape)
+            selected = np.where(selected==1)
+            print(type(selected), pool.thetas.shape)
+            selected_thetas = pool.thetas[selected]
+            selected_weight = pool.ws[selected]
+
+            if samples is None:
+                samples = selected_thetas
+                weights = selected_weight
+            else:
+                samples = np.concatenate((samples, selected_thetas), axis=0)
+                weights = np.concatenate((weights, selected_weight), axis=0)
+
+        print(samples.shape, weights.shape)
+        fig = corner.corner(samples, weights=weights, **kwargs2)
+        add_correlation(fig, samples)
+        plt.savefig("/data/Test.pdf")
+
+
+        for mean, std in zip(*abcpmc.weighted_avg_and_std(samples, weights, axis=0)):
+            print(u"mean: {0:>.4f} \u00B1 {1:>.4f}".format(mean, std))
+
+
+        exit()
+
+
+
 
 
         print('eps_use_wide', eps_use_wide)
