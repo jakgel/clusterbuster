@@ -483,7 +483,7 @@ class Galaxycluster(object):
     # The lambda function does make the file unpickelable
     #  self.Filter = lambda x: (x.flux > self.minflux and (x.iner_rat/(x.LAS/(x.dinfo.beam[0]/60.))) < self.maxcomp)
 
-    def filterRelics(self, Filter=True, maxcomp=None, shape=False, shape_pca=False, minrms=8, regard=[1,2,3],
+    def filterRelics(self, Filter=True, maxcomp=None, shape=False, shape_pca=False, minrms=8, alpha_tresh=-1e3, regard=[1,2,3],
                      filter_pca_kwargs={}):
 
         if Filter:
@@ -494,8 +494,12 @@ class Galaxycluster(object):
             maxcomp = 1e9
             self.minflux = -1
 
+        #for relic in self.relics:
+        #    print(relic.alpha)
+        #    print(relic.alpha)
         return [relic for relic in self.relics
-                if ((relic.flux() > self.minflux) and (relic.region.rtype.classi in regard) and
+                if ((relic.flux.value > self.minflux) and (relic.region.rtype.classi in regard) and
+                    (alpha_tresh < relic.alpha.value) and
                     ((shape is False) or (relic.shape_advanced().value < maxcomp))) and
                     ((shape_pca is False) or
                      (surut.discovery_prop_pca(relic, **filter_pca_kwargs) > (1-self.random_detection_quality)))]

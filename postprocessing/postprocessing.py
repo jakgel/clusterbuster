@@ -13,6 +13,7 @@ import os
 import corner
 import os.path
 import numpy as np
+import pandas as pd
 
 import clusterbuster.iout.misc as iom
 import clusterbuster.iout.surveyplots as ioclass
@@ -56,6 +57,17 @@ def main():
     NVSSsurvey.seed_dropout = None
     NVSSsurvey.relic_filter_kwargs = {"Filter": True, "shape":False, "minrms": 8}
     NVSSsurvey.cluster_filter_kwargs = {'minrel': 1, 'zmin': 0.05}
+
+
+    if 1==2:
+        relicsA = NVSSsurvey.fetch_totalRelics()
+
+        # Get alpha and remove nans
+        A = np.array([min(-1, relic.alpha()) for relic in relicsA])
+
+        mA = A[~np.isnan(A)].mean()
+        print(mA)
+        exit()
 
     if 1==2:
         import copy
@@ -359,6 +371,17 @@ def main():
                                          transform=corner_plot.axes[i].transAxes,
                                          size=16) #, color='r'
 
+
+    def add_literature_values(corner_plot, id_B0=1, id_kappa=2):
+        df_clean = pd.DataFrame(x)
+        values = [ (0,0,5), (0.5,1.0), (0.3,0.7)]
+        rows = rho.shape[0]
+        for i in range(rows*rows):
+            if i % rows < int(i/rows):
+                corner_plot.axes[i].text(0.05, 0.05, '%+.2f' % (rho.values[i % rows, int(i/rows)]),
+                                         transform=corner_plot.axes[i].transAxes,
+                                         size=16) #, color='r'
+
     if create_ABC_plots:
 
 
@@ -366,8 +389,8 @@ def main():
         allpools  = []
         plottings = []
         model_samples_total = 0
-        mode = "thesis_largestRun" # "4vs3_new"
-        folderN = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_13'
+        mode = "4vs4_new"  #"thesis_largestRun" #"4vs4_new" #
+        folderN = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_15'
         show_metrics = False
         metric_log = False
 
@@ -421,22 +444,24 @@ def main():
             #par_select = lambda x: (float(x[5]) < 1.0 and float(x[6]) > 0.0) and float(x[8]) > -0.3
             par_select = lambda x: float(x[5]) < 5 #and float(x[8]) > -0.0
             #par_select = lambda x: float(x[8]) > -0.0 #float(x[8]) < 0.10 and
-        elif mode == "4vs3_new_wo_pca_b":
-            labelset = ["$\Delta_\mathrm{count}$", "$\Delta_\mathrm{average\,relic}$", "$\Delta_\mathrm{2DKS}$",
+        elif mode == "4vs4_new":
+            labelset = ["$\Delta_\mathrm{count}$", "$\Delta_\mathrm{average\,relic}$", "$\Delta_\mathrm{2DKS}$", "$\Delta_\mathrm{alpha,mean}$",
                         r"$\log_{10} \xi_e$", r"$\log_{10} B_0$", r"$\kappa$", "$b_\mathrm{pca\,filter}$"]
             rangeset = [[0, 2.0],
                         [0, 1.0],
                         [0, 1.0],
+                        [0, 0.1],
                         [-5.5, -4.0],
                         [-0.5, 2.5],
                         [-0.5, 2.0],
-                        [-0.5,0.1]
+                        [-0.5,0.5]
                         ]
-            eps_use_wide = [4, 2, 1]
-            eps_use_narrow = [0.35, 0.38, 0.62]
+            eps_use_wide = [3, 2, 1, 0.3]
+            eps_use_narrow = [ 0.7989435,  0.26666418,  0.71958977,  0.01344388]  #0.35, 0.38, 0.62, 0.03]
             #eps_use_narrow = [0.35668561, 0.31255057, 0.74173276]
-            eps_select = lambda x: [float(x[0]), float(x[1]), float(x[2]),
-                                     np.log10(float(x[4])), np.log10(float(x[5])), float(x[6]), float(x[8])]
+            eps_select = lambda x: [float(x[0]), float(x[1]), float(x[2]), float(x[3]),
+                                     np.log10(float(x[5])), np.log10(float(x[6])), float(x[7]), float(x[9])]
+            par_select = lambda x: float(x[6]) < 5
         elif mode == "3vs5_new":
             labelset = ["$\Delta_\mathrm{count}$", "$\Delta_\mathrm{average\,relic}$", "$\Delta_\mathrm{alpha,mean}$",
                         r"$\log_{10} \xi_e$", r"$\log_{10} B_0 [\mu G]$", r"$\kappa$",
@@ -491,14 +516,15 @@ def main():
 
 
         quantiles = [0.16, 0.5, 0.84]
-        levels = quantiles #(1 - np.exp(-0.16), 1 - np.exp(-0.5), 1 - np.exp(-0.84),)
+        levels = [0.90, 0.60, 0.30] #None #quantiles #(1 - np.exp(-0.16), 1 - np.exp(-0.5), 1 - np.exp(-0.84),)
         used_cmap = plt.get_cmap('viridis')    # hot, viridis, magma, hot, 'viridis_r'
-        kwargs = {"quantiles": quantiles,  "levels": levels, "labels": labelset, "show_titles": True,
+        kwargs = {"quantiles": quantiles,  "labels": labelset, "show_titles": True,
                   "label_kwargs": {"fontsize": 18}, "title_kwargs": {"fontsize": 18},
-                  "contourf_kwargs": {'cmap': used_cmap, 'colors': None},  "range": rangeset}
+                  "contourf_kwargs": {'cmap': used_cmap, 'colors': None},  "range": rangeset,
+                  "hist2d_kwargs": {"levels": levels}}
         kwargs2 = {"quantiles": quantiles, "levels": levels, "labels": labelset, "show_titles": True,
                    "label_kwargs": {"fontsize": 18}, "contourf_kwargs": {'cmap': used_cmap, 'colors': None},
-                   "title_kwargs":{"fontsize": 18, "loc":'left'}}
+                   "title_kwargs":{"fontsize": 18, "loc":'left'}, "hist2d_kwargs": {"levels": levels}}
 
         if 1==1:
             all_selected = []
@@ -550,39 +576,39 @@ def main():
         #import triangle
         import abcpmc
 
-        samples = None
-        for pool in pools:
+        if 1==2:
+            samples = None
+            for pool in pools:
 
-            print(pool.eps, pool.dists.shape, pools[-1].eps)
-            selected = np.ones_like(pool.thetas[:,0])
-            print(pool.dists.shape, selected.shape)
-            for ii in range(pool.dists.shape[1]):
-                one_criterion= pool.dists[:,ii] < pools[-1].eps[ii]
-                selected = selected * one_criterion
-            print(selected.shape)
-            selected = np.where(selected==1)
-            print(type(selected), pool.thetas.shape)
-            selected_thetas = pool.thetas[selected]
-            selected_weight = pool.ws[selected]
+                print(pool.eps, pool.dists.shape, pools[-1].eps)
+                selected = np.ones_like(pool.thetas[:,0])
+                print(pool.dists.shape, selected.shape)
+                for ii in range(pool.dists.shape[1]):
+                    one_criterion= pool.dists[:,ii] < pools[-1].eps[ii]
+                    selected = selected * one_criterion
+                print(selected.shape)
+                selected = np.where(selected==1)
+                print(type(selected), pool.thetas.shape)
+                selected_thetas = pool.thetas[selected]
+                selected_weight = pool.ws[selected]
 
-            if samples is None:
-                samples = selected_thetas
-                weights = selected_weight
-            else:
-                samples = np.concatenate((samples, selected_thetas), axis=0)
-                weights = np.concatenate((weights, selected_weight), axis=0)
+                if samples is None:
+                    samples = selected_thetas
+                    weights = selected_weight
+                else:
+                    samples = np.concatenate((samples, selected_thetas), axis=0)
+                    weights = np.concatenate((weights, selected_weight), axis=0)
 
-        print(samples.shape, weights.shape)
-        fig = corner.corner(samples, weights=weights, **kwargs2)
-        add_correlation(fig, samples)
-        plt.savefig("/data/Test.pdf")
-
-
-        for mean, std in zip(*abcpmc.weighted_avg_and_std(samples, weights, axis=0)):
-            print(u"mean: {0:>.4f} \u00B1 {1:>.4f}".format(mean, std))
+            print(samples.shape, weights.shape)
+            fig = corner.corner(samples, weights=weights, **kwargs2)
+            add_correlation(fig, samples)
+            plt.savefig("/data/Test.pdf")
 
 
-        exit()
+            for mean, std in zip(*abcpmc.weighted_avg_and_std(samples, weights, axis=0)):
+                print(u"mean: {0:>.4f} \u00B1 {1:>.4f}".format(mean, std))
+
+            exit()
 
 
 
@@ -703,10 +729,11 @@ def main():
         mainname    = "Survey"  #'Threehundrets'
         #========== My specific cohord plot =============#
         plt.style.use('ggplot')
-        
+
         proclist = range(0, 36)  # range(0,36), 313
         #proclist = range(5600, 5600+50)  # range(1360, 3288+250)  '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_11/'
-        folder = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_20kpc/'
+        folder = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_100kpc_10times_sensitivity/'
+                #'/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_20kpc/'
                 #'/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_13/'
                 #
                 # '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_100kpc_3times_sensitivity/surveys/'
@@ -715,7 +742,6 @@ def main():
         from os.path import normpath, basename
         outname = basename(normpath(folder))
         folder += "surveys/"
-
 
         def radialstatistics(surveypaths,positive=True, normalize=True, density=True,color='red'):
             fullarray = []
@@ -788,6 +814,29 @@ def main():
 
         if 1 == 2:
             CombinedSurvey_Statistics()
+            exit()
+
+        if 1 == 2:
+            total = None
+            for surveyname in surveynames:
+                print('%s/%s' % (folder, surveyname))
+                try:
+                    survey = iom.unpickleObject('%s/%s' % (folder, surveyname))
+                except:
+                    continue
+                print(survey.name)
+                survey.relic_filter_kwargs = {"Filter": True, 'minrms': 8, "shape_pca": True}
+                survey.set_seed_dropout()
+                relicsA = survey.fetch_totalRelics()
+
+                # Get alpha and remove nans
+                A = np.array([ [relic.P_rest.value, relic.LLS.value] for relic in relicsA])
+                if total is None:
+                    total = A
+                else:
+                    total = np.concatenate((total,A), axis=0)
+                    print(total.shape)
+            np.save("/data/SurveyLLSPower_10times", total)
             exit()
 
         SurveysSample_full = [NVSSsurvey]
@@ -931,11 +980,11 @@ def main():
             iom.pickleObject_old(SurveysSample, "/data/ManySurveys", append = False)
             print("I did it!!!!")
 
-        SurveysSample = [] #iom.unpickleObject("/data/ManySurveys")
-        yeaahh = [NVSSsurvey] + SurveysSample
-        print(len(yeaahh))
-        ioclass.plot_cummulative_flux(yeaahh)
-        exit()
+            SurveysSample = [] #iom.unpickleObject("/data/ManySurveys")
+            yeaahh = [NVSSsurvey] + SurveysSample
+            print(len(yeaahh))
+            ioclass.plot_cummulative_flux(yeaahh)
+            exit()
 
         for surveyname in surveynames:
             SurveysSample = []
@@ -953,7 +1002,10 @@ def main():
             survey.dinfo = survey.GCls[0].dinfo
             survey.scatterkwargs = {"alpha": 0.15, "fmt": "^", "markersize": 7}
             survey.cnt_levels = [9e-4, 1.8e-3, 3.6e-3, 7.2e-3, 1.44e-2, 2.88e-2, 5.76e-2]
-            survey.relic_filter_kwargs.update({"Filter": True, 'minrms': 8, "shape_pca": True})
+            try:
+                survey.relic_filter_kwargs.update({"Filter": True, 'minrms': 8, "shape_pca": True})
+            except:
+                survey.relic_filter_kwargs = {"Filter": True, 'minrms': 8, "shape_pca": True}
             survey.histkwargs = {"alpha": 0.15}
             survey.set_binning(Histo)
             survey.emi_max = 2e-2
@@ -968,6 +1020,7 @@ def main():
             for gcl in survey.GCls:
                 for relic in gcl.relics:
                     relic.corrupt_alpha()
+
 
 
 
@@ -1006,6 +1059,31 @@ def main():
                 np.save("/data/clusters_with_mass_redshift_filtered_by_cluster", measures)
                 exit()
             survey.set_seed_dropout()
+
+
+
+
+
+            if 1 == 1:
+                import clusterbuster.fitsut as fiut
+                # Only the brightest objects
+                kwargs = {"minimumLAS": 4, "GClflux": 5}
+                usethem = survey.FilterCluster(**kwargs)
+                print('len(usethem)', len(usethem), len(survey.FilterCluster(**kwargs)),
+                      len(survey.FilterCluster()), len(survey.GCls))
+                fiut.sparse_array_to_fits(usethem, survey.outfolder)
+                fiut.sparse_array_to_fits(usethem, survey.outfolder, maptype="Subtracted", source_type="compacts")
+                fiut.sparse_array_to_fits(usethem, survey.outfolder, maptype="Temperature")
+                fiut.sparse_array_to_fits(usethem, survey.outfolder, maptype="Density")
+                fiut.sparse_array_to_fits(usethem, survey.outfolder, maptype="Mach")
+
+
+                #        ioclass.plot_Clusters(survey, dynamicscale=False, relicregions=False, DS9regions=False, sectors=True, colorbar=True)
+                ioclass.plot_Clusters(survey, xray=True, dynamicscale=False, relicregions=False, DS9regions=False,
+                                      sectors=False, colorbar=True, infolabel=False, subtracted=True,
+                                      filterargs={'zmin': 0.05, 'minimumLAS': 0, 'GClflux': 3.6,
+                                                  'index': None})
+            exit()
 
             """ DEVELOPMENT 
             if ( -0.9 < survey.Rmodel.kappa < -0.2) and (1.6 > np.log10(survey.Rmodel.B0) > 0.8)  and (-5.0 > np.log10(survey.Rmodel.effList[0]) > -5.3):
@@ -1057,27 +1135,6 @@ def main():
             ioclass.create_scattermatrix([NVSSsurvey, survey], [lambda x: x.LLS, lambda x: x.P_rest, lambda x: x.GCl.z],
                                          logs=logs_alpha, suffix='_z', shade=False)
 
-
-
-            if 1 == 1:
-                import clusterbuster.fitsut as fiut
-                # Only the brightest objects
-                kwargs = {"minimumLAS": 4, "GClflux": 5}
-                usethem = survey.FilterCluster(**kwargs)
-                print('len(usethem)', len(usethem), len(survey.FilterCluster(**kwargs)),
-                      len(survey.FilterCluster()), len(survey.GCls))
-                fiut.sparse_array_to_fits(usethem, survey.outfolder)
-                fiut.sparse_array_to_fits(usethem, survey.outfolder, maptype="Subtracted", source_type="compacts")
-                fiut.sparse_array_to_fits(usethem, survey.outfolder, maptype="Temperature")
-                fiut.sparse_array_to_fits(usethem, survey.outfolder, maptype="Density")
-                fiut.sparse_array_to_fits(usethem, survey.outfolder, maptype="Mach")
-
-
-                #        ioclass.plot_Clusters(survey, dynamicscale=False, relicregions=False, DS9regions=False, sectors=True, colorbar=True)
-                ioclass.plot_Clusters(survey, xray=True, dynamicscale=False, relicregions=False, DS9regions=False,
-                                      sectors=False, colorbar=True, infolabel=False, subtracted=True,
-                                      filterargs={'zmin': 0.05, 'minimumLAS': 0, 'GClflux': 3.6,
-                                                  'index': None})
 
 
 #                ioclass.create_Power_LLS(     SurveysSample, (zrange, colors, zsymbols), minrel=1)

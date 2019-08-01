@@ -15,12 +15,11 @@ import configparser
 import numpy as np
 import abcpmc
 import corner
-import time
 import matplotlib
-import matplotlib.pyplot                   as plt
-import clusterbuster.iout.misc             as iom
-import surveysim.music2.runsurvey          as music2run
-import inference.surveymetrics             as surmet
+import matplotlib.pyplot          as plt
+import clusterbuster.iout.misc    as iom
+import surveysim.music2.runsurvey as music2run
+import inference.surveymetrics    as surmet
 import seaborn as sns
 
 from functools import partial
@@ -46,7 +45,7 @@ def main_abcpmc_MUSIC2(conf, test=False):
         dataMUSIC2 = iom.unpickleObject(conf['paths']['surveysim'])
         print(type(dataMUSIC2.Rmodel), conf['paths']['surveysim'])
         surmet.abcpmc_dist_severalMetrices(dataMUSIC2, data, metrics=json.loads(conf['metrics']['used']),
-                                           delal=True, stochdrop=False, outpath='/data/')
+                                           delal=True, stochdrop=False, phoenixdrop=False, outpath='/data/')
         return 0
 
     """ The abcpmc part starts: Define thetas i.e. parameter values to be inferred  and priors"""
@@ -70,7 +69,8 @@ def main_abcpmc_MUSIC2(conf, test=False):
     else:
         sampler = abcpmc.Sampler(N=conf.getint('pmc', 'Nw'), Y=data, postfn=partial(music2run.main_ABC, parfile=conf['simulation']['parfile']),
                                  dist=partial(surmet.abcpmc_dist_severalMetrices, metrics=json.loads(conf['metrics']['used']),
-                                              outpath=conf['paths']['abcpmc'], stochdrop=conf['flavor']['stochdrop']),
+                                              outpath=conf['paths']['abcpmc'], stochdrop=conf['flavor']['stochdrop'],
+                                              phoenixdrop = conf['flavor']['phoenixdrop']),
                                  threads=conf.getint('mp', 'Nthreads'), maxtasksperchild=conf.getint('mp', 'maxtasksperchild'))
 
         # Prepares the file for counting
@@ -83,14 +83,9 @@ def main_abcpmc_MUSIC2(conf, test=False):
     sampler = astroabc.ABC_class(Ndim,walkers,data,tlevels,niter,priors,**prop)
     sampler.sample(music2run.main_astroABC)    
     """
-    
-    
-    t0 = time.time()
-    
     #	startfrom=iom.unpickleObject('/data/ClusterBuster-Output/MUSIC_NVSS02_Test01/launch_pools')
     pool = None #startfrom[-1]
     launch(sampler, prior, conf.getfloat('pmc','alpha'), eps, surveypath=conf['paths']['abcpmc'], pool=pool)
-    print("took", (time.time() - t0))
 
 
 def launch(sampler, prior, alpha, eps, ratio_min=1e-2, surveypath=None, pool=None, plotting=False):
@@ -190,9 +185,9 @@ def plot_abctraces(pools, surveypath=''):
     
     """
     corner.corner(distances)
-    plots the various distances over each other and shows nicely that they are uncorrelated. 
-    This is not super important, you could also use correlated distances with this abbroach. On the other hand it is interesting to see
-    that both measures are independent, often this is a sign that they are good features!
+    plots the various distances over each other to show if they are uncorrelated. 
+    This is not super important, you could also use correlated distances with this approach. On the other hand it is interesting to see
+    if both metrices are independent, often this is a sign that they are good features!
     """
     
 
@@ -279,7 +274,7 @@ if __name__ == "__main__":
     #exit()
 
     """ Full routines for parsing a combination of argparse, configparser and json"""
-    parser = argparse.ArgumentParser(description='Evaluates the best solutions of survey simulations with the abc abbroach.')
+    parser = argparse.ArgumentParser(description='Evaluates the best solutions of survey simulations with the abc approach.')
     parser.add_argument('-parini', dest='parini', action='store', default='params.ini', type=str,
                         help='set filepath for parameter initialisation file.')
     args = parser.parse_args()

@@ -23,17 +23,18 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA as sklearnPCA
 import scipy
 
-def abcpmc_dist_severalMetrices(SurveyA, SurveyB, metrics=['number'], outpath='', delal=True, stochdrop=True):
+def abcpmc_dist_severalMetrices(SurveyA, SurveyB, metrics=['number'], outpath='', delal=True, stochdrop=True, phoenixdrop=False):
   """ abcpmc differs from astroABC in that sense that the model data is called before the data in the metric arguement,
       so it is metric(model,data) instead of metric(data,model)
       
   So this is just a wrapper    
   """
-  return ABC_dist_severalMetrices(SurveyB, SurveyA, metrics=metrics, outpath = outpath, delal=delal, stochdrop=stochdrop)
+  return ABC_dist_severalMetrices(SurveyB, SurveyA, metrics=metrics, outpath = outpath, delal=delal,
+                                  stochdrop=stochdrop, phoenixdrop=phoenixdrop)
 
 
 def ABC_dist_severalMetrices(SurveyA, SurveyB, metrics=['number'], outpath='', delal=True,
-                             verbose=False, stochdrop=True):
+                             verbose=False, stochdrop=True, phoenixdrop=False):
     """ 
     Returns the distance within the MUSIC-2/NVSS metric
     you have: data,model
@@ -47,8 +48,11 @@ def ABC_dist_severalMetrices(SurveyA, SurveyB, metrics=['number'], outpath='', d
     if verbose:
         print(SurveyA.name, SurveyB.name)
 
+    if phoenixdrop:
+        SurveyB.relic_filter_kwargs.update({"alpha_tresh":1.65})
     if stochdrop:
         SurveyB.set_seed_dropout()
+
 
     distances = []
     SurveyA.FilterCluster(**SurveyA.cluster_filter_kwargs)
