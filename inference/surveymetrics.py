@@ -49,10 +49,9 @@ def ABC_dist_severalMetrices(SurveyA, SurveyB, metrics=['number'], outpath='', d
         print(SurveyA.name, SurveyB.name)
 
     if phoenixdrop:
-        SurveyB.relic_filter_kwargs.update({"alpha_tresh":1.65})
+        SurveyB.relic_filter_kwargs.update({"alpha_tresh":-1.65})
     if stochdrop:
         SurveyB.set_seed_dropout()
-
 
     distances = []
     SurveyA.FilterCluster(**SurveyA.cluster_filter_kwargs)
@@ -62,7 +61,7 @@ def ABC_dist_severalMetrices(SurveyA, SurveyB, metrics=['number'], outpath='', d
         distances = [1e9 for m in metrics]
         return distances
 
-    print('SurveyA.GCls', len(SurveyA.GCls), '-->', 'SurveyB.filteredClusters', len(SurveyA.filteredClusters))
+    print('SurveyA.GCls', len(SurveyA.GCls), '-->', 'SurveyA.filteredClusters', len(SurveyA.filteredClusters))
     print('SurveyB.GCls', len(SurveyB.GCls), '-->', 'SurveyB.filteredClusters', len(SurveyB.filteredClusters))
 
     relicsA = SurveyA.fetch_totalRelics()

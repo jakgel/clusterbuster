@@ -494,15 +494,11 @@ class Galaxycluster(object):
             maxcomp = 1e9
             self.minflux = -1
 
-        #for relic in self.relics:
-        #    print(relic.alpha)
-        #    print(relic.alpha)
         return [relic for relic in self.relics
-                if ((relic.flux.value > self.minflux) and (relic.region.rtype.classi in regard) and
-                    (alpha_tresh < relic.alpha.value) and
+                if ((relic.flux.value > self.minflux) and (relic.region.rtype.classi in regard) and not
+                    (alpha_tresh > relic.alpha.value) and #the negation is because in case of unknown alpha which always gives False in comparisons I dont want to exclude the object
                     ((shape is False) or (relic.shape_advanced().value < maxcomp))) and
-                    ((shape_pca is False) or
-                     (surut.discovery_prop_pca(relic, **filter_pca_kwargs) > (1-self.random_detection_quality)))]
+                    ((shape_pca is False) or (surut.discovery_prop_pca(relic, **filter_pca_kwargs) > (1-self.random_detection_quality)))]
 
     def add_regions(self, regions, **filterargs):
 
