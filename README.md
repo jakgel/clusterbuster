@@ -21,7 +21,7 @@ A future release will add additional modules to analyse at least MUSIC-2.
 
 ####  Likely changes
  - Installing descriptions will be layed out.
-- NVSS poststamp images (currently 50MB) will be removed and add a description added where to find them
+- NVSS poststamp images (currently 50MB) will be removed and a description will be added about  where to find them
 - Cosmic web (cite, also cite the data science centre because it has the radio emission)
 
 
@@ -64,7 +64,7 @@ Older versions may work but are untested.
 ## Documentation
 Currently sparse within the files. You can get an overview of the idea by reading section 2 & 3 of [Nuza et al. 2017](http://adsabs.harvard.edu/abs/2017MNRAS.470..240N). The main repository includes. *surveyreal* shows how to get all relevant information from radio relics in the NVSS survey.  *surveysim* (once made accesible) includes the code to extract relevant information from the MUSIC-2 survey once you have additional files. *inference* lets you apply some more modern inference mechanism of physical models on the code.
 
-
+![Example of parameter inference with [ABCPMC](https://github.com/jakeret/abcpmc))(/inference/Example_abcpmc.png)
 
 ## Licence
 Copyright 2018 Jakob Gelszinnis

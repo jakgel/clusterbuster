@@ -389,8 +389,8 @@ def main():
         allpools  = []
         plottings = []
         model_samples_total = 0
-        mode = "4vs4_new"  #"thesis_largestRun" #"4vs4_new" #
-        folderN = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_15'
+        mode = "thesis_largestRun" #"4vs4_new" #
+        folderN = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_16'
         show_metrics = False
         metric_log = False
 
