@@ -376,11 +376,18 @@ def ABC_summaryStatistics_alpha(Surveys):
         relic.corrupt_alpha()
 
     # Get alpha and remove nans
-    A = np.array([min(-1, relic.alpha()) for relic in relicsA])
-    B = np.array([min(-1, relic.alpha()) for relic in relicsB])
+    A = np.array([relic.alpha() for relic in relicsA])
+    B = np.array([relic.alpha() for relic in relicsB])
 
-    mA = A[~np.isnan(A)].mean()
-    mB = B[~np.isnan(B)].mean()
+    A = A[~np.isnan(A)]
+    B = B[~np.isnan(B)]
+
+    A[A > -1] = -1
+    B[B > -1] = -1
+
+    mA = A.mean()
+    mB = B.mean()
+
 
     return abs(mA - mB)
 

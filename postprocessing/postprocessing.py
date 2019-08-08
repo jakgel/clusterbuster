@@ -32,7 +32,7 @@ def main():
 
     create_NVSS = [] #'create_tables', 'create_scattermatrix'] #'create_misc'] #, 'plot_Clusters','correlation template'
     create_ABC_plots = True
-    create_PhDplots = False
+    create_PhDplots = True
     create_CWpaperplots = False
     print('###==== PostProcessing: Importing self written .py subroutines ====###')
 
@@ -59,13 +59,18 @@ def main():
     NVSSsurvey.cluster_filter_kwargs = {'minrel': 1, 'zmin': 0.05}
 
 
-    if 1==2:
+    if 1==1:
         relicsA = NVSSsurvey.fetch_totalRelics()
 
         # Get alpha and remove nans
-        A = np.array([min(-1, relic.alpha()) for relic in relicsA])
 
-        mA = A[~np.isnan(A)].mean()
+
+        # A = np.array([min(-1, relic.alpha()) for relic in relicsA])
+        # mA = A[~np.isnan(A)].mean()
+        A = np.array([relic.alpha() for relic in relicsA])
+        A = A[~np.isnan(A)]
+        A[A > -1] = -1
+        mA = A.mean()
         print(mA)
         exit()
 
@@ -730,12 +735,11 @@ def main():
         #========== My specific cohord plot =============#
         plt.style.use('ggplot')
 
-        proclist = range(0, 36)  # range(0,36), 313
+        proclist = range(3449-36, 3449)  # range(0,36), 313
         #proclist = range(5600, 5600+50)  # range(1360, 3288+250)  '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_11/'
-        folder = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_100kpc_10times_sensitivity/'
+        folder = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_16/'
+                #'/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_100kpc_10times_sensitivity/'
                 #'/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_20kpc/'
-                #'/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_13/'
-                #
                 # '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_100kpc_3times_sensitivity/surveys/'
                 # '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_100kpc_10times_sensitivity/surveys/'
                  #'/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_100kpc/surveys/'
