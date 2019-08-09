@@ -351,7 +351,7 @@ def ABC_summaryStatistics_logMach(Surveys):
 
 
 
-def ABC_summaryStatistics_alpha(Surveys):
+def ABC_summaryStatistics_alpha(Surveys, flattest_alpha=False):
     """ Compares survey B (simulation) with survey A (real world survey)
         Derives the difference of the means in alpha
     """
@@ -382,8 +382,9 @@ def ABC_summaryStatistics_alpha(Surveys):
     A = A[~np.isnan(A)]
     B = B[~np.isnan(B)]
 
-    A[A > -1] = -1
-    B[B > -1] = -1
+    if flattest_alpha:
+        A[A > -1] = -1
+        B[B > -1] = -1
 
     mA = A.mean()
     mB = B.mean()

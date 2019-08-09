@@ -31,7 +31,7 @@ import matplotlib.patches as mpatches
 def main():
 
     create_NVSS = [] #'create_tables', 'create_scattermatrix'] #'create_misc'] #, 'plot_Clusters','correlation template'
-    create_ABC_plots = True
+    create_ABC_plots = False
     create_PhDplots = True
     create_CWpaperplots = False
     print('###==== PostProcessing: Importing self written .py subroutines ====###')
@@ -59,7 +59,7 @@ def main():
     NVSSsurvey.cluster_filter_kwargs = {'minrel': 1, 'zmin': 0.05}
 
 
-    if 1==1:
+    if 1==2:
         relicsA = NVSSsurvey.fetch_totalRelics()
 
         # Get alpha and remove nans
@@ -389,13 +389,12 @@ def main():
 
     if create_ABC_plots:
 
-
         #plt.style.use('classic')
         allpools  = []
         plottings = []
         model_samples_total = 0
         mode = "thesis_largestRun" #"4vs4_new" #
-        folderN = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_16'
+        folderN = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_17'
         show_metrics = False
         metric_log = False
 
@@ -617,8 +616,6 @@ def main():
 
 
 
-
-
         print('eps_use_wide', eps_use_wide)
         all_selected = []
         for line in open(folderN + '/logfile.txt'):
@@ -735,9 +732,10 @@ def main():
         #========== My specific cohord plot =============#
         plt.style.use('ggplot')
 
-        proclist = range(3449-36, 3449)  # range(0,36), 313
+        proclist = range(0, 0+36)  # range(0,36), 313
         #proclist = range(5600, 5600+50)  # range(1360, 3288+250)  '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_11/'
-        folder = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_16/'
+        folder = '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_20kpc_kappa0.0_lowereffi/'
+                #'/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_Run_15/'
                 #'/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_100kpc_10times_sensitivity/'
                 #'/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_20kpc/'
                 # '/data/ClusterBuster-Output/abcpmc-MUSIC2NVSS_TestingSimpleParas_Nuza_woPhaseFilter_0.75_100kpc_3times_sensitivity/surveys/'
@@ -911,7 +909,7 @@ def main():
 
             exit()
 
-        if 1 == 2:
+        if 1 == 1:
             distances_list = []
             for surveyname in surveynames:
                 print('%s/%s' % (folder, surveyname))
@@ -938,7 +936,8 @@ def main():
 
                 import inference.surveymetrics as surveymetrices
                 #metrices = ['number', "flux_kolm", "2DKS", "polarHisto", "polarHisto_simple", "PCA", "alpha"]
-                metrices = ["number_cluster", 'number', "polarHisto", "alpha", "2DKS", "flux_kolm"]
+                #metrices = ["number_cluster", 'number', "polarHisto", "alpha", "2DKS", "flux_kolm"]
+                metrices = ["alpha"]
                 distances = surveymetrices.ABC_dist_severalMetrices(NVSSsurvey, survey, metrics=metrices,
                                          outpath='', delal=False, verbose=True, stochdrop=True)
                 print("distances", distances)
@@ -947,9 +946,10 @@ def main():
             data = np.asarray(distances_list)
             print(data.shape)
             import pandas as pd
-            dataset = pd.DataFrame({'folder': folder, 'number_cluster': data[:, 0], 'number': data[:, 1],
-                                    'polarHisto': data[:, 2], "alpha": data[:, 3], "2DKS": data[:, 4],
-                                    "flux_kolm": data[:, 5]})
+            #dataset = pd.DataFrame({'folder': folder, 'number_cluster': data[:, 0], 'number': data[:, 1],
+            #                        'polarHisto': data[:, 2], "alpha": data[:, 3], "2DKS": data[:, 4],
+            #                        "flux_kolm": data[:, 5]})
+            dataset = pd.DataFrame({'folder': folder, 'alpha': data[:, 0]})
 
             from os.path import normpath, basename
             dataset.to_csv('/data/metric_estimate_%s.csv' % outname)
