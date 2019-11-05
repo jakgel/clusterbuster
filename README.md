@@ -6,7 +6,7 @@ go from data-cubes (simulations) or .fits images (surveys) to object catalogues.
 It provides a joint analysis framework for radio relic surveys and simulations. You have to supply the map files or simulations cubes by yourself.
 Because of the widely varying output of different simulations you also have write your own wrapper to parse simulaion output into this tool. ClusterBuster provides some functionalities for this purpose.
 Once you have done this you are able to create a survey catalogue (.pickle) that you can use for further analysis. Approximate Bayesian computation for your own specified model has to be implemented in a submodel (so some coding is required).
-``astroABC`` requires ``NumPy``, and ``astropy``. The modules ``astroABC``, ``abcpmc``, and ``multiprocessing`` are optional and usefull if you want to analyse simulations.
+``astroABC`` requires ``NumPy``, and ``astropy``. The module [``abcpmc``](https://github.com/jakeret/abcpmc) is optional and usefull if you want to analyse simulations.
 
 In the subdirectories several functionalities are added. In the provided examples the focus is on so-called diffuse radio emision, which is synchrotron emission emerging from cosmic rays in galaxy clusters.
 A future release will add additional modules to analyse at least MUSIC-2.
@@ -20,10 +20,8 @@ A future release will add additional modules to analyse at least MUSIC-2.
 - MUSIC-2: 283 massive clusters resimulated from Multidark. Ask authors of [Nuza et al. 2017](http://adsabs.harvard.edu/abs/2017MNRAS.470..240N) for the processed files that include the infered shock strength and other hydrodynamical properties within the galaxy clusters.
 
 ####  Likely changes
- - Installing descriptions will be layed out.
+- Installing descriptions will be layed out.
 - NVSS poststamp images (currently 50MB) will be removed and a description will be added about  where to find them
-- Cosmic web (cite, also cite the data science centre because it has the radio emission)
-
 
 **[Disclaimer](#disclaimer)** |
 **[Installation](#documentation)** |
@@ -35,13 +33,9 @@ This .git outlines the overall structure of the software. As no larger release i
 
 
 ## Installation
-Install via pip (broken, but fix incoming with next version):
-
-    pip install clusterbuster
-
-Alternatively clone/fork this directory from  github. 
+Clone/fork this directory from  github. 
 After download go to the directory and add the repository to your bashrc
->> echo "export PYTHONPATH=\PYTHONPATH:$(pwd)" >> ~/.bashrc
+    >> echo "export PYTHONPATH=\PYTHONPATH:$(pwd)" >> ~/.bashrc
 
 ## Dependencies
 - NumPy >=1.8
