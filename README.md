@@ -9,7 +9,6 @@ Once you have done this you are able to create a survey catalogue (.pickle) that
 ``astroABC`` requires ``NumPy``, and ``astropy``. The module [``abcpmc``](https://github.com/jakeret/abcpmc) is optional and usefull if you want to analyse simulations.
 
 In the subdirectories several functionalities are added. In the provided examples the focus is on so-called diffuse radio emision, which is synchrotron emission emerging from cosmic rays in galaxy clusters.
-A future release will add additional modules to analyse at least MUSIC-2.
 
 ##### Radio Surveys:
 - NVSS ([Condon et al. 1998](http://adsabs.harvard.edu/abs/1998AJ....115.1693C) + add link to the TLS catalogue of point sources+relic region+cluster information)
